@@ -7,10 +7,10 @@ import {
 } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
 
-function Sidebar({ isOpen, onToggle }) {
+function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout }) {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   useEffect(() => {
@@ -18,6 +18,12 @@ function Sidebar({ isOpen, onToggle }) {
       setCadastrosOpen(true);
     }
   }, [currentPath]);
+
+  // Fecha sidebar no mobile ao navegar
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (isMobile) onClose();
+  };
 
   const menuItems = [
     { id: 'dashboard',       path: '/',                label: 'Início',             icon: FaHome },
@@ -37,8 +43,8 @@ function Sidebar({ isOpen, onToggle }) {
 
   return (
     <>
-      {/* Botão toggle quando sidebar fechada */}
-      {!isOpen && (
+      {/* Botão hamburguer quando sidebar fechada (só desktop) */}
+      {!isOpen && !isMobile && (
         <button
           type="button"
           onClick={onToggle}
@@ -56,87 +62,78 @@ function Sidebar({ isOpen, onToggle }) {
 
       {/* Sidebar */}
       <div style={{
-        width: isOpen ? '250px' : '0px',
+        width: '250px',
         height: '100vh',
         background: 'linear-gradient(180deg, #0d1b2a 0%, #0f172a 100%)',
-        borderRight: isOpen ? '1px solid #1e293b' : 'none',
-        padding: isOpen ? '0' : '0',
+        borderRight: '1px solid #1e293b',
         position: 'fixed', left: 0, top: 0,
         overflowY: 'auto', overflowX: 'hidden',
         display: 'flex', flexDirection: 'column',
-        transition: 'all 0.3s ease',
+        transition: 'transform 0.3s ease',
+        // no mobile usa transform para entrar/sair da tela
+        // no desktop usa transform também para consistência
+        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
         zIndex: 999,
         boxShadow: isOpen ? '4px 0 24px rgba(0,0,0,0.4)' : 'none',
       }}>
 
-        {isOpen && (
-          <>
-            {/* ── Logo / Branding ── */}
+        {/* ── Logo / Branding ── */}
+        <div style={{
+          padding: '20px 20px 0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              padding: '20px 20px 0',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              width: '36px', height: '36px', borderRadius: '10px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 16px rgba(16,185,129,0.4)',
+              flexShrink: 0,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 0 16px rgba(16,185,129,0.4)',
-                  flexShrink: 0,
-                }}>
-                  <FiTrendingUp size={18} color="#fff" />
-                </div>
-                <span style={{
-                  fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc',
-                  letterSpacing: '-0.3px',
-                }}>
-                  FII<span style={{ color: '#10b981' }}>Track</span>
-                </span>
-              </div>
-
-              {/* Botão fechar */}
-              <button
-                type="button"
-                onClick={onToggle}
-                style={{
-                  background: 'transparent', color: '#64748b',
-                  border: 'none', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '28px', height: '28px', borderRadius: '6px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
-              >
-                <FaTimes size={14} />
-              </button>
+              <FiTrendingUp size={18} color="#fff" />
             </div>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.3px' }}>
+              FII<span style={{ color: '#10b981' }}>Track</span>
+            </span>
+          </div>
 
-            {/* ── Status servidor ── */}
-            <div style={{ padding: '16px 20px 20px' }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '7px',
-                background: 'rgba(16,185,129,0.08)',
-                border: '1px solid rgba(16,185,129,0.2)',
-                padding: '5px 12px', borderRadius: '20px',
-                fontSize: '12px', color: '#10b981', fontWeight: 500,
-              }}>
-                <FaCircle size={7} style={{ color: '#10b981', filter: 'drop-shadow(0 0 4px #10b981)' }} />
-                Servidor Online
-              </div>
-            </div>
+          {/* Botão fechar */}
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'transparent', color: '#64748b',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '28px', height: '28px', borderRadius: '6px',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
+          >
+            <FaTimes size={14} />
+          </button>
+        </div>
 
-            {/* ── Divisória ── */}
-            <div style={{ height: '1px', background: '#1e293b', margin: '0 20px 12px' }} />
-          </>
-        )}
+        {/* ── Status servidor ── */}
+        <div style={{ padding: '16px 20px 20px' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '7px',
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            padding: '5px 12px', borderRadius: '20px',
+            fontSize: '12px', color: '#10b981', fontWeight: 500,
+          }}>
+            <FaCircle size={7} style={{ color: '#10b981', filter: 'drop-shadow(0 0 4px #10b981)' }} />
+            Servidor Online
+          </div>
+        </div>
+
+        {/* ── Divisória ── */}
+        <div style={{ height: '1px', background: '#1e293b', margin: '0 20px 12px' }} />
 
         {/* ── Menu ── */}
-        <nav style={{
-          display: 'flex', flexDirection: 'column', gap: '4px',
-          padding: isOpen ? '0 12px' : '60px 0 0',
-          flex: 1,
-        }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '0 12px', flex: 1 }}>
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = currentPath === item.path;
@@ -145,43 +142,25 @@ function Sidebar({ isOpen, onToggle }) {
               <React.Fragment key={item.id}>
                 <button
                   type="button"
-                  onClick={() => navigate(item.path)}
-                  title={!isOpen ? item.label : ''}
+                  onClick={() => handleNavigate(item.path)}
                   style={{
-                    display: 'flex', alignItems: 'center',
-                    gap: isOpen ? '10px' : '0',
-                    padding: isOpen ? '10px 12px' : '12px',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '12px 12px',
                     background: isActive
                       ? 'linear-gradient(90deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))'
                       : 'transparent',
                     color: isActive ? '#10b981' : '#64748b',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: isActive ? 600 : 400,
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: isActive ? 600 : 400,
                     transition: 'all 0.2s ease',
                     borderLeft: isActive ? '3px solid #10b981' : '3px solid transparent',
-                    justifyContent: isOpen ? 'flex-start' : 'center',
-                    whiteSpace: 'nowrap',
-                    width: '100%',
-                    textAlign: 'left',
+                    whiteSpace: 'nowrap', width: '100%', textAlign: 'left',
                   }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                      e.currentTarget.style.color = '#94a3b8';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = '#64748b';
-                    }
-                  }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; } }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; } }}
                 >
                   <Icon size={17} />
-                  {isOpen && <span>{item.label}</span>}
+                  <span>{item.label}</span>
                 </button>
 
                 {/* Cadastros (submenu) — inserido após "Início" */}
@@ -190,56 +169,35 @@ function Sidebar({ isOpen, onToggle }) {
                     <button
                       type="button"
                       onClick={() => setCadastrosOpen(!cadastrosOpen)}
-                      title={!isOpen ? 'Cadastros' : ''}
                       style={{
-                        display: 'flex', alignItems: 'center',
-                        gap: isOpen ? '10px' : '0',
-                        padding: isOpen ? '10px 12px' : '12px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '12px 12px',
                         background: cadastrosOpen
                           ? 'linear-gradient(90deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))'
                           : 'transparent',
                         color: cadastrosOpen ? '#10b981' : '#64748b',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: cadastrosOpen ? 600 : 400,
+                        border: 'none', borderRadius: '8px', cursor: 'pointer',
+                        fontSize: '14px', fontWeight: cadastrosOpen ? 600 : 400,
                         transition: 'all 0.2s ease',
                         borderLeft: cadastrosOpen ? '3px solid #10b981' : '3px solid transparent',
-                        justifyContent: isOpen ? 'space-between' : 'center',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
+                        justifyContent: 'space-between',
+                        whiteSpace: 'nowrap', width: '100%',
                       }}
-                      onMouseEnter={e => {
-                        if (!cadastrosOpen) {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                          e.currentTarget.style.color = '#94a3b8';
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (!cadastrosOpen) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = '#64748b';
-                        }
-                      }}
+                      onMouseEnter={e => { if (!cadastrosOpen) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; } }}
+                      onMouseLeave={e => { if (!cadastrosOpen) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; } }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <FaFolder size={17} />
-                        {isOpen && <span>Cadastros</span>}
+                        <span>Cadastros</span>
                       </span>
-                      {isOpen && (cadastrosOpen
-                        ? <FaChevronUp size={12} />
-                        : <FaChevronDown size={12} />
-                      )}
+                      {cadastrosOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
                     </button>
 
-                    {/* Subitens */}
-                    {cadastrosOpen && isOpen && (
+                    {cadastrosOpen && (
                       <div style={{
                         display: 'flex', flexDirection: 'column', gap: '2px',
                         marginLeft: '12px', paddingLeft: '16px',
-                        borderLeft: '1px solid #1e293b',
-                        marginBottom: '4px',
+                        borderLeft: '1px solid #1e293b', marginBottom: '4px',
                       }}>
                         {subItems.map(sub => {
                           const subActive = currentPath === sub.path;
@@ -247,29 +205,18 @@ function Sidebar({ isOpen, onToggle }) {
                             <button
                               key={sub.path}
                               type="button"
-                              onClick={() => navigate(sub.path)}
+                              onClick={() => handleNavigate(sub.path)}
                               style={{
                                 background: subActive ? 'rgba(16,185,129,0.1)' : 'transparent',
                                 color: subActive ? '#10b981' : '#64748b',
                                 border: 'none', borderRadius: '6px',
-                                padding: '8px 10px', textAlign: 'left',
+                                padding: '10px 10px', textAlign: 'left',
                                 cursor: 'pointer', fontSize: '13px',
                                 fontWeight: subActive ? 600 : 400,
-                                transition: 'all 0.2s',
-                                width: '100%',
+                                transition: 'all 0.2s', width: '100%',
                               }}
-                              onMouseEnter={e => {
-                                if (!subActive) {
-                                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                                  e.currentTarget.style.color = '#94a3b8';
-                                }
-                              }}
-                              onMouseLeave={e => {
-                                if (!subActive) {
-                                  e.currentTarget.style.background = 'transparent';
-                                  e.currentTarget.style.color = '#64748b';
-                                }
-                              }}
+                              onMouseEnter={e => { if (!subActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; } }}
+                              onMouseLeave={e => { if (!subActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; } }}
                             >
                               {sub.label}
                             </button>
@@ -284,17 +231,14 @@ function Sidebar({ isOpen, onToggle }) {
           })}
         </nav>
 
-        {/* ── Rodapé da sidebar ── */}
-        {isOpen && (
-          <div style={{
-            padding: '16px 20px',
-            borderTop: '1px solid #1e293b',
-            fontSize: '11px', color: '#334155',
-            textAlign: 'center',
-          }}>
-            © {new Date().getFullYear()} FIITrack
-          </div>
-        )}
+        {/* ── Rodapé ── */}
+        <div style={{
+          padding: '16px 20px',
+          borderTop: '1px solid #1e293b',
+          fontSize: '11px', color: '#334155', textAlign: 'center',
+        }}>
+          © {new Date().getFullYear()} FIITrack
+        </div>
       </div>
     </>
   );

@@ -47,7 +47,7 @@ export default function AreaChart({ data, keys, colors, height = 160 }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', padding: '15px 5px 35px 5px', overflowX: 'auto' }}>
-      <div style={{ position: 'relative', width: '100%', minWidth: '600px', height: `${height}px` }}>
+      <div style={{ position: 'relative', width: '100%', height: `${height}px` }}>
         <svg
           viewBox={`0 0 ${svgWidth} ${height}`}
           preserveAspectRatio="none"

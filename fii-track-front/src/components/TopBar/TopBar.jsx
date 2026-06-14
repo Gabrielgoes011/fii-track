@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { FaKey, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
+import { FaKey, FaSignOutAlt, FaChevronDown, FaBars } from 'react-icons/fa';
+import { FiTrendingUp } from 'react-icons/fi';
 
 function useUsuarioLogado() {
   return useMemo(() => {
@@ -19,7 +20,7 @@ function useUsuarioLogado() {
   }, []);
 }
 
-function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha }) {
+function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout, onTrocarSenha, onToggleSidebar }) {
   const { nome, email, iniciais } = useUsuarioLogado();
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef(null);
@@ -41,29 +42,68 @@ function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha })
     <div style={{
       position: 'fixed',
       top: 0,
-      left: sidebarOpen ? '250px' : '0px',
+      left: (!isMobile && sidebarOpen) ? '250px' : '0px',
       right: 0,
       height: '60px',
-      background: 'rgba(10,15,30,0.85)',
+      background: 'rgba(10,15,30,0.95)',
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
       borderBottom: '1px solid #1e293b',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'flex-end',
-      padding: '0 24px',
-      zIndex: 998,
+      justifyContent: 'space-between',
+      padding: '0 16px',
+      zIndex: 997,
       transition: 'left 0.3s ease',
       boxShadow: '0 1px 0 rgba(255,255,255,0.03)',
     }}>
 
-      <div ref={menuRef} style={{ position: 'relative' }}>
+      {/* Lado esquerdo — hamburguer no mobile, logo no mobile */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Botão hamburguer — aparece sempre que sidebar está fechada */}
+        {(!sidebarOpen || isMobile) && (
+          <button
+            onClick={onToggleSidebar}
+            style={{
+              background: 'transparent',
+              border: '1px solid #1e293b',
+              borderRadius: '8px',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+          >
+            <FaBars size={16} />
+          </button>
+        )}
 
-        {/* Trigger */}
+        {/* Logo no mobile (sidebar escondida) */}
+        {isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '28px', height: '28px', borderRadius: '8px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <FiTrendingUp size={14} color="#fff" />
+            </div>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>
+              FII<span style={{ color: '#10b981' }}>Track</span>
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Lado direito — avatar + menu */}
+      <div ref={menuRef} style={{ position: 'relative' }}>
         <button
           onClick={() => setMenuAberto(v => !v)}
           style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
+            display: 'flex', alignItems: 'center', gap: '8px',
             background: menuAberto ? 'rgba(255,255,255,0.06)' : 'transparent',
             border: '1px solid',
             borderColor: menuAberto ? '#334155' : 'transparent',
@@ -71,32 +111,26 @@ function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha })
             padding: '6px 10px', borderRadius: '10px',
             transition: 'all 0.2s',
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.borderColor = '#334155';
-          }}
-          onMouseLeave={e => {
-            if (!menuAberto) {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = 'transparent';
-            }
-          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = '#334155'; }}
+          onMouseLeave={e => { if (!menuAberto) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; } }}
         >
-          {/* Nome e email */}
-          <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{nome}</div>
-            {email && <div style={{ fontSize: '11px', color: '#64748b' }}>{email}</div>}
-          </div>
+          {/* Nome e email — oculta no mobile pra economizar espaço */}
+          {!isMobile && (
+            <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{nome}</div>
+              {email && <div style={{ fontSize: '11px', color: '#64748b' }}>{email}</div>}
+            </div>
+          )}
 
           {/* Avatar */}
           <div style={{
             width: '34px', height: '34px', borderRadius: '50%',
-            overflow: 'hidden',
             background: 'linear-gradient(135deg, #10b981, #059669)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
             border: '2px solid rgba(16,185,129,0.3)',
             boxShadow: '0 0 10px rgba(16,185,129,0.2)',
+            overflow: 'hidden',
           }}>
             {fotoUrl ? (
               <img src={fotoUrl} alt={nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -107,7 +141,6 @@ function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha })
             )}
           </div>
 
-          {/* Chevron */}
           <FaChevronDown
             size={10}
             color="#64748b"
@@ -140,7 +173,7 @@ function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha })
               onClick={handleTrocarSenha}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                width: '100%', padding: '11px 16px',
+                width: '100%', padding: '12px 16px',
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '13px', color: '#94a3b8', textAlign: 'left',
                 transition: 'all 0.15s',
@@ -159,7 +192,7 @@ function TopBar({ sidebarOpen = true, fotoUrl = null, onLogout, onTrocarSenha })
               onClick={handleLogout}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                width: '100%', padding: '11px 16px',
+                width: '100%', padding: '12px 16px',
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '13px', color: '#f87171', textAlign: 'left',
                 transition: 'all 0.15s',
