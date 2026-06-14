@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon --import ./src/config/env.js server.js",
-    "start": "node --import ./src/config/env.js server.js"
+    "start": "cross-env NODE_ENV=production node --import ./src/config/env.js server.js"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +20,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.14"
   }
 }
