@@ -52,7 +52,7 @@ function PaginaUsuarios() {
     setFormData((prev) => {
       // Pega o estado novo independentemente de ser passado via callback ou objeto
       const newData = typeof updater === 'function' ? updater(prev) : { ...updater };
-      
+
       // Aplica a máscara se o campo de data de nascimento estiver sendo alterado
       if (newData.dataNascimento !== undefined) {
         let v = newData.dataNascimento.replace(/\D/g, ''); // Remove tudo que não for número
