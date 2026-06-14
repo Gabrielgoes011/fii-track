@@ -1,4 +1,4 @@
-# Gerenciador de Fundos Imobiliários — FIITrack
+# 💚 fii-track
 
 Aplicação fullstack para controle e acompanhamento de carteira de Fundos de Investimento Imobiliário (FIIs). Permite gerenciar ativos, registrar operações de compra/venda, acompanhar rendimentos recebidos e visualizar a performance da carteira.
 
@@ -9,14 +9,14 @@ Aplicação fullstack para controle e acompanhamento de carteira de Fundos de In
 ## Estrutura do Projeto
 
 ```
-api-Node/
-├── api-nodeback/   # API REST — Node.js + Express + PostgreSQL
-└── api-nodefront/  # SPA — React + Vite + Tailwind CSS
+fii-track/
+├── fii-track-back/   # API REST — Node.js + Express + PostgreSQL
+└── fii-track-front/  # SPA — React + Vite + Tailwind CSS
 ```
 
 ---
 
-## Backend (`api-nodeback`)
+## Backend (`fii-track-back`)
 
 ### Tecnologias
 
@@ -56,7 +56,7 @@ Valida o JWT no header `Authorization: Bearer <token>`. Retorna `401` se ausente
 
 ### Variáveis de Ambiente
 
-Crie `.env.development` na raiz de `api-nodeback/` com base no `.env.example`:
+Crie `.env.development` na raiz de `fii-track-back/` com base no `.env.example`:
 
 ```env
 PORT=3000
@@ -131,7 +131,7 @@ Authorization: Bearer <token>
 ### Como Executar
 
 ```bash
-cd api-nodeback
+cd fii-track-back
 npm install
 npm run dev     # desenvolvimento com hot-reload
 npm start       # produção
@@ -141,7 +141,7 @@ O servidor sobe em `http://localhost:3000`.
 
 ---
 
-## Frontend (`api-nodefront`)
+## Frontend (`fii-track-front`)
 
 ### Tecnologias
 
@@ -181,7 +181,7 @@ O token JWT é armazenado no `localStorage`. Um interceptor no Axios dispara o e
 ### Modos de Build
 
 ```bash
-cd api-nodefront
+cd fii-track-front
 npm install
 npm run dev      # desenvolvimento
 npm run demo     # modo demonstração
@@ -195,7 +195,7 @@ npm run preview  # preview do build
 
 PostgreSQL hospedado no [Neon](https://neon.tech), acessado via `Pool` de conexões com SSL habilitado (`pg`). A configuração fica em `api-nodeback/src/config/configDb.js`.
 
-Script de criação das tabelas em `api-nodeback/db/createDb.sql`.
+Script de criação das tabelas em `fii-track-back/db/createDb.sql`.
 
 Tabelas principais:
 
