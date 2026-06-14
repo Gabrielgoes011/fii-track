@@ -17,10 +17,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
     "nodemon": "^3.1.14"
   }
 }
