@@ -32,4 +32,12 @@ export const rendimentosService = {
       // retorna: [{ mes, ano, totalRendimento }]
     } catch (error) { throw error; }
   },
+
+  // Excluir um rendimento pelo seu ID
+  excluir: async (id) => {
+    try {
+      const res = await api.delete(`/rendimentos/${id}`);
+      return res.data;
+    } catch (error) { throw error; }
+  },
 };
