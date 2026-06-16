@@ -11,7 +11,12 @@ export const useRendimentos = () => {
   const [loading,         setLoading]         = useState(false);
   const [loadingGrafico,  setLoadingGrafico]  = useState(false);
   const [loadingComp,     setLoadingComp]     = useState(false);
-  const [loadingDelete,   setLoadingDelete]   = useState(false); // Novo estado de loading
+  const [loadingDelete,   setLoadingDelete]   = useState(false);
+
+  // Placeholder — será preenchido quando o endpoint GET /kpis-operacoes for implementado.
+  // Formato esperado: { totalInvestido: number, totalReinvestido: number }
+  // Veja: DOCUMENTACAO_KPIs_RENDIMENTOS.md
+  const kpisOperacoes = null;
 
   // Busca a lista de rendimentos (tabela histórico)
   const getRendimentos = useCallback(async ({ mes, ano }) => {
@@ -85,6 +90,7 @@ export const useRendimentos = () => {
     loadingGrafico,
     loadingComp,
     loadingDelete,
+    kpisOperacoes,
     getRendimentos,
     getGrafico,
     getComparacaoAnual,

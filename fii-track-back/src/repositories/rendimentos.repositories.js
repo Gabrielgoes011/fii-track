@@ -6,7 +6,6 @@ import { openDb } from '../config/configDb.js';
 // Nenhuma regra de negócio aqui.
 // ─────────────────────────────────────────────────────────────────────────────
 
-
 //#region Listar rendimentos por ano (e opcionalmente por mês)
 // Parâmetros: { mes, ano }
 // Retorna: [ { id, dtRendimento, ticker, nomeSeguimento, valorRecebido } ]
@@ -46,7 +45,6 @@ async function findRendimentos({ mes, ano }) {
     return result.rows;
 }
 //#endregion
-
 
 //#region Carregar dados do gráfico dashboard (mensal + anual)
 // Parâmetros: { ano }
@@ -89,7 +87,6 @@ async function findDadosGraficoDashboard({ ano }) {
 }
 //#endregion
 
-
 //#region Carregar comparação mensal entre múltiplos anos
 // Parâmetros: { anos: [2023, 2024, 2025, 2026] }
 // Retorna: [ { mes, ano, totalRendimento } ]
@@ -113,7 +110,6 @@ async function findComparacaoAnual({ anos }) {
     return result.rows;
 }
 //#endregion
-
 
 //#region Carregar ativos para o dropdown do modal de novo rendimento
 // Sem parâmetros
@@ -140,7 +136,6 @@ async function findAtivosParaModal() {
 }
 //#endregion
 
-
 //#region Excluir um rendimento pelo seu ID
 // Parâmetros: id (number | string)
 // Retorna: rowCount (number) — 0 se não encontrado, 1 se deletado
@@ -160,7 +155,6 @@ async function deleteRendimento(id) {
     return result.rowCount;
 }
 //#endregion
-
 
 export {
     findRendimentos,

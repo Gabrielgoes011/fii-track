@@ -369,27 +369,48 @@ const S = {
 
   // ── KPIs ──────────────────────────────────────────────────────────────────
 
-  kpiVerde: {
-    background:   'rgba(16,185,129,0.1)',
-    border:       '1px solid rgba(16,185,129,0.2)',
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+
+  // Todos os cards usam o mesmo fundo neutro — a cor fica só no label e valor
+  kpiCard: {
+    background:   'rgba(255,255,255,0.03)',
+    border:       '1px solid #1e293b',
     borderRadius: '0.75rem',
   },
 
-  kpiAzul: {
-    background:   'rgba(96,165,250,0.1)',
-    border:       '1px solid rgba(96,165,250,0.2)',
-    borderRadius: '0.75rem',
+  // Label título do card (ex: "TOTAL RECEBIDO")
+  kpiLabelVerde:   { margin: 0, fontSize: '11px', fontWeight: 700, color: '#10b981',  letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelAmarelo: { margin: 0, fontSize: '11px', fontWeight: 700, color: '#f59e0b',  letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelAzul:    { margin: 0, fontSize: '11px', fontWeight: 700, color: '#38bdf8',  letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelRoxo:    { margin: 0, fontSize: '11px', fontWeight: 700, color: '#a78bfa',  letterSpacing: '0.08em', textTransform: 'uppercase' },
+
+  // Sub-texto descritivo abaixo do valor (ex: "desde o início")
+  kpiSubInfo: {
+    margin:      '5px 0 0',
+    fontSize:    '12px',
+    fontWeight:  500,
+    color:       '#475569',
+    lineHeight:  1.4,
   },
 
-  kpiAmarelo: {
-    background:   'rgba(245,158,11,0.1)',
-    border:       '1px solid rgba(245,158,11,0.2)',
-    borderRadius: '0.75rem',
+  // Valor em destaque dentro do sub-texto (ex: percentual YoC)
+  kpiSubInfoDestaque: {
+    color:      '#a78bfa',
+    fontWeight: 700,
   },
 
-  kpiLabelVerde:   { margin: 0, fontSize: '10px', fontWeight: 600, color: '#10b981' },
-  kpiLabelAzul:    { margin: 0, fontSize: '10px', fontWeight: 600, color: '#60a5fa' },
-  kpiLabelAmarelo: { margin: 0, fontSize: '10px', fontWeight: 600, color: '#f59e0b' },
+  // Valor em destaque dentro do KPI — função para receber cor e isMobile
+  // Usa fonte tabular (variant-numeric) para alinhar dígitos corretamente
+  kpiValor: (cor, mobile) => ({
+    margin:             '6px 0 0',
+    fontSize:           mobile ? '1.05rem' : '1.3rem',
+    fontWeight:         600,
+    color:              cor,
+    lineHeight:         1,
+    fontFamily:         "'Inter', 'Segoe UI', system-ui, sans-serif",
+    fontVariantNumeric: 'tabular-nums',
+    letterSpacing:      '-0.01em',
+  }),
 };
 
 // ─── Gráfico Evolução Anual ───────────────────────────────────────────────────
@@ -552,6 +573,7 @@ export default function PaginaRendimentos() {
     getComparacaoAnual,
     deleteRendimento,
     loadingDelete,
+    kpisOperacoes,       // { totalInvestido, totalReinvestido } — vem do backend quando implementado
   } = useRendimentos();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
@@ -582,7 +604,24 @@ export default function PaginaRendimentos() {
   const filtrados     = useMemo(() => rendimentos.filter(d => filtroAtivo === 'Todos' || d.ticker === filtroAtivo), [rendimentos, filtroAtivo]);
   const totalRecebido = useMemo(() => filtrados.reduce((s, d) => s + Number(d.valorRecebido), 0), [filtrados]);
   const totalAcumulado= useMemo(() => rendimentos.reduce((s, d) => s + Number(d.valorRecebido), 0), [rendimentos]);
-  const yieldOnCost   = totalAcumulado > 0 ? ((totalRecebido / totalAcumulado) * 100).toFixed(2) : '0.00';
+
+  // ── Dados que virão do backend (operações) — placeholder até a implementação ──
+  // Quando o endpoint /kpis-rendimentos estiver pronto, substituir por chamada real.
+  // Veja: DOCUMENTACAO_KPIs_RENDIMENTOS.md
+  const totalInvestido   = kpisOperacoes?.totalInvestido   ?? 0;
+  const totalReinvestido = kpisOperacoes?.totalReinvestido ?? 0;
+
+  // YoC = total recebido no período / total investido * 100
+  // Usa totalAcumulado como fallback enquanto totalInvestido não estiver disponível
+  const baseYoC    = totalInvestido > 0 ? totalInvestido : totalAcumulado;
+  const yieldOnCost = baseYoC > 0
+    ? ((totalAcumulado / baseYoC) * 100).toFixed(2)
+    : '0.00';
+
+  // % do total investido que veio de reinvestimento de proventos
+  const pctReinvestido = totalInvestido > 0
+    ? ((totalReinvestido / totalInvestido) * 100).toFixed(1)
+    : '0.0';
 
   const chartMensal = useMemo(() =>
     MESES.map((nome, mi) => {
@@ -664,16 +703,11 @@ export default function PaginaRendimentos() {
 
   const kpiPadding = isMobile ? '0.75rem' : '0.75rem 1.25rem';
 
+  // Grid de 4 KPIs: 2x2 no mobile, 4 colunas no desktop
   const gridKpis = {
     display:             'grid',
-    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
+    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
     gap:                 '10px',
-  };
-
-  const kpiAmarelo = {
-    ...S.kpiAmarelo,
-    padding:    kpiPadding,
-    gridColumn: isMobile ? '1 / -1' : 'auto',
   };
 
   const tituloGraficoMensal = {
@@ -731,26 +765,49 @@ export default function PaginaRendimentos() {
           {/* ── KPIs ── */}
           <div style={cardBase}>
             <div style={gridKpis}>
-              <div style={{ ...S.kpiVerde, padding: kpiPadding }}>
-                <p style={S.kpiLabelVerde}>TOTAL RECEBIDO</p>
-                <p style={{ margin: '4px 0 0', fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, color: '#34d399' }}>
+
+              {/* Card 1 — Total Recebido (período filtrado) */}
+              <div style={{ ...S.kpiCard, padding: kpiPadding }}>
+                <p style={S.kpiLabelVerde}>Total Recebido</p>
+                <p style={S.kpiValor('#34d399', isMobile)}>
                   {fmt(totalRecebido)}
                 </p>
+                <p style={S.kpiSubInfo}>no período selecionado</p>
               </div>
 
-              <div style={{ ...S.kpiAzul, padding: kpiPadding }}>
-                <p style={S.kpiLabelAzul}>YIELD ON COST</p>
-                <p style={{ margin: '4px 0 0', fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, color: '#93c5fd' }}>
-                  {yieldOnCost}%
-                </p>
-              </div>
-
-              <div style={kpiAmarelo}>
-                <p style={S.kpiLabelAmarelo}>TOTAL ACUMULADO</p>
-                <p style={{ margin: '4px 0 0', fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, color: '#fbbf24' }}>
+              {/* Card 2 — Total Acumulado (histórico completo) */}
+              <div style={{ ...S.kpiCard, padding: kpiPadding }}>
+                <p style={S.kpiLabelAmarelo}>Total Acumulado</p>
+                <p style={S.kpiValor('#fbbf24', isMobile)}>
                   {fmt(totalAcumulado)}
                 </p>
+                <p style={S.kpiSubInfo}>desde o início</p>
               </div>
+
+              {/* Card 3 — Total Investido + YoC */}
+              <div style={{ ...S.kpiCard, padding: kpiPadding }}>
+                <p style={S.kpiLabelAzul}>Total Investido</p>
+                <p style={S.kpiValor('#7dd3fc', isMobile)}>
+                  {fmt(totalInvestido)}
+                </p>
+                <p style={S.kpiSubInfo}>
+                  YoC{' '}
+                  <span style={S.kpiSubInfoDestaque}>{yieldOnCost}% a.a</span>
+                </p>
+              </div>
+
+              {/* Card 4 — Reinvestido */}
+              <div style={{ ...S.kpiCard, padding: kpiPadding }}>
+                <p style={S.kpiLabelRoxo}>Reinvestido</p>
+                <p style={S.kpiValor('#c4b5fd', isMobile)}>
+                  {fmt(totalReinvestido)}
+                </p>
+                <p style={S.kpiSubInfo}>
+                  <span style={S.kpiSubInfoDestaque}>{pctReinvestido}%</span>{' '}
+                  do total investido
+                </p>
+              </div>
+
             </div>
           </div>
 
