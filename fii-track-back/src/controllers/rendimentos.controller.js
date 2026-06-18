@@ -13,10 +13,7 @@ import {
 // e devolver a resposta HTTP. Sem regras de negócio e sem queries.
 // ─────────────────────────────────────────────────────────────────────────────
 
-
-//#region Listar rendimentos por ano (e opcionalmente por mês)
-// POST /rendimentos
-// body: { mes, ano }
+//#region Listar rendimentos
 async function listarRendimentosController(req, res) {
     try {
 
@@ -35,10 +32,7 @@ async function listarRendimentosController(req, res) {
 }
 //#endregion
 
-
 //#region Carregar dados do gráfico dashboard (mensal + anual)
-// POST /carregarGraficoDashboard
-// body: { ano }
 async function carregarGraficoDashboardController(req, res) {
     try {
 
@@ -57,10 +51,7 @@ async function carregarGraficoDashboardController(req, res) {
 }
 //#endregion
 
-
 //#region Carregar comparação mensal entre múltiplos anos
-// POST /carregarComparacaoAnual
-// body: { anos: ['2023','2024','2025','2026'] }
 async function carregarComparacaoAnualController(req, res) {
     try {
 
@@ -79,10 +70,7 @@ async function carregarComparacaoAnualController(req, res) {
 }
 //#endregion
 
-
 //#region Carregar ativos para o dropdown do modal de novo rendimento
-// GET /carregarDadosModalNovoRendimento
-// sem body — retorna [ { idAtivo, ticker, idSeguimento, nomeSeguimento } ]
 async function carregarDadosModalNovoRendimentoController(req, res) {
     try {
 
@@ -98,10 +86,7 @@ async function carregarDadosModalNovoRendimentoController(req, res) {
 }
 //#endregion
 
-
 //#region Excluir um rendimento pelo seu ID
-// DELETE /rendimentos/:id
-// sem body — id passado como parâmetro na URL (ex: /rendimentos/123)
 async function deleteRendimentoController(req, res) {
     try {
 
@@ -122,9 +107,9 @@ async function deleteRendimentoController(req, res) {
 
 
 export {
-    listarRendimentosController                    as listarRendimentos,
-    carregarGraficoDashboardController             as carregarGraficoDashboard,
-    carregarComparacaoAnualController              as carregarComparacaoAnual,
-    carregarDadosModalNovoRendimentoController     as carregarDadosModalNovoRendimento,
-    deleteRendimentoController                     as deleteRendimento,
+    listarRendimentosController,
+    carregarGraficoDashboardController,
+    carregarComparacaoAnualController,
+    carregarDadosModalNovoRendimentoController,
+    deleteRendimentoController,
 };

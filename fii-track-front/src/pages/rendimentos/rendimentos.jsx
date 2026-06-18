@@ -916,10 +916,9 @@ export default function PaginaRendimentos() {
             isMobile ? (
               /* ── MOBILE: cards ── */
               <div>
-                <div style={S.mobileHeader}>
-                  <h2 style={S.mobileTitulo}>Histórico</h2>
+                <div style={{ ...S.mobileHeader, justifyContent: 'flex-end' }}>
                   <button onClick={() => setModalAberto(true)} style={S.btnNovoMobile}>
-                    <FiPlus size={15} /> Novo
+                    <FiPlus size={15} /> Novo Rendimento
                   </button>
                 </div>
 
@@ -990,21 +989,36 @@ export default function PaginaRendimentos() {
             ) : (
               /* ── DESKTOP: tabela ── */
               <DataCard
-                titulo="Histórico de Rendimentos"
+                labelpesquisa="Buscar ativo, segmento..."
                 botaoLabel="Novo Rendimento"
                 onBotaoClick={() => setModalAberto(true)}
-                labelpesquisa="Buscar ativo, segmento..."
                 filtros={
-                  <select
-                    value={filtroMes}
-                    onChange={e => setFiltroMes(e.target.value)}
-                    style={S.select}
-                  >
-                    <option value="Todos">Todos os meses</option>
-                    {MESES.map((m, i) => (
-                      <option key={i} value={String(i + 1).padStart(2, '0')}>{m}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select
+                      value={filtroAtivo}
+                      onChange={e => setFiltroAtivo(e.target.value)}
+                      style={S.select}
+                    >
+                      {ativos.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                    <select
+                      value={filtroMes}
+                      onChange={e => setFiltroMes(e.target.value)}
+                      style={S.select}
+                    >
+                      <option value="Todos">Todos</option>
+                      {MESES.map((m, i) => (
+                        <option key={i} value={String(i + 1).padStart(2, '0')}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={filtroAno}
+                      onChange={e => setFiltroAno(e.target.value)}
+                      style={{ ...S.select, fontWeight: 600 }}
+                    >
+                      {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
                 }
                 coluna={colunasHistorico}
                 data={loading ? [] : filtrados}
