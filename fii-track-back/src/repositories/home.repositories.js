@@ -10,13 +10,13 @@ async function getCardsHome() {
     //chama a função do repositório para listar os dados do card
     const resultadoOperacao = await db.query(`
             SELECT 
-                COUNT (*) linhas
+                COUNT(*) linhas
             FROM operacoes
         `);
 
     const resultadoFundos = await db.query(`
             SELECT 
-                COUNT (*) linhas
+                COUNT(*) linhas
             FROM ativos
         `);
 

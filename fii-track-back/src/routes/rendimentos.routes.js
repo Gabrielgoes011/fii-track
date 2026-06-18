@@ -7,7 +7,8 @@ import {
   carregarGraficoDashboardController,
   carregarComparacaoAnualController,
   carregarDadosModalNovoRendimentoController,
-  deleteRendimentoController
+  deleteRendimentoController,
+  getCardsRendimentos
 } from '../controllers/rendimentos.controller.js';
 
 
@@ -25,6 +26,10 @@ router.get('/carregarDadosModalNovoRendimento', verificaToken, carregarDadosModa
 
 router.delete('/rendimentos/:id', deleteRendimentoController);
 // sem body — id do rendimento a ser deletao passado como parâmetro na URL (ex: /rendimentos/123) 
+
+router.post('/cardsRendimentos', getCardsRendimentos);
+//body: { mes, ano, idAtivo (todos parametros opcional) }
+
 export default router;
 
 //#endregion

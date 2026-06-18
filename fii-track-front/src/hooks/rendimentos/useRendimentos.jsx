@@ -4,19 +4,16 @@ import { rendimentosService } from '../../services/rendimentos/rendimentosServic
 import { toast } from 'react-toastify';
 
 export const useRendimentos = () => {
-  const [rendimentos,     setRendimentos]     = useState([]);
-  const [detalheMensal,   setDetalheMensal]   = useState([]); // [{ mes, ano, totalRendimento }]
-  const [detalheAnual,    setDetalheAnual]    = useState([]); // [{ ano, totalRendimento }]
-  const [comparacaoAnual, setComparacaoAnual] = useState([]); // [{ mes, ano, totalRendimento }]
-  const [loading,         setLoading]         = useState(false);
-  const [loadingGrafico,  setLoadingGrafico]  = useState(false);
-  const [loadingComp,     setLoadingComp]     = useState(false);
-  const [loadingDelete,   setLoadingDelete]   = useState(false);
-
-  // Placeholder — será preenchido quando o endpoint GET /kpis-operacoes for implementado.
-  // Formato esperado: { totalInvestido: number, totalReinvestido: number }
-  // Veja: DOCUMENTACAO_KPIs_RENDIMENTOS.md
-  const kpisOperacoes = null;
+  const [rendimentos,      setRendimentos]      = useState([]);
+  const [detalheMensal,    setDetalheMensal]    = useState([]); // [{ mes, ano, totalRendimento }]
+  const [detalheAnual,     setDetalheAnual]     = useState([]); // [{ ano, totalRendimento }]
+  const [comparacaoAnual,  setComparacaoAnual]  = useState([]); // [{ mes, ano, totalRendimento }]
+  const [cardsRendimentos, setCardsRendimentos] = useState(null); // { totalPeriodo, totalAcumulado, totalCompras, totalReinvestido, aporteProprio, yieldOnCost, percProprio, percReinvestido }
+  const [loading,          setLoading]          = useState(false);
+  const [loadingGrafico,   setLoadingGrafico]   = useState(false);
+  const [loadingComp,      setLoadingComp]      = useState(false);
+  const [loadingDelete,    setLoadingDelete]    = useState(false);
+  const [loadingCards,     setLoadingCards]     = useState(false);
 
   // Busca a lista de rendimentos (tabela histórico)
   const getRendimentos = useCallback(async ({ mes, ano }) => {
@@ -60,6 +57,19 @@ export const useRendimentos = () => {
     }
   }, []);
 
+  // Busca os dados dos cards de KPIs de rendimentos
+  const getCardsRendimentos = useCallback(async ({ mes, ano, idAtivo }) => {
+    setLoadingCards(true);
+    try {
+      const data = await rendimentosService.cardsRendimentos({ mes, ano, idAtivo });
+      setCardsRendimentos(data || null);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoadingCards(false);
+    }
+  }, []);
+
   // Exclui um rendimento e atualiza a lista local
   const deleteRendimento = useCallback(async (id) => {
     // 1. Extrai o ID real caso a função receba um Evento do React por acidente
@@ -86,14 +96,16 @@ export const useRendimentos = () => {
     detalheMensal,
     detalheAnual,
     comparacaoAnual,
+    cardsRendimentos,
     loading,
     loadingGrafico,
     loadingComp,
     loadingDelete,
-    kpisOperacoes,
+    loadingCards,
     getRendimentos,
     getGrafico,
     getComparacaoAnual,
+    getCardsRendimentos,
     deleteRendimento,
   };
 };

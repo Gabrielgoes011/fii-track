@@ -562,16 +562,6 @@ function BarChartHorizontal({ data, anos }) {
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function PaginaRendimentos() {
-  const apiResponse = {
-    totalRecebidoPeriodo: 4850.25,
-    totalAcumulado: 46837.41,
-    totalInvestido: 125560.52,
-    totalReinvestido: 18450.00,
-    aporteProprio: 107110.52,
-    yoc: 37.30,
-    percProprio: 85.3,
-    percReinvestido: 14.7
-  };
 
   const {
     rendimentos,
@@ -584,7 +574,9 @@ export default function PaginaRendimentos() {
     getComparacaoAnual,
     deleteRendimento,
     loadingDelete,
-    kpisOperacoes,       // { totalInvestido, totalReinvestido } — vem do backend quando implementado
+    cardsRendimentos,
+    loadingCards,
+    getCardsRendimentos,
   } = useRendimentos();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
@@ -610,29 +602,30 @@ export default function PaginaRendimentos() {
   useEffect(() => { getGrafico({ ano: anoGrafico }); }, [anoGrafico, getGrafico]);
   useEffect(() => { getComparacaoAnual({ anos: anosComp }); }, [anosComp, getComparacaoAnual]);
 
+  // Busca os cards sempre que mudar mês, ano ou ativo selecionado
+  useEffect(() => {
+    // idAtivo: se "Todos" não filtra por ativo (envia null)
+    const idAtivo = filtroAtivo === 'Todos'
+      ? null
+      : rendimentos.find(r => r.ticker === filtroAtivo)?.idAtivo ?? null;
+    getCardsRendimentos({ mes: filtroMes, ano: filtroAno, idAtivo });
+  }, [filtroMes, filtroAno, filtroAtivo, rendimentos, getCardsRendimentos]);
+
   // ─── Dados derivados ────────────────────────────────────────────────────────
   const ativos = useMemo(() => ['Todos', ...new Set(rendimentos.map(d => d.ticker))], [rendimentos]);
   const filtrados = useMemo(() => rendimentos.filter(d => filtroAtivo === 'Todos' || d.ticker === filtroAtivo), [rendimentos, filtroAtivo]);
-  const totalRecebido = useMemo(() => filtrados.reduce((s, d) => s + Number(d.valorRecebido), 0), [filtrados]);
-  const totalAcumulado = useMemo(() => rendimentos.reduce((s, d) => s + Number(d.valorRecebido), 0), [rendimentos]);
 
-  // ── Dados que virão do backend (operações) — placeholder até a implementação ──
-  // Quando o endpoint /kpis-rendimentos estiver pronto, substituir por chamada real.
-  // Veja: DOCUMENTACAO_KPIs_RENDIMENTOS.md
-  const totalInvestido = kpisOperacoes?.totalInvestido ?? 0;
-  const totalReinvestido = kpisOperacoes?.totalReinvestido ?? 0;
-
-  // YoC = total recebido no período / total investido * 100
-  // Usa totalAcumulado como fallback enquanto totalInvestido não estiver disponível
-  const baseYoC = totalInvestido > 0 ? totalInvestido : totalAcumulado;
-  const yieldOnCost = baseYoC > 0
-    ? ((totalAcumulado / baseYoC) * 100).toFixed(2)
-    : '0.00';
-
-  // % do total investido que veio de reinvestimento de proventos
-  const pctReinvestido = totalInvestido > 0
-    ? ((totalReinvestido / totalInvestido) * 100).toFixed(1)
-    : '0.0';
+  // Dados dos cards vindos do backend
+  const cards = {
+    totalPeriodo:    cardsRendimentos?.totalPeriodo    ?? 0,
+    totalAcumulado:  cardsRendimentos?.totalAcumulado  ?? 0,
+    totalCompras:    cardsRendimentos?.totalCompras    ?? 0,
+    totalReinvestido:cardsRendimentos?.totalReinvestido?? 0,
+    aporteProprio:   cardsRendimentos?.aporteProprio   ?? 0,
+    yieldOnCost:     cardsRendimentos?.yieldOnCost     ?? 0,
+    percProprio:     cardsRendimentos?.percProprio     ?? 0,
+    percReinvestido: cardsRendimentos?.percReinvestido ?? 0,
+  };
 
   const chartMensal = useMemo(() =>
     MESES.map((nome, mi) => {
@@ -774,24 +767,6 @@ export default function PaginaRendimentos() {
       <div style={S.paginaRaiz}>
         <main style={estiloMain}>
 
-          {/* REMOVER BANER Banner indicador de desenvolvimento (fácil de remover) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-            borderRadius: '8px',
-            padding: '8px 14px',
-            marginBottom: '12px',
-            color: '#fbbf24',
-            fontSize: '12px',
-            fontWeight: 500,
-            fontFamily: "'Inter', sans-serif",
-          }}>
-            <span>🛠️ <strong>Cards em Desenvolvimento:</strong> Exibindo dados simulados (mock).</span>
-          </div>
-
           {/* ── KPIs ── */}
           <div style={cardBase}>
             <div style={gridKpis}>
@@ -801,7 +776,7 @@ export default function PaginaRendimentos() {
                 <div>
                   <p style={S.kpiLabelVerde}>Total Recebido</p>
                   <p style={S.kpiValor('#34d399', isMobile)}>
-                    {fmt(apiResponse.totalRecebidoPeriodo)}
+                    {loadingCards ? '...' : fmt(cards.totalPeriodo)}
                   </p>
                 </div>
                 <p style={S.kpiSubInfo}>no período selecionado</p>
@@ -812,7 +787,7 @@ export default function PaginaRendimentos() {
                 <div>
                   <p style={S.kpiLabelAmarelo}>Total Acumulado</p>
                   <p style={S.kpiValor('#fbbf24', isMobile)}>
-                    {fmt(apiResponse.totalAcumulado)}
+                    {loadingCards ? '...' : fmt(cards.totalAcumulado)}
                   </p>
                 </div>
                 <p style={S.kpiSubInfo}>desde o início</p>
@@ -823,7 +798,7 @@ export default function PaginaRendimentos() {
                 <div>
                   <p style={S.kpiLabelAzul}>Total Investido</p>
                   <p style={S.kpiValor('#7dd3fc', isMobile)}>
-                    {fmt(apiResponse.totalInvestido)}
+                    {loadingCards ? '...' : fmt(cards.totalCompras)}
                   </p>
                 </div>
                 <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -839,7 +814,7 @@ export default function PaginaRendimentos() {
                     YoC
                   </span>
                   <span style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
-                    {apiResponse.yoc.toFixed(2)}% a.a
+                    {loadingCards ? '...' : `${Number(cards.yieldOnCost).toFixed(2)}% a.a`}
                   </span>
                 </div>
               </div>
@@ -849,10 +824,10 @@ export default function PaginaRendimentos() {
                 <div>
                   <p style={S.kpiLabelRoxo}>Efeito Bola de Neve</p>
                   <p style={S.kpiValor('#c4b5fd', isMobile)}>
-                    {fmt(apiResponse.totalReinvestido)}
+                    {loadingCards ? '...' : fmt(cards.totalReinvestido)}
                   </p>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                    gerado e reinvestido ({apiResponse.percReinvestido.toFixed(1)}%)
+                    gerado e reinvestido ({loadingCards ? '...' : `${Number(cards.percReinvestido).toFixed(1)}%`})
                   </p>
                 </div>
                 <div style={{ marginTop: '12px' }}>
@@ -867,16 +842,16 @@ export default function PaginaRendimentos() {
                     <div style={{
                       height: '100%',
                       backgroundColor: '#64748b',
-                      width: `${apiResponse.percProprio}%`
+                      width: `${cards.percProprio}%`
                     }} title="Aporte do seu bolso" />
                     <div style={{
                       height: '100%',
                       backgroundColor: '#6366f1',
-                      width: `${apiResponse.percReinvestido}%`
+                      width: `${cards.percReinvestido}%`
                     }} title="Dinheiro gerado pelos fundos" />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: '#64748b' }}>
-                    <span>Do seu bolso: {fmt(apiResponse.aporteProprio)}</span>
+                    <span>Do seu bolso: {loadingCards ? '...' : fmt(cards.aporteProprio)}</span>
                   </div>
                 </div>
               </div>

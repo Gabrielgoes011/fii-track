@@ -4,6 +4,10 @@ import {
     findComparacaoAnual,
     findAtivosParaModal,
     deleteRendimento,
+    getRendimentosFiltro,
+    getTotalAcumulado,
+    getTotalCompras,
+    getTotalReinvestido
 } from '../repositories/rendimentos.repositories.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +38,6 @@ async function listarRendimentos({ mes, ano }) {
 }
 //#endregion
 
-
 //#region Carregar dados do gráfico dashboard (mensal + anual)
 async function carregarGraficoDashboard({ ano }) {
     try {
@@ -56,7 +59,6 @@ async function carregarGraficoDashboard({ ano }) {
 }
 //#endregion
 
-
 //#region Carregar comparação mensal entre múltiplos anos
 async function carregarComparacaoAnual({ anos }) {
     try {
@@ -77,7 +79,6 @@ async function carregarComparacaoAnual({ anos }) {
 }
 //#endregion
 
-
 //#region Carregar ativos para o dropdown do modal de novo rendimento
 async function carregarAtivosParaModal() {
     try {
@@ -92,7 +93,6 @@ async function carregarAtivosParaModal() {
     }
 }
 //#endregion
-
 
 //#region Excluir um rendimento pelo seu ID
 async function excluirRendimento(id) {
@@ -120,6 +120,65 @@ async function excluirRendimento(id) {
 }
 //#endregion
 
+// #region => service para logica de calculos do card de rendimentos
+async function calculoCardsRendimento(mes, ano, idAtivo) {
+    // Valida se o mês e o ano foram informados
+    if (!mes || !ano) {
+        throw new Error('Os campos "mes" e "ano" são obrigatórios para calcular os cards de rendimentos.');
+    }
+
+    // Chama as funções do repositório para obter os dados necessários para os cards
+    try {
+        // Dispara as 4 queries ao mesmo tempo para máxima performance
+        const [
+            totalPeriodo,
+            totalAcumulado,
+            totalCompras,
+            totalReinvestido
+        ] = await Promise.all([
+            getRendimentosFiltro(mes, ano, idAtivo),
+            getTotalAcumulado(),
+            getTotalCompras(),
+            getTotalReinvestido()
+        ]);
+
+        // Calcula YoC (Yield on Cost) = (Total acumulado / Total Investido) * 100
+        const yieldOnCost = totalCompras > 0
+            ? (totalAcumulado / totalCompras) * 100
+            : 0;
+
+        // Calcula o Efeito Bola de Neve
+        // O dinheiro que você tirou do bolso (Aporte Próprio)
+        const aporteProprio = totalCompras - totalReinvestido;
+
+        // Porcentagem da carteira que veio do seu bolso
+        const percProprio = totalCompras > 0
+            ? (aporteProprio / totalCompras) * 100
+            : 0;
+
+        // Porcentagem da carteira que se pagou sozinha (A Bola de Neve real)
+        const percReinvestido = totalCompras > 0
+            ? (totalReinvestido / totalCompras) * 100
+            : 0;
+
+        // Retorna o pacote completo e formatado para o frontend renderizar
+        return {
+            totalPeriodo,
+            totalAcumulado,
+            totalCompras,
+            totalReinvestido,
+            aporteProprio,
+            yieldOnCost: Number(yieldOnCost.toFixed(2)),
+            percProprio: Number(percProprio.toFixed(1)),
+            percReinvestido: Number(percReinvestido.toFixed(1))
+        };
+
+    } catch (error) {
+        throw new Error(`Erro ao calcular dados para os cards: ${error.message}`);
+    }
+}
+//#endregion
+
 
 export {
     listarRendimentos,
@@ -127,4 +186,5 @@ export {
     carregarComparacaoAnual,
     carregarAtivosParaModal,
     excluirRendimento,
+    calculoCardsRendimento
 };

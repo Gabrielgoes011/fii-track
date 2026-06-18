@@ -40,4 +40,12 @@ export const rendimentosService = {
       return res.data;
     } catch (error) { throw error; }
   },
+
+  // Carregar dados dos cards de KPIs (totalPeriodo, totalAcumulado, YoC, bola de neve…)
+  cardsRendimentos: async ({ mes, ano, idAtivo }) => {
+    try {
+      const res = await api.post('/cardsRendimentos', { mes, ano, idAtivo: idAtivo || null });
+      return res.data; // { totalPeriodo, totalAcumulado, totalCompras, totalReinvestido, aporteProprio, yieldOnCost, percProprio, percReinvestido }
+    } catch (error) { throw error; }
+  },
 };

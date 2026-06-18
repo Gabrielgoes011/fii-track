@@ -5,6 +5,7 @@ import {
     carregarComparacaoAnual,
     carregarAtivosParaModal,
     excluirRendimento,
+    calculoCardsRendimento
 } from '../services/rendimentos.services.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +106,31 @@ async function deleteRendimentoController(req, res) {
 }
 //#endregion
 
+//region Carregar dados do gráfico dashboard (mensal + anual)
+async function getCardsRendimentos(req, res) {
+    try {
+        //chama o service para calcular os valores dos cards
+        const {
+            mes,
+            ano,
+            idAtivo
+        } = req.body;
+
+        //calcula os valores dos cards chamando o service
+        const cards = await calculoCardsRendimento(mes, ano, idAtivo);
+
+        // Retorna os dados dos cards calculados
+        return apiResponse.success(res, 'Dados dos cards calculados com sucesso.', cards);
+    }
+    catch (error) {
+        return apiResponse.error(res, error.message);
+    }
+}
+//#endregion
+
+
+// Abre a conexão com o banco de dados
+
 
 export {
     listarRendimentosController,
@@ -112,4 +138,5 @@ export {
     carregarComparacaoAnualController,
     carregarDadosModalNovoRendimentoController,
     deleteRendimentoController,
+    getCardsRendimentos
 };

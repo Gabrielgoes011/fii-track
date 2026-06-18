@@ -7,8 +7,6 @@ import { openDb } from '../config/configDb.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-// Parâmetros: { mes, ano }
-// Retorna: [ { id, dtRendimento, ticker, nomeSeguimento, valorRecebido } ]
 async function findRendimentos({ mes, ano }) {
 
     // Abre a conexão com o banco de dados
@@ -19,6 +17,7 @@ async function findRendimentos({ mes, ano }) {
         SELECT
             a.id,
             a."dtRendimento",
+            b.id   AS "idAtivo",
             b.ticker,
             c."nomeSeguimento",
             a."valorRecebido"
@@ -47,8 +46,6 @@ async function findRendimentos({ mes, ano }) {
 //#endregion
 
 //#region Carregar dados do gráfico dashboard (mensal + anual)
-// Parâmetros: { ano }
-// Retorna: { detalheMensal: [...], detalheAnual: [...] }
 async function findDadosGraficoDashboard({ ano }) {
 
     // Abre a conexão com o banco de dados
@@ -82,14 +79,12 @@ async function findDadosGraficoDashboard({ ano }) {
     // Retorna os dois conjuntos de dados juntos
     return {
         detalheMensal: detalheMensal.rows,
-        detalheAnual:  detalheAnual.rows,
+        detalheAnual: detalheAnual.rows,
     };
 }
 //#endregion
 
 //#region Carregar comparação mensal entre múltiplos anos
-// Parâmetros: { anos: [2023, 2024, 2025, 2026] }
-// Retorna: [ { mes, ano, totalRendimento } ]
 async function findComparacaoAnual({ anos }) {
 
     // Abre a conexão com o banco de dados
@@ -112,8 +107,6 @@ async function findComparacaoAnual({ anos }) {
 //#endregion
 
 //#region Carregar ativos para o dropdown do modal de novo rendimento
-// Sem parâmetros
-// Retorna: [ { idAtivo, ticker, idSeguimento, nomeSeguimento } ]
 async function findAtivosParaModal() {
 
     // Abre a conexão com o banco de dados
@@ -137,8 +130,6 @@ async function findAtivosParaModal() {
 //#endregion
 
 //#region Excluir um rendimento pelo seu ID
-// Parâmetros: id (number | string)
-// Retorna: rowCount (number) — 0 se não encontrado, 1 se deletado
 async function deleteRendimento(id) {
 
     // Abre a conexão com o banco de dados
@@ -156,10 +147,90 @@ async function deleteRendimento(id) {
 }
 //#endregion
 
+//#region => Sequencia de querys para card de rendimentos.
+async function getRendimentosFiltro(mes, ano, idAtivo) {
+
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    //passa a query
+    const result = await db.query(`
+        SELECT 
+            SUM("valorRecebido") AS "totalPeriodo"
+        FROM rendimentos
+        WHERE 
+            (EXTRACT(MONTH FROM "dtRendimento") = $1 OR $1 IS NULL) AND
+            (EXTRACT(YEAR FROM "dtRendimento") = $2 OR $2 IS NULL) AND
+            ("idAtivo" = $3 OR $3 IS NULL)
+            `, [mes, ano, idAtivo]);
+
+    // Extrai o valor, converte para número e garante que não retorne nulo
+    return Number(result.rows[0].totalPeriodo) || 0;
+
+}
+
+// Total acumulado de rendimentos (sem filtro de período)
+async function getTotalAcumulado() {
+
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    //passa a query
+    const result = await db.query(`
+         SELECT 
+            SUM("valorRecebido") AS "valorTotalRecebido"
+        FROM rendimentos
+    `);
+
+    // Extrai o valor, converte para número e garante que não retorne nulo
+    return Number(result.rows[0].valorTotalRecebido) || 0;
+}
+
+// Total investido apenas nas operações de compra 
+async function getTotalCompras() {
+
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    //passa a query
+    const result = await db.query(`
+        SELECT 
+            SUM(preco * quantidade) AS "totalInvestido"
+        FROM operacoes
+        WHERE tipo = 'Compra'; 
+    `);
+
+    // Extrai o valor, converte para número e garante que não retorne nulo
+    return Number(result.rows[0].totalInvestido) || 0;
+}
+
+// Total investido apenas nas operações de compra que foram marcadas como reinvestimento
+async function getTotalReinvestido() {
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    // passa a query
+    const result = await db.query(`
+         SELECT 
+            SUM("valorRecebido") AS "totalReinvestido"
+        FROM rendimentos
+        WHERE reinvestido = 'True';
+    `);
+
+    // Extrai o valor, converte para número e garante que não retorne nulo
+    return Number(result.rows[0].totalReinvestido) || 0;
+}
+//#endregion 
+
+
 export {
     findRendimentos,
     findDadosGraficoDashboard,
     findComparacaoAnual,
     findAtivosParaModal,
     deleteRendimento,
+    getRendimentosFiltro,
+    getTotalAcumulado,
+    getTotalCompras,
+    getTotalReinvestido
 };
