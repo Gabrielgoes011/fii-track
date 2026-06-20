@@ -7,7 +7,7 @@ import { openDb } from '../config/configDb.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function findRendimentos({ mes, ano }) {
+async function findRendimentos({ mes, ano, idAtivo }) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -31,10 +31,16 @@ async function findRendimentos({ mes, ano }) {
     `;
     const params = [ano];
 
-    // Adiciona filtro de mês somente quando informado
-    if (mes !== 'Todos') {
-        query += ` AND EXTRACT(MONTH FROM a."dtRendimento") = $2 `;
+    // Adiciona filtro de mês somente quando informado (null = todos os meses)
+    if (mes !== null && mes !== undefined && mes !== 'Todos') {
+        query += ` AND EXTRACT(MONTH FROM a."dtRendimento") = $${params.length + 1} `;
         params.push(mes);
+    }
+
+    // Adiciona filtro de ativo somente quando informado
+    if (idAtivo) {
+        query += ` AND a."idAtivo" = $${params.length + 1} `;
+        params.push(idAtivo);
     }
 
     query += ` ORDER BY a."dtRendimento" DESC `;

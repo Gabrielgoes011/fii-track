@@ -16,10 +16,10 @@ export const useRendimentos = () => {
   const [loadingCards,     setLoadingCards]     = useState(false);
 
   // Busca a lista de rendimentos (tabela histórico)
-  const getRendimentos = useCallback(async ({ mes, ano }) => {
+  const getRendimentos = useCallback(async ({ mes, ano, idAtivo }) => {
     setLoading(true);
     try {
-      const data = await rendimentosService.listar({ mes, ano });
+      const data = await rendimentosService.listar({ mes, ano, idAtivo });
       setRendimentos(data || []);
     } catch (error) {
       handleError(error);

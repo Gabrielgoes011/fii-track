@@ -19,10 +19,10 @@ async function listarRendimentosController(req, res) {
     try {
 
         // Extrai os filtros do body
-        const { mes, ano } = req.body;
+        const { mes, ano, idAtivo } = req.body;
 
         // Chama o service com os filtros recebidos
-        const rendimentos = await listarRendimentos({ mes, ano });
+        const rendimentos = await listarRendimentos({ mes, ano, idAtivo });
 
         // Retorna a lista de rendimentos
         return apiResponse.success(res, 'Rendimentos listados com sucesso.', rendimentos);
@@ -106,20 +106,28 @@ async function deleteRendimentoController(req, res) {
 }
 //#endregion
 
-//region Carregar dados do gráfico dashboard (mensal + anual)
+//#region Carregar dados dos cards de rendimentos
 async function getCardsRendimentos(req, res) {
     try {
-        //chama o service para calcular os valores dos cards
-        const {
-            mes,
-            ano,
-            idAtivo
-        } = req.body;
+        const { mes, ano, idAtivo } = req.body;
 
-        //calcula os valores dos cards chamando o service
-        const cards = await calculoCardsRendimento(mes, ano, idAtivo);
+        // Sanitiza mes: null, undefined, 'Todos', 0 ou NaN → null (busca o ano inteiro)
+        const mesSanitizado =
+            mes == null || mes === '' || mes === 'Todos' || isNaN(Number(mes))
+                ? null
+                : Number(mes);
 
-        // Retorna os dados dos cards calculados
+        // Sanitiza idAtivo: null, undefined, 'Todos' ou string vazia → null
+        const idAtivoSanitizado =
+            idAtivo == null || idAtivo === '' || idAtivo === 'Todos'
+                ? null
+                : Number(idAtivo);
+
+        // Sanitiza ano para número
+        const anoSanitizado = ano != null ? Number(ano) : null;
+
+        const cards = await calculoCardsRendimento(mesSanitizado, anoSanitizado, idAtivoSanitizado);
+
         return apiResponse.success(res, 'Dados dos cards calculados com sucesso.', cards);
     }
     catch (error) {

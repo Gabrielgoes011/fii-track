@@ -9,11 +9,11 @@ let formatarDataBR;
 let formatarDataComHora;
 try {
   const dateUtils = require('../../utils/dateUtils');
-  formatarDataBR      = dateUtils.formatarDataBR      || ((d) => d ? new Date(d).toLocaleDateString('pt-BR')  : '');
-  formatarDataComHora = dateUtils.formatarDataComHora || ((d) => d ? new Date(d).toLocaleString('pt-BR')      : '');
+  formatarDataBR = dateUtils.formatarDataBR || ((d) => d ? new Date(d).toLocaleDateString('pt-BR') : '');
+  formatarDataComHora = dateUtils.formatarDataComHora || ((d) => d ? new Date(d).toLocaleString('pt-BR') : '');
 } catch {
-  formatarDataBR      = (d) => d ? new Date(d).toLocaleDateString('pt-BR')  : '';
-  formatarDataComHora = (d) => d ? new Date(d).toLocaleString('pt-BR')      : '';
+  formatarDataBR = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '';
+  formatarDataComHora = (d) => d ? new Date(d).toLocaleString('pt-BR') : '';
 }
 
 /**
@@ -25,24 +25,24 @@ try {
 const GridDados = ({
   coluna,
   data,
-  itemsPerPage    = 10,
-  labelpesquisa   = 'Buscar...',
-  usaVisualizar   = false, acaoVisualizar,
-  usaEditar       = false, acaoEditar,
-  usaExcluir      = false, acaoExcluir,
+  itemsPerPage = 10,
+  labelpesquisa = 'Buscar...',
+  usaVisualizar = false, acaoVisualizar,
+  usaEditar = false, acaoEditar,
+  usaExcluir = false, acaoExcluir,
   usaResetarSenha = false, acaoResetarSenha,
-  usaInativar     = false, acaoInativar,
-  usaReativar     = false, acaoReativar,
+  usaInativar = false, acaoInativar,
+  usaReativar = false, acaoReativar,
   // props legadas
-  paddingHead     = '4px 8px',
-  paddingBody     = '4px 8px',
-  tamanhoIcones   = 'fs-5',
+  paddingHead = '4px 8px',
+  paddingBody = '4px 8px',
+  tamanhoIcones = 'fs-5',
   tamanhoFontBody = '13px',
   tamanhoFontHead = '13px',
-  _embutido       = false,
+  _embutido = false,
 }) => {
-  const [currentPage,         setCurrentPage]         = useState(1);
-  const [buscar,              setBuscar]              = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [buscar, setBuscar] = useState('');
   const [currentItemsPerPage, setCurrentItemsPerPage] = useState(itemsPerPage);
 
   const temAcoes = usaVisualizar || usaEditar || usaExcluir || usaResetarSenha || usaInativar || usaReativar;
@@ -58,10 +58,10 @@ const GridDados = ({
   });
 
   // ── paginação ──
-  const perPage    = Number(currentItemsPerPage) || 10;
+  const perPage = Number(currentItemsPerPage) || 10;
   const totalPages = Math.ceil(filteredData.length / perPage);
-  const start      = (currentPage - 1) * perPage;
-  const pageData   = filteredData.slice(start, start + perPage);
+  const start = (currentPage - 1) * perPage;
+  const pageData = filteredData.slice(start, start + perPage);
 
   // ── botão de ação base ──
   const btnBase = {

@@ -598,13 +598,19 @@ export default function PaginaRendimentos() {
   const [modalExclusao, setModalExclusao] = useState(false);
   const [rendimentoParaExcluir, setRendimentoParaExcluir] = useState(null);
 
-  useEffect(() => { getRendimentos({ mes: filtroMes, ano: filtroAno }); }, [filtroMes, filtroAno, getRendimentos]);
+  useEffect(() => {
+    // idAtivo: 'Todos' → null (sem filtro); caso contrário busca o id pelo ticker
+    const idAtivo = filtroAtivo === 'Todos'
+      ? null
+      : rendimentos.find(r => r.ticker === filtroAtivo)?.idAtivo ?? null;
+    getRendimentos({ mes: filtroMes, ano: filtroAno, idAtivo });
+  }, [filtroMes, filtroAno, filtroAtivo, getRendimentos]);
+
   useEffect(() => { getGrafico({ ano: anoGrafico }); }, [anoGrafico, getGrafico]);
   useEffect(() => { getComparacaoAnual({ anos: anosComp }); }, [anosComp, getComparacaoAnual]);
 
   // Busca os cards sempre que mudar mês, ano ou ativo selecionado
   useEffect(() => {
-    // idAtivo: se "Todos" não filtra por ativo (envia null)
     const idAtivo = filtroAtivo === 'Todos'
       ? null
       : rendimentos.find(r => r.ticker === filtroAtivo)?.idAtivo ?? null;

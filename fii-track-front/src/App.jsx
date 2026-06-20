@@ -17,6 +17,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { PrivacyProvider } from './context/PrivacyContext';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,7 +48,7 @@ function App() {
   };
 
   return (
-    <>
+    <PrivacyProvider>
       <SpeedInsights />
       <ToastContainer autoClose={3000} />
       <Routes>
@@ -75,7 +76,7 @@ function App() {
         {/* Rota padrão - redireciona para login se não encontrar */}
         <Route path="*" element={<Navigate to={isLoggedIn ? "/" : "/login"} replace />} />
       </Routes>
-    </>
+    </PrivacyProvider>
   );
 }
 

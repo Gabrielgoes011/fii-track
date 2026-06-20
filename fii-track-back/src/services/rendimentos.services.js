@@ -18,7 +18,7 @@ import {
 
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function listarRendimentos({ mes, ano }) {
+async function listarRendimentos({ mes, ano, idAtivo }) {
     try {
 
         // Valida se o ano foi informado
@@ -26,8 +26,8 @@ async function listarRendimentos({ mes, ano }) {
             throw new Error('O campo "ano" é obrigatório.');
         }
 
-        // Busca os rendimentos no repositório
-        const rendimentos = await findRendimentos({ mes, ano });
+        // Busca os rendimentos no repositório (mes e idAtivo opcionais — null = sem filtro)
+        const rendimentos = await findRendimentos({ mes, ano, idAtivo });
 
         // Retorna array vazio quando não há registros (não é um erro)
         return rendimentos;
@@ -122,9 +122,9 @@ async function excluirRendimento(id) {
 
 // #region => service para logica de calculos do card de rendimentos
 async function calculoCardsRendimento(mes, ano, idAtivo) {
-    // Valida se o mês e o ano foram informados
-    if (!mes || !ano) {
-        throw new Error('Os campos "mes" e "ano" são obrigatórios para calcular os cards de rendimentos.');
+    // Apenas o ano é obrigatório — mes null = busca o ano inteiro
+    if (!ano) {
+        throw new Error('O campo "ano" é obrigatório para calcular os cards de rendimentos.');
     }
 
     // Chama as funções do repositório para obter os dados necessários para os cards

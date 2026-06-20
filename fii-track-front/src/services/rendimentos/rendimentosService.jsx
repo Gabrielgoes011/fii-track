@@ -1,10 +1,13 @@
 import api from '../../config/api';
 
 export const rendimentosService = {
-  // Listar rendimentos por ano (e opcionalmente mês)
-  listar: async ({ mes, ano }) => {
+  // Listar rendimentos por ano, mês e opcionalmente idAtivo
+  listar: async ({ mes, ano, idAtivo }) => {
     try {
-      const res = await api.post('/rendimentos', { mes, ano });
+      // 'Todos' ou vazio → null (sem filtro de mês/ativo)
+      const mesSanitizado = !mes || mes === 'Todos' ? null : mes;
+      const idAtivoSanitizado = idAtivo ? Number(idAtivo) : null;
+      const res = await api.post('/rendimentos', { mes: mesSanitizado, ano, idAtivo: idAtivoSanitizado });
       return Array.isArray(res.data) ? res.data : [];
     } catch (error) { throw error; }
   },
@@ -44,8 +47,20 @@ export const rendimentosService = {
   // Carregar dados dos cards de KPIs (totalPeriodo, totalAcumulado, YoC, bola de neve…)
   cardsRendimentos: async ({ mes, ano, idAtivo }) => {
     try {
-      const res = await api.post('/cardsRendimentos', { mes, ano, idAtivo: idAtivo || null });
-      return res.data; // { totalPeriodo, totalAcumulado, totalCompras, totalReinvestido, aporteProprio, yieldOnCost, percProprio, percReinvestido }
+      // Sanitiza mes: 'Todos', null, undefined ou NaN → null (busca o ano inteiro)
+      const mesSanitizado =
+        !mes || mes === 'Todos' ? null : Number(mes);
+
+      // Sanitiza idAtivo: 'Todos', null, undefined → null
+      const idAtivoSanitizado =
+        !idAtivo || idAtivo === 'Todos' ? null : Number(idAtivo);
+
+      const res = await api.post('/cardsRendimentos', {
+        mes: mesSanitizado,
+        ano: Number(ano),
+        idAtivo: idAtivoSanitizado,
+      });
+      return res.data;
     } catch (error) { throw error; }
   },
 };
