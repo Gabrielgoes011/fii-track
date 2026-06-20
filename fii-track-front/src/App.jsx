@@ -16,22 +16,16 @@ import Login from './pages/login/login';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Valida o token ao carregar a aplicação
+  // Sempre começa deslogado ao abrir o app:
+  // remove o token para garantir que o usuário faça login novamente.
+  // Isso evita entrar no dashboard enquanto o servidor (Render) ainda está iniciando.
   React.useEffect(() => {
-    const validateToken = () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        setIsLoggedIn(true);
-      }
-      setIsLoading(false);
-    };
-
-    validateToken();
+    localStorage.removeItem('token');
   }, []);
 
   // Escuta o evento disparado pelo interceptor quando recebe 401
@@ -40,16 +34,6 @@ function App() {
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => window.removeEventListener('unauthorized', handleUnauthorized);
   }, []);
-
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a' }}>
-        <div style={{ textAlign: 'center', color: '#f8fafc' }}>
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Componente Layout protegido
   const ProtectedLayout = () => {
@@ -64,6 +48,7 @@ function App() {
 
   return (
     <>
+      <SpeedInsights />
       <ToastContainer autoClose={3000} />
       <Routes>
         {/* Rota de login */}

@@ -7,6 +7,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.13.6",
     "react": "^19.2.4",
     "react-bootstrap": "^2.10.10",
@@ -15,12 +16,12 @@
     "react-router-dom": "^7.14.2",
     "react-toastify": "^11.0.5"
   },
-"scripts": {
-  "dev": "vite --mode development",
-  "demo": "vite --mode demo",
-  "build": "vite build --mode production",
-  "preview": "vite preview"
-},
+  "scripts": {
+    "dev": "vite --mode development",
+    "demo": "vite --mode demo",
+    "build": "vite build --mode production",
+    "preview": "vite preview"
+  },
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
