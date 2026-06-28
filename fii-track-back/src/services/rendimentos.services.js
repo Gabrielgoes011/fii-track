@@ -179,7 +179,7 @@ async function calculoCardsRendimento(mes, ano, idAtivo) {
 }
 //#endregion
 
-
+//#region => Exporta rendimentos
 export {
     listarRendimentos,
     carregarGraficoDashboard,
@@ -188,3 +188,4 @@ export {
     excluirRendimento,
     calculoCardsRendimento
 };
+//endRegion 

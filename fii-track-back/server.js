@@ -1,3 +1,4 @@
+import "./src/config/env.js"; // Carrega variáveis de ambiente ANTES de tudo
 import app from "./src/app.js";
 
 //inicia o servidor na porta 3000
