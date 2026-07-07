@@ -7,12 +7,12 @@ import { openDb } from '../config/configDb.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function findRendimentos({ mes, ano, idAtivo }) {
+async function findRendimentos({ mes, ano, idUser }) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
 
-    // Query base — filtra sempre pelo ano
+    // Query base — filtra sempre pelo ano e pelo usuário
     let query = `
         SELECT
             a.id,
@@ -27,20 +27,15 @@ async function findRendimentos({ mes, ano, idAtivo }) {
         INNER JOIN seguimentos c
             ON c.id = b."idSeguimento"
         WHERE
-            EXTRACT(YEAR FROM a."dtRendimento") = $1
+            a."idUser" = $1 AND
+            EXTRACT(YEAR FROM a."dtRendimento") = $2
     `;
-    const params = [ano];
+    const params = [idUser, ano];
 
-    // Adiciona filtro de mês somente quando informado (null = todos os meses)
-    if (mes !== null && mes !== undefined && mes !== 'Todos') {
+    // Adiciona filtro de mês somente quando informado (não é null, undefined ou "Todos")
+    if (mes && mes !== 'Todos') {
         query += ` AND EXTRACT(MONTH FROM a."dtRendimento") = $${params.length + 1} `;
         params.push(mes);
-    }
-
-    // Adiciona filtro de ativo somente quando informado
-    if (idAtivo) {
-        query += ` AND a."idAtivo" = $${params.length + 1} `;
-        params.push(idAtivo);
     }
 
     query += ` ORDER BY a."dtRendimento" DESC `;
@@ -52,7 +47,7 @@ async function findRendimentos({ mes, ano, idAtivo }) {
 //#endregion
 
 //#region Carregar dados do gráfico dashboard (mensal + anual)
-async function findDadosGraficoDashboard({ ano }) {
+async function findDadosGraficoDashboard({ ano, idUser }) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -64,23 +59,24 @@ async function findDadosGraficoDashboard({ ano }) {
             EXTRACT(YEAR  FROM "dtRendimento") AS ano,
             SUM("valorRecebido")               AS "totalRendimento"
         FROM rendimentos
-        WHERE EXTRACT(YEAR FROM "dtRendimento") = $1
+        WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = $2
         GROUP BY
             EXTRACT(YEAR  FROM "dtRendimento"),
             EXTRACT(MONTH FROM "dtRendimento")
         ORDER BY ano, mes;
-    `, [ano]);
+    `, [idUser, ano]);
 
-    // Total de rendimentos agrupado por ano (todos os anos)
+    // Total de rendimentos agrupado por ano (todos os anos do usuário)
     const detalheAnual = await db.query(`
         SELECT
             EXTRACT(YEAR FROM "dtRendimento") AS ano,
             SUM("valorRecebido")              AS "totalRendimento"
         FROM rendimentos
+        WHERE "idUser" = $1
         GROUP BY
             EXTRACT(YEAR FROM "dtRendimento")
         ORDER BY ano;
-    `);
+    `, [idUser]);
 
     // Retorna os dois conjuntos de dados juntos
     return {
@@ -91,7 +87,7 @@ async function findDadosGraficoDashboard({ ano }) {
 //#endregion
 
 //#region Carregar comparação mensal entre múltiplos anos
-async function findComparacaoAnual({ anos }) {
+async function findComparacaoAnual({ anos, idUser }) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -103,22 +99,22 @@ async function findComparacaoAnual({ anos }) {
             EXTRACT(YEAR  FROM "dtRendimento") AS ano,
             SUM("valorRecebido")               AS "totalRendimento"
         FROM rendimentos
-        WHERE EXTRACT(YEAR FROM "dtRendimento") = ANY($1::int[])
+        WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = ANY($2::int[])
         GROUP BY ano, mes
         ORDER BY ano, mes;
-    `, [anos.map(Number)]);
+    `, [idUser, anos.map(Number)]);
 
     return result.rows;
 }
 //#endregion
 
 //#region Carregar ativos para o dropdown do modal de novo rendimento
-async function findAtivosParaModal() {
+async function findAtivosParaModal(idUser) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
 
-    // Busca todos os ativos com seus respectivos segmentos
+    // Busca todos os ativos do usuário com seus respectivos segmentos
     const result = await db.query(`
         SELECT
             a.id           AS "idAtivo",
@@ -128,25 +124,26 @@ async function findAtivosParaModal() {
         FROM ativos a
         INNER JOIN seguimentos b
             ON a."idSeguimento" = b.id
+        WHERE a."idUser" = $1
         ORDER BY a.ticker ASC;
-    `);
+    `, [idUser]);
 
     return result.rows;
 }
 //#endregion
 
-//#region Excluir um rendimento pelo seu ID
-async function deleteRendimento(id) {
+//#region Excluir um rendimento pelo seu ID (garante que pertence ao usuário)
+async function deleteRendimento(id, idUser) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
 
-    // Deleta o rendimento pelo ID
+    // Deleta o rendimento pelo ID apenas se pertencer ao usuário
     const result = await db.query(`
         DELETE
         FROM rendimentos
-        WHERE id = $1
-    `, [id]);
+        WHERE id = $1 AND "idUser" = $2
+    `, [id, idUser]);
 
     // Retorna o número de linhas afetadas
     return result.rowCount;
@@ -154,7 +151,7 @@ async function deleteRendimento(id) {
 //#endregion
 
 //#region => Sequencia de querys para card de rendimentos.
-async function getRendimentosFiltro(mes, ano, idAtivo) {
+async function getRendimentosFiltro(mes, ano, idAtivo, idUser) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -165,18 +162,19 @@ async function getRendimentosFiltro(mes, ano, idAtivo) {
             SUM("valorRecebido") AS "totalPeriodo"
         FROM rendimentos
         WHERE 
-            (EXTRACT(MONTH FROM "dtRendimento") = $1 OR $1 IS NULL) AND
-            (EXTRACT(YEAR FROM "dtRendimento") = $2 OR $2 IS NULL) AND
-            ("idAtivo" = $3 OR $3 IS NULL)
-            `, [mes, ano, idAtivo]);
+            "idUser" = $1 AND
+            (EXTRACT(MONTH FROM "dtRendimento") = $2 OR $2 IS NULL) AND
+            (EXTRACT(YEAR FROM "dtRendimento") = $3 OR $3 IS NULL) AND
+            ("idAtivo" = $4 OR $4 IS NULL)
+            `, [idUser, mes, ano, idAtivo]);
 
     // Extrai o valor, converte para número e garante que não retorne nulo
     return Number(result.rows[0].totalPeriodo) || 0;
 
 }
 
-// Total acumulado de rendimentos (sem filtro de período)
-async function getTotalAcumulado() {
+// Total acumulado de rendimentos do usuário (sem filtro de período)
+async function getTotalAcumulado(idUser) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -186,14 +184,15 @@ async function getTotalAcumulado() {
          SELECT 
             SUM("valorRecebido") AS "valorTotalRecebido"
         FROM rendimentos
-    `);
+        WHERE "idUser" = $1
+    `, [idUser]);
 
     // Extrai o valor, converte para número e garante que não retorne nulo
     return Number(result.rows[0].valorTotalRecebido) || 0;
 }
 
-// Total investido apenas nas operações de compra 
-async function getTotalCompras() {
+// Total investido apenas nas operações de compra do usuário
+async function getTotalCompras(idUser) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -203,15 +202,15 @@ async function getTotalCompras() {
         SELECT 
             SUM(preco * quantidade) AS "totalInvestido"
         FROM operacoes
-        WHERE tipo = 'Compra'; 
-    `);
+        WHERE tipo = 'Compra' AND "idUser" = $1
+    `, [idUser]);
 
     // Extrai o valor, converte para número e garante que não retorne nulo
     return Number(result.rows[0].totalInvestido) || 0;
 }
 
-// Total investido apenas nas operações de compra que foram marcadas como reinvestimento
-async function getTotalReinvestido() {
+// Total reinvestido pelo usuário
+async function getTotalReinvestido(idUser) {
     // Abre a conexão com o banco de dados
     const db = await openDb();
 
@@ -220,8 +219,8 @@ async function getTotalReinvestido() {
          SELECT 
             SUM("valorRecebido") AS "totalReinvestido"
         FROM rendimentos
-        WHERE reinvestido = 'True';
-    `);
+        WHERE reinvestido = 'True' AND "idUser" = $1
+    `, [idUser]);
 
     // Extrai o valor, converte para número e garante que não retorne nulo
     return Number(result.rows[0].totalReinvestido) || 0;

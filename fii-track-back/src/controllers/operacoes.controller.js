@@ -3,12 +3,14 @@ import { openDb } from "../config/configDb.js";
 //#region função listar fundos -  (ativos/inativos)
 export async function carregaAtivosDropList(req, res) {
     const db = await openDb();
+    const idUser = req.user.id;
     try {
         const resultado = await db.query(`        
         SELECT
           id, ticker
-        FROM ativos 
-        `
+        FROM ativos
+        WHERE "idUser" = $1
+        `, [idUser]
         );
         // Verifica se a consulta retornou resultados
         if (resultado.rows.length === 0) {
@@ -34,6 +36,7 @@ export async function listarOperacoes(req, res) {
             mes: req.body.mes,
             ano: req.body.ano
         };
+        const idUser = req.user.id;
 
         //abrir conexão com o banco de dados
         const db = await openDb();
@@ -49,13 +52,14 @@ export async function listarOperacoes(req, res) {
             INNER JOIN seguimentos c
             ON c.id = b."idSeguimento" 
             WHERE 
-                EXTRACT(YEAR FROM a."dtOperacao") = $1
+                a."idUser" = $1 AND
+                EXTRACT(YEAR FROM a."dtOperacao") = $2
         `;
-        let params = [campos.ano];
+        let params = [idUser, campos.ano];
 
         //se o mês não for "Todos", adicionar a condição do mês
         if (campos.mes !== 'Todos') {
-            query += ` AND EXTRACT(MONTH FROM a."dtOperacao") = $2`;
+            query += ` AND EXTRACT(MONTH FROM a."dtOperacao") = $3`;
             params.push(campos.mes);
         }
 
@@ -92,6 +96,7 @@ export async function lancarOperacao(req, res) {
             quantidade: req.body.quantidade,
             preco: req.body.preco
         };
+        const idUser = req.user.id;
 
         //abrir conexão com o banco de dados
         const db = await openDb();
@@ -100,7 +105,7 @@ export async function lancarOperacao(req, res) {
         const ativo = await db.query(`
             SELECT id 
             FROM ativos 
-            WHERE id = $1`, [dados.idAtivo]);
+            WHERE id = $1 AND "idUser" = $2`, [dados.idAtivo, idUser]);
 
         if (ativo.rows.length === 0) {
             return res.status(400).json({ error: 'Ativo não encontrado.' });
@@ -108,11 +113,11 @@ export async function lancarOperacao(req, res) {
 
         const novasOperacao = await db.query(`
             INSERT INTO operacoes
-                ("idAtivo", "dtOperacao", tipo, quantidade, preco)
+                ("idAtivo", "dtOperacao", tipo, quantidade, preco, "idUser")
             VALUES 
-                ($1, $2, $3, $4, $5)
+                ($1, $2, $3, $4, $5, $6)
             RETURNING id`,
-            [dados.idAtivo, dados.dataOperacao, dados.tipo, dados.quantidade, dados.preco]
+            [dados.idAtivo, dados.dataOperacao, dados.tipo, dados.quantidade, dados.preco, idUser]
         );
 
         // Retornar o ID da operação lançada
@@ -132,6 +137,7 @@ export async function carregaDadosGraficoOperacoes(req, res) {
         const campos = {
             ano: req.body.ano
         };
+        const idUser = req.user.id;
 
         //abrir conexão com o banco de dados
         const db = await openDb();
@@ -151,13 +157,13 @@ export async function carregaDadosGraficoOperacoes(req, res) {
             END) AS "totalLiquido"
 
         FROM operacoes
-        WHERE EXTRACT(YEAR FROM "dtOperacao") = $1
+        WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtOperacao") = $2
         GROUP BY EXTRACT(YEAR FROM "dtOperacao"), EXTRACT(MONTH FROM "dtOperacao")
         ORDER BY mes;
         `;
 
         //executar a consulta e recuperar os dados do gráfico
-        const dadosGrafico = await db.query(query, [campos.ano]);
+        const dadosGrafico = await db.query(query, [idUser, campos.ano]);
 
         //verificar se a consulta retornou resultados
         if (dadosGrafico.rows.length === 0) {
@@ -181,16 +187,17 @@ export async function excluirOperacao(req, res) {
     try {
         //envia o id no body da requisição
         const idOperacao = req.body.id;
+        const idUser = req.user.id;
 
         //abrir conexão com o banco de dados
         const db = await openDb();
 
-        //excluir a operação
+        //excluir a operação (garante que pertence ao usuário)
         const resultado = await db.query(`
             DELETE 
             FROM operacoes
-            WHERE id = $1
-        `, [idOperacao]);
+            WHERE id = $1 AND "idUser" = $2
+        `, [idOperacao, idUser]);
 
         //verificar se a operação foi excluída 
         if (resultado.rowCount === 0) {

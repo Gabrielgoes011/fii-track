@@ -24,10 +24,10 @@ router.post('/carregarComparacaoAnual', verificaToken, carregarComparacaoAnualCo
 router.get('/carregarDadosModalNovoRendimento', verificaToken, carregarDadosModalNovoRendimentoController);
 // sem body — retorna [{ id, ticker, nomeSeguimento }]
 
-router.delete('/rendimentos/:id', deleteRendimentoController);
+router.delete('/rendimentos/:id', verificaToken, deleteRendimentoController);
 // sem body — id do rendimento a ser deletao passado como parâmetro na URL (ex: /rendimentos/123) 
 
-router.post('/cardsRendimentos', getCardsRendimentos);
+router.post('/cardsRendimentos', verificaToken, getCardsRendimentos);
 //body: { mes, ano, idAtivo (todos parametros opcional) }
 
 export default router;

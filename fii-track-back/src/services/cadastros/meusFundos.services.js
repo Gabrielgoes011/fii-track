@@ -10,10 +10,10 @@ import {
 } from "../../repositories/cadastros/meuFundos.repositories.js";
 
 //#region => Service para listar os fundos cadastrados
-async function listarFundosService() {
+async function listarFundosService(idUser) {
 
     //Chama a função do repositório para listar os fundos
-    const listarFundos = await listarFundosRepository();
+    const listarFundos = await listarFundosRepository(idUser);
 
     //retorna lista de fundos
     return listarFundos;
@@ -61,10 +61,10 @@ async function cadastrarFundosService(dados) {
 //#endregion
 
 //#region => Service para contar fundos ativos
-async function contarFundosService() {
+async function contarFundosService(idUser) {
 
     //Chama a função do repositório para contar os fundos ativos
-    const contarFundos = await contarFundosRepository();
+    const contarFundos = await contarFundosRepository(idUser);
 
     //retorna o resultado
     return contarFundos;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
+import { usePrivacy } from '../../context/PrivacyContext';
 
 // breakpoint mobile
 const MOBILE_BP = 768;
@@ -8,6 +9,7 @@ const MOBILE_BP = 768;
 function Layout({ children, onLogout }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= MOBILE_BP);
+  const { valoresOcultos } = usePrivacy();
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,7 +27,7 @@ function Layout({ children, onLogout }) {
   const closeSidebar  = () => setSidebarOpen(false);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0f1e' }}>
+    <div className={valoresOcultos ? 'privacidade-ativa' : ''} style={{ display: 'flex', minHeight: '100vh', background: '#0a0f1e' }}>
 
       {/* Overlay escuro no mobile quando sidebar aberta */}
       {isMobile && sidebarOpen && (

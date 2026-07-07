@@ -18,7 +18,7 @@ import {
 
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function listarRendimentos({ mes, ano, idAtivo }) {
+async function listarRendimentos({ mes, ano, idUser }) {
     try {
 
         // Valida se o ano foi informado
@@ -26,8 +26,8 @@ async function listarRendimentos({ mes, ano, idAtivo }) {
             throw new Error('O campo "ano" é obrigatório.');
         }
 
-        // Busca os rendimentos no repositório (mes e idAtivo opcionais — null = sem filtro)
-        const rendimentos = await findRendimentos({ mes, ano, idAtivo });
+        // Busca os rendimentos no repositório
+        const rendimentos = await findRendimentos({ mes, ano, idUser });
 
         // Retorna array vazio quando não há registros (não é um erro)
         return rendimentos;
@@ -39,7 +39,7 @@ async function listarRendimentos({ mes, ano, idAtivo }) {
 //#endregion
 
 //#region Carregar dados do gráfico dashboard (mensal + anual)
-async function carregarGraficoDashboard({ ano }) {
+async function carregarGraficoDashboard({ ano, idUser }) {
     try {
 
         // Valida se o ano foi informado
@@ -48,7 +48,7 @@ async function carregarGraficoDashboard({ ano }) {
         }
 
         // Busca os dados agrupados no repositório
-        const dados = await findDadosGraficoDashboard({ ano });
+        const dados = await findDadosGraficoDashboard({ ano, idUser });
 
         // Retorna o objeto com os dois conjuntos de dados
         return dados;
@@ -60,7 +60,7 @@ async function carregarGraficoDashboard({ ano }) {
 //#endregion
 
 //#region Carregar comparação mensal entre múltiplos anos
-async function carregarComparacaoAnual({ anos }) {
+async function carregarComparacaoAnual({ anos, idUser }) {
     try {
 
         // Valida se o array de anos foi informado e não está vazio
@@ -69,7 +69,7 @@ async function carregarComparacaoAnual({ anos }) {
         }
 
         // Busca os dados comparativos no repositório
-        const dados = await findComparacaoAnual({ anos });
+        const dados = await findComparacaoAnual({ anos, idUser });
 
         return dados;
 
@@ -80,11 +80,11 @@ async function carregarComparacaoAnual({ anos }) {
 //#endregion
 
 //#region Carregar ativos para o dropdown do modal de novo rendimento
-async function carregarAtivosParaModal() {
+async function carregarAtivosParaModal(idUser) {
     try {
 
         // Busca os ativos com seus segmentos no repositório
-        const ativos = await findAtivosParaModal();
+        const ativos = await findAtivosParaModal(idUser);
 
         return ativos;
 
@@ -95,7 +95,7 @@ async function carregarAtivosParaModal() {
 //#endregion
 
 //#region Excluir um rendimento pelo seu ID
-async function excluirRendimento(id) {
+async function excluirRendimento(id, idUser) {
     try {
 
         // Valida se o ID foi informado
@@ -104,7 +104,7 @@ async function excluirRendimento(id) {
         }
 
         // Chama o repositório para executar a exclusão
-        const rowCount = await deleteRendimento(id);
+        const rowCount = await deleteRendimento(id, idUser);
 
         // Nenhuma linha afetada significa que o ID não existe
         if (rowCount === 0) {
@@ -121,11 +121,14 @@ async function excluirRendimento(id) {
 //#endregion
 
 // #region => service para logica de calculos do card de rendimentos
-async function calculoCardsRendimento(mes, ano, idAtivo) {
-    // Apenas o ano é obrigatório — mes null = busca o ano inteiro
+async function calculoCardsRendimento(mes, ano, idAtivo, idUser) {
+    // Valida se o ano foi informado (mês pode ser "Todos" ou null)
     if (!ano) {
         throw new Error('O campo "ano" é obrigatório para calcular os cards de rendimentos.');
     }
+
+    // Se mes for "Todos" ou vazio, trata como null (sem filtro de mês)
+    const mesFiltro = (mes && mes !== 'Todos') ? mes : null;
 
     // Chama as funções do repositório para obter os dados necessários para os cards
     try {
@@ -136,10 +139,10 @@ async function calculoCardsRendimento(mes, ano, idAtivo) {
             totalCompras,
             totalReinvestido
         ] = await Promise.all([
-            getRendimentosFiltro(mes, ano, idAtivo),
-            getTotalAcumulado(),
-            getTotalCompras(),
-            getTotalReinvestido()
+            getRendimentosFiltro(mesFiltro, ano, idAtivo, idUser),
+            getTotalAcumulado(idUser),
+            getTotalCompras(idUser),
+            getTotalReinvestido(idUser)
         ]);
 
         // Calcula YoC (Yield on Cost) = (Total acumulado / Total Investido) * 100
@@ -179,7 +182,7 @@ async function calculoCardsRendimento(mes, ano, idAtivo) {
 }
 //#endregion
 
-//#region => Exporta rendimentos
+
 export {
     listarRendimentos,
     carregarGraficoDashboard,
@@ -188,4 +191,3 @@ export {
     excluirRendimento,
     calculoCardsRendimento
 };
-//endRegion 

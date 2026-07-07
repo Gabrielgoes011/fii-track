@@ -474,7 +474,7 @@ function EvolucaoAnualChart({ data }) {
 
         return (
           <div key={idx} style={estiloColunaItem}>
-            <span style={estiloValorLabel}>{fmt(item.Valor)}</span>
+            <span style={estiloValorLabel} className="vp">{fmt(item.Valor)}</span>
             <div style={estiloBarra} title={`${item.name}: ${fmt(item.Valor)}`} />
             <span style={estiloAnoLabel}>{item.name}</span>
           </div>
@@ -548,7 +548,7 @@ function BarChartHorizontal({ data, anos }) {
                 return (
                   <div key={ano} style={estiloLinhaAno}>
                     <div style={estiloBarra} title={`${ano}: ${fmt(val)}`} />
-                    {val > 0 && <span style={estiloValorMini}>{fmt(val)}</span>}
+                    {val > 0 && <span className="vp" style={estiloValorMini}>{fmt(val)}</span>}
                   </div>
                 );
               })}
@@ -762,7 +762,7 @@ export default function PaginaRendimentos() {
       acesso: 'valorRecebido',
       width: '15%',
       align: 'center',
-      render: (val) => <span style={S.valorDesk}>{fmt(Number(val))}</span>,
+      render: (val) => <span className="vp" style={S.valorDesk}>{fmt(Number(val))}</span>,
     },
   ];
 
@@ -781,7 +781,7 @@ export default function PaginaRendimentos() {
               <div style={{ ...S.kpiCard, padding: kpiPadding, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={S.kpiLabelVerde}>Total Recebido</p>
-                  <p style={S.kpiValor('#34d399', isMobile)}>
+                  <p className="vp" style={S.kpiValor('#34d399', isMobile)}>
                     {loadingCards ? '...' : fmt(cards.totalPeriodo)}
                   </p>
                 </div>
@@ -792,7 +792,7 @@ export default function PaginaRendimentos() {
               <div style={{ ...S.kpiCard, padding: kpiPadding, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={S.kpiLabelAmarelo}>Total Acumulado</p>
-                  <p style={S.kpiValor('#fbbf24', isMobile)}>
+                  <p className="vp" style={S.kpiValor('#fbbf24', isMobile)}>
                     {loadingCards ? '...' : fmt(cards.totalAcumulado)}
                   </p>
                 </div>
@@ -803,7 +803,7 @@ export default function PaginaRendimentos() {
               <div style={{ ...S.kpiCard, padding: kpiPadding, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={S.kpiLabelAzul}>Total Investido</p>
-                  <p style={S.kpiValor('#7dd3fc', isMobile)}>
+                  <p className="vp" style={S.kpiValor('#7dd3fc', isMobile)}>
                     {loadingCards ? '...' : fmt(cards.totalCompras)}
                   </p>
                 </div>
@@ -819,7 +819,7 @@ export default function PaginaRendimentos() {
                   }}>
                     YoC
                   </span>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
+                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
                     {loadingCards ? '...' : `${Number(cards.yieldOnCost).toFixed(2)}% a.a`}
                   </span>
                 </div>
@@ -829,7 +829,7 @@ export default function PaginaRendimentos() {
               <div style={{ ...S.kpiCard, padding: kpiPadding, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={S.kpiLabelRoxo}>Efeito Bola de Neve</p>
-                  <p style={S.kpiValor('#c4b5fd', isMobile)}>
+                  <p className="vp" style={S.kpiValor('#c4b5fd', isMobile)}>
                     {loadingCards ? '...' : fmt(cards.totalReinvestido)}
                   </p>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
@@ -857,7 +857,7 @@ export default function PaginaRendimentos() {
                     }} title="Dinheiro gerado pelos fundos" />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: '#64748b' }}>
-                    <span>Do seu bolso: {loadingCards ? '...' : fmt(cards.aporteProprio)}</span>
+                    <span className="vp">Do seu bolso: {loadingCards ? '...' : fmt(cards.aporteProprio)}</span>
                   </div>
                 </div>
               </div>
@@ -958,7 +958,7 @@ export default function PaginaRendimentos() {
                           <span style={S.cardData}>
                             {new Date(r.dtRendimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                           </span>
-                          <span style={S.cardValor}>
+                          <span className="vp" style={S.cardValor}>
                             + {fmt(Number(r.valorRecebido))}
                           </span>
                         </div>

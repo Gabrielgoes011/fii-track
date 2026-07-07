@@ -6,11 +6,13 @@ import { openDb } from "../../config/configDb.js";
 //#region função listar seguimentos 
 export async function listarSeguimentos(req, res) {
   const db = await openDb();
+  const idUser = req.user.id;
   try {
     const resultado = await db.query(`        
         SELECT id, "nomeSeguimento" AS nome 
-        FROM seguimentos   
-        ORDER BY "nomeSeguimento" ASC `
+        FROM seguimentos
+        WHERE "idUser" = $1
+        ORDER BY "nomeSeguimento" ASC `, [idUser]
     );
     // Verifica se a consulta retornou resultados
     if (resultado.rows.length === 0) {
@@ -30,11 +32,13 @@ export async function listarSeguimentos(req, res) {
 //#region função Contar Seguimentos 
 export async function contarSeguimentos(req, res) {
   const db = await openDb();
+  const idUser = req.user.id;
   try {
     const resultadoAtivo = await db.query(`
         SELECT COUNT(id) AS totalSeguimentos
         FROM seguimentos
-    `);
+        WHERE "idUser" = $1
+    `, [idUser]);
 
     // Retorna a contagem de usuários ativos, inativos e total
     res.status(200).json({
@@ -51,6 +55,7 @@ export async function contarSeguimentos(req, res) {
 export async function cadastrarSeguimento(req, res) {
   const dados = req.body;
   const db = await openDb();
+  const idUser = req.user.id;
 
   if (!dados.nome) {
     return res.status(400).json({ error: 'O campo nao pode ser vazio' });
@@ -59,7 +64,7 @@ export async function cadastrarSeguimento(req, res) {
   const existeSeguimento = await db.query(`
       SELECT id 
       FROM seguimentos
-      WHERE "nomeSeguimento" = $1 `, [dados.nome]
+      WHERE "nomeSeguimento" = $1 AND "idUser" = $2`, [dados.nome, idUser]
   );
   if (existeSeguimento.rows.length > 0) {
     return res.status(400).json({ error: 'Seguimento ja cadastrado!' });
@@ -68,11 +73,11 @@ export async function cadastrarSeguimento(req, res) {
   try {
     const insertSeguimento = await db.query(`
         INSERT INTO seguimentos
-          ("nomeSeguimento")
+          ("nomeSeguimento", "idUser")
         VALUES 
-          ($1)
+          ($1, $2)
         RETURNING id`,
-      [dados.nome]
+      [dados.nome, idUser]
     );
 
     //

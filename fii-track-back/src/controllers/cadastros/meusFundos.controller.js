@@ -1,4 +1,3 @@
-import { openDb } from "../../config/configDb.js";
 import apiResponse from '../../utils/httpResponse.js';
 import {
   listarFundosService,
@@ -11,9 +10,10 @@ import {
 
 //#region => cadastrar meus fundos
 async function cadastrarFundos(req, res) {
-  
+
   //recebe os dados do corpo da requisição
   const dados = req.body;
+  dados.idUser = req.user.id; // associa o fundo ao usuário logado
 
   try {
 
@@ -36,9 +36,10 @@ async function cadastrarFundos(req, res) {
 //#region função listar fundos -  
 async function listarFundos(req, res) {
   try {
+    const idUser = req.user.id;
 
     // Chama a função do repositório para listar os fundos
-    const listarFundos = await listarFundosService();
+    const listarFundos = await listarFundosService(idUser);
 
     // Retorna os resultados da consulta em formato JSON
     apiResponse.success(res,
@@ -58,9 +59,10 @@ async function listarFundos(req, res) {
 //#region função de contar fundos ativos
 async function contarFundosAtivos(req, res) {
   try {
+    const idUser = req.user.id;
 
     // Chama a função do repositório para contar os fundos ativos
-    const contarFundos = await contarFundosService();
+    const contarFundos = await contarFundosService(idUser);
 
     // Retorna os resultados da consulta em formato JSON
     apiResponse.success(res,

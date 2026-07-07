@@ -93,8 +93,8 @@ export default function PaginaOperacoes() {
       ),
     },
     { titulo: 'Qtde',        acesso: 'qtde',       width: '8%',  align: 'center' },
-    { titulo: 'Preço',       acesso: 'preco',      width: '12%', align: 'right', render: (val) => fmt(val) },
-    { titulo: 'Valor Total', acesso: 'valorTotal', width: '14%', align: 'right', render: (val) => <span style={{ fontWeight: 600, color: '#f8fafc' }}>{fmt(val)}</span> },
+    { titulo: 'Preço',       acesso: 'preco',      width: '12%', align: 'right', render: (val) => <span className="vp">{fmt(val)}</span> },
+    { titulo: 'Valor Total', acesso: 'valorTotal', width: '14%', align: 'right', render: (val) => <span className="vp" style={{ fontWeight: 600, color: '#f8fafc' }}>{fmt(val)}</span> },
   ];
 
   return (
@@ -289,7 +289,7 @@ export default function PaginaOperacoes() {
                           ['Data',      op.data],
                           ['Seguimento', op.seguimento],
                           ['Quantidade', op.qtde],
-                          ['Preço Unit.', fmt(op.preco)],
+                          ['Preço Unit.', <span className="vp">{fmt(op.preco)}</span>],
                         ].map(([k, v]) => (
                           <div key={k}>
                             <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '1px' }}>{k}</div>
@@ -301,7 +301,7 @@ export default function PaginaOperacoes() {
                       {/* linha 3: total */}
                       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '12px', color: '#64748b' }}>Valor Total</span>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: isCompra ? '#10b981' : '#f87171' }}>
+                        <span className="vp" style={{ fontSize: '15px', fontWeight: 700, color: isCompra ? '#10b981' : '#f87171' }}>
                           {isCompra ? '+ ' : '− '}{fmt(op.valorTotal)}
                         </span>
                       </div>

@@ -134,3 +134,11 @@ tr:hover td {
 ::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ─── Modo Privacidade (blur em valores financeiros) ─── */
+.privacidade-ativa .vp {
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.3s ease;
+}

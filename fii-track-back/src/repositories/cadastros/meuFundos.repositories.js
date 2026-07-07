@@ -1,7 +1,7 @@
 import { openDb } from "../../config/configDb.js";
 
 //#region => Query para listar os fundos cadastrados
-async function listarFundosRepository() {
+async function listarFundosRepository(idUser) {
 
     //abre a conexão com o banco de dados
     const db = await openDb();
@@ -14,12 +14,13 @@ async function listarFundosRepository() {
             a."nomeFundo",
             a.cnpj,
             b."nomeSeguimento",
-            a."idUsuario",
+            a."idUser",
             a."dtCadastro" 
         FROM ativos a INNER JOIN seguimentos b 
         ON a."idSeguimento" = b.id
+        WHERE a."idUser" = $1
         ORDER BY a.ticker ASC
-     `
+     `, [idUser]
     );
 
     //retorna os resultados da consulta
@@ -70,15 +71,16 @@ async function cadastrarFundosRepository(dados) {
     //Executa a consulta SQL para inserir um novo fundo
     const insertFundos = await db.query(`
         INSERT INTO ativos
-            ("ticker", "nomeFundo", cnpj, "idSeguimento", "dtCadastro")  
+            ("ticker", "nomeFundo", cnpj, "idSeguimento", "idUser", "dtCadastro")  
         VALUES
-            ($1, $2, $3, $4, now())
+            ($1, $2, $3, $4, $5, now())
         RETURNING id, "ticker", "nomeFundo"`,
         [
             dados.ticker,
             dados.nomeFundo,
             dados.cnpj,
-            dados.idSeguimento
+            dados.idSeguimento,
+            dados.idUser
         ]
     );
 
@@ -88,7 +90,7 @@ async function cadastrarFundosRepository(dados) {
 //#endregion
 
 //#region => Query para contar fundos ativos
-async function contarFundosRepository() {
+async function contarFundosRepository(idUser) {
     //abre a conexão com o banco de dados
     const db = await openDb();
 
@@ -96,7 +98,8 @@ async function contarFundosRepository() {
     const resultado = await db.query(`
         SELECT COUNT(*) total
         FROM ativos
-    `);
+        WHERE "idUser" = $1
+    `, [idUser]);
 
     //retorna o resultado da consulta
     return resultado.rows[0].total;
