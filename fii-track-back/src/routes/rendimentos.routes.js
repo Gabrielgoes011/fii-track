@@ -7,6 +7,7 @@ import {
   carregarGraficoDashboardController,
   carregarComparacaoAnualController,
   carregarDadosModalNovoRendimentoController,
+  criarRendimentoController,
   deleteRendimentoController,
   getCardsRendimentos
 } from '../controllers/rendimentos.controller.js';
@@ -23,6 +24,9 @@ router.post('/carregarComparacaoAnual', verificaToken, carregarComparacaoAnualCo
 
 router.get('/carregarDadosModalNovoRendimento', verificaToken, carregarDadosModalNovoRendimentoController);
 // sem body — retorna [{ id, ticker, nomeSeguimento }]
+
+router.post('/criarRendimento', verificaToken, criarRendimentoController);
+//body: { idAtivo, dtRendimento, valorRecebido }
 
 router.delete('/rendimentos/:id', verificaToken, deleteRendimentoController);
 // sem body — id do rendimento a ser deletao passado como parâmetro na URL (ex: /rendimentos/123) 

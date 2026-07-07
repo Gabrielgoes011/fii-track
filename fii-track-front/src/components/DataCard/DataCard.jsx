@@ -19,7 +19,7 @@ import { GridDados } from '../GridDados';
  *  usaInativar, acaoInativar, usaReativar, acaoReativar
  */
 export default function DataCard({
-  titulo, subtitulo, botaoLabel, onBotaoClick, filtros, rodape,
+  titulo, subtitulo, botaoLabel, onBotaoClick, botaoExtra, filtros, rodape,
   coluna, data, itemsPerPage, labelpesquisa,
   usaVisualizar,   acaoVisualizar,
   usaEditar,       acaoEditar,
@@ -61,38 +61,41 @@ export default function DataCard({
           {filtros}
         </div>
 
-        {/* Botão principal */}
-        {botaoLabel && onBotaoClick && (
-          <button
-            onClick={onBotaoClick}
-            style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: '#fff',
-              fontWeight: 600,
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '13px',
-              boxShadow: '0 2px 12px rgba(16,185,129,0.3)',
-            }}
-            onMouseOver={e => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.45)';
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 12px rgba(16,185,129,0.3)';
-            }}
-          >
-            <AiOutlinePlus size={16} />
-            {botaoLabel}
-          </button>
-        )}
+        {/* Botões */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {botaoExtra}
+          {botaoLabel && onBotaoClick && (
+            <button
+              onClick={onBotaoClick}
+              style={{
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#fff',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '13px',
+                boxShadow: '0 2px 12px rgba(16,185,129,0.3)',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.45)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 12px rgba(16,185,129,0.3)';
+              }}
+            >
+              <AiOutlinePlus size={16} />
+              {botaoLabel}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Tabela ── */}

@@ -2,9 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, AreaChart } from '../../components/Charts';
 import NovoRendimentoModal from './components/modalNovoRendimento';
 import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
-import { toastSuccess } from '../../utils/responseUtils';
+import { toastSuccess, toastInfo } from '../../utils/responseUtils';
+import { toast } from 'react-toastify';
 import { DataCard } from '../../components/DataCard';
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUpload } from 'react-icons/fi';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MESES = [
@@ -577,6 +578,7 @@ export default function PaginaRendimentos() {
     cardsRendimentos,
     loadingCards,
     getCardsRendimentos,
+    criarRendimento,
   } = useRendimentos();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
@@ -661,11 +663,18 @@ export default function PaginaRendimentos() {
     [comparacaoAnual, anosComp]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
-  const handleNovoRendimento = () => {
-    toastSuccess('Rendimento lançado com sucesso!');
-    setModalAberto(false);
-    getRendimentos({ mes: filtroMes, ano: filtroAno });
-    getGrafico({ ano: anoGrafico });
+  const handleNovoRendimento = async (dados) => {
+    const ok = await criarRendimento({
+      idAtivo: dados.idAtivo,
+      dtRendimento: dados.dtRendimento,
+      valorRecebido: dados.valorRecebido,
+    });
+    if (ok) {
+      toastSuccess('Rendimento lançado com sucesso!');
+      setModalAberto(false);
+      getRendimentos({ mes: filtroMes, ano: filtroAno });
+      getGrafico({ ano: anoGrafico });
+    }
   };
 
   const abrirModalExclusao = (row) => {
@@ -737,19 +746,19 @@ export default function PaginaRendimentos() {
     {
       titulo: 'Data',
       acesso: 'dtRendimento',
-      width: '12%',
+      width: '18%',
       render: (val) => new Date(val).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
     },
     {
       titulo: 'Ativo',
       acesso: 'ticker',
-      width: '12%',
+      width: '15%',
       render: (val) => <span style={S.tickerDesk}>{val}</span>,
     },
     {
       titulo: 'Segmento',
       acesso: 'nomeSeguimento',
-      width: '20%',
+      width: '30%',
       align: 'center',
       render: (val) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -760,7 +769,7 @@ export default function PaginaRendimentos() {
     {
       titulo: 'Valor Recebido',
       acesso: 'valorRecebido',
-      width: '15%',
+      width: '25%',
       align: 'center',
       render: (val) => <span className="vp" style={S.valorDesk}>{fmt(Number(val))}</span>,
     },
@@ -897,8 +906,21 @@ export default function PaginaRendimentos() {
             isMobile ? (
               /* ── MOBILE: cards ── */
               <div>
-                <div style={{ ...S.mobileHeader, justifyContent: 'flex-end' }}>
-                  <button onClick={() => setModalAberto(true)} style={S.btnNovoMobile}>
+                <div style={{ ...S.mobileHeader, justifyContent: 'flex-end', gap: '8px' }}>
+                  <button
+                    onClick={() => toast.info('Importação via Excel em desenvolvimento.')}
+                    style={{ ...S.btnNovoMobile, background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
+                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.45)'; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)'; }}
+                  >
+                    <FiUpload size={15} /> Importar
+                  </button>
+                  <button
+                    onClick={() => setModalAberto(true)}
+                    style={S.btnNovoMobile}
+                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(16,185,129,0.45)'; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(16,185,129,0.3)'; }}
+                  >
                     <FiPlus size={15} /> Novo Rendimento
                   </button>
                 </div>
@@ -973,6 +995,35 @@ export default function PaginaRendimentos() {
                 labelpesquisa="Buscar ativo, segmento..."
                 botaoLabel="Novo Rendimento"
                 onBotaoClick={() => setModalAberto(true)}
+                botaoExtra={
+                  <button
+                    onClick={() => toast.info('Importação via Excel em desenvolvimento.')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      background: 'rgba(59,130,246,0.1)',
+                      border: '1px solid rgba(59,130,246,0.3)',
+                      color: '#60a5fa',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.35)';
+                      e.currentTarget.style.background = 'rgba(59,130,246,0.2)';
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.background = 'rgba(59,130,246,0.1)';
+                    }}
+                  >
+                    <FiUpload size={14} /> Importar Excel
+                  </button>
+                }
                 filtros={
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <select

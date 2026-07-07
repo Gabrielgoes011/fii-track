@@ -3,6 +3,7 @@ import {
     findDadosGraficoDashboard,
     findComparacaoAnual,
     findAtivosParaModal,
+    insertRendimento,
     deleteRendimento,
     getRendimentosFiltro,
     getTotalAcumulado,
@@ -90,6 +91,39 @@ async function carregarAtivosParaModal(idUser) {
 
     } catch (error) {
         throw new Error(`Erro ao carregar ativos para o modal: ${error.message}`);
+    }
+}
+//#endregion
+
+//#region Criar novo rendimento
+async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser }) {
+    try {
+
+        // Valida campos obrigatórios
+        if (!idAtivo)
+            throw new Error('O campo "idAtivo" é obrigatório.');
+
+        //valuda data de rendimento 
+        if (!dtRendimento)
+            throw new Error('O campo "dtRendimento" é obrigatório.'); 3
+
+        //valuda valor recebido
+        if (!valorRecebido || Number(valorRecebido) <= 0)
+            throw new Error('O valor recebido deve ser maior que zero.');
+
+
+        // Chama o repositório para inserir no banco
+        const resultado = await insertRendimento({
+            idAtivo,
+            dtRendimento,
+            valorRecebido: Number(valorRecebido),
+            idUser
+        });
+
+        return resultado;
+
+    } catch (error) {
+        throw new Error(`Erro ao criar rendimento: ${error.message}`);
     }
 }
 //#endregion
@@ -188,6 +222,7 @@ export {
     carregarGraficoDashboard,
     carregarComparacaoAnual,
     carregarAtivosParaModal,
+    criarRendimento,
     excluirRendimento,
     calculoCardsRendimento
 };

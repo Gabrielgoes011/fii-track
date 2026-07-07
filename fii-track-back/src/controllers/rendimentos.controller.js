@@ -4,6 +4,7 @@ import {
     carregarGraficoDashboard,
     carregarComparacaoAnual,
     carregarAtivosParaModal,
+    criarRendimento,
     excluirRendimento,
     calculoCardsRendimento
 } from '../services/rendimentos.services.js';
@@ -77,6 +78,22 @@ async function carregarDadosModalNovoRendimentoController(req, res) {
 }
 //#endregion
 
+//#region Criar novo rendimento
+async function criarRendimentoController(req, res) {
+    try {
+        const idUser = req.user.id;
+        const { idAtivo, dtRendimento, valorRecebido } = req.body;
+
+        const resultado = await criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser });
+
+        return apiResponse.success(res, 'Rendimento lançado com sucesso!', resultado, 201);
+
+    } catch (error) {
+        return apiResponse.error(res, error.message);
+    }
+}
+//#endregion
+
 //#region Excluir um rendimento pelo seu ID
 async function deleteRendimentoController(req, res) {
     try {
@@ -115,6 +132,7 @@ export {
     carregarGraficoDashboardController,
     carregarComparacaoAnualController,
     carregarDadosModalNovoRendimentoController,
+    criarRendimentoController,
     deleteRendimentoController,
     getCardsRendimentos
 };

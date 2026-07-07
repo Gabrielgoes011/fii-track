@@ -132,6 +132,21 @@ async function findAtivosParaModal(idUser) {
 }
 //#endregion
 
+//#region Inserir novo rendimento
+async function insertRendimento({ idAtivo, dtRendimento, valorRecebido, idUser }) {
+
+    const db = await openDb();
+
+    const result = await db.query(`
+        INSERT INTO rendimentos ("idAtivo", "dtRendimento", "valorRecebido", "idUser")
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, "idAtivo", "dtRendimento", "valorRecebido"
+    `, [idAtivo, dtRendimento, valorRecebido, idUser]);
+
+    return result.rows[0];
+}
+//#endregion
+
 //#region Excluir um rendimento pelo seu ID (garante que pertence ao usuário)
 async function deleteRendimento(id, idUser) {
 
@@ -233,6 +248,7 @@ export {
     findDadosGraficoDashboard,
     findComparacaoAnual,
     findAtivosParaModal,
+    insertRendimento,
     deleteRendimento,
     getRendimentosFiltro,
     getTotalAcumulado,

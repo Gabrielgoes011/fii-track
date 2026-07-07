@@ -57,6 +57,17 @@ export const useRendimentos = () => {
     }
   }, []);
 
+  // Cria um novo rendimento
+  const criarRendimento = useCallback(async ({ idAtivo, dtRendimento, valorRecebido }) => {
+    try {
+      await rendimentosService.criarRendimento({ idAtivo, dtRendimento, valorRecebido });
+      return true;
+    } catch (error) {
+      handleError(error);
+      return false;
+    }
+  }, []);
+
   // Busca os dados dos cards de KPIs de rendimentos
   const getCardsRendimentos = useCallback(async ({ mes, ano, idAtivo }) => {
     setLoadingCards(true);
@@ -106,6 +117,7 @@ export const useRendimentos = () => {
     getGrafico,
     getComparacaoAnual,
     getCardsRendimentos,
+    criarRendimento,
     deleteRendimento,
   };
 };

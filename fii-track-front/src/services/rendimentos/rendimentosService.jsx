@@ -36,6 +36,14 @@ export const rendimentosService = {
     } catch (error) { throw error; }
   },
 
+  // Criar novo rendimento
+  criarRendimento: async ({ idAtivo, dtRendimento, valorRecebido }) => {
+    try {
+      const res = await api.post('/criarRendimento', { idAtivo, dtRendimento, valorRecebido });
+      return res.data;
+    } catch (error) { throw error; }
+  },
+
   // Excluir um rendimento pelo seu ID
   excluir: async (id) => {
     try {

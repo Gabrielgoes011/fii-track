@@ -119,7 +119,7 @@ const GridDados = ({
 
       {/* ── Tabela ── */}
       <div style={{ overflowX: 'auto', width: '100%' }}>
-        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <thead>
             <tr style={{
               background: 'rgba(16,185,129,0.06)',
@@ -140,11 +140,11 @@ const GridDados = ({
               ))}
               {temAcoes && (
                 <th style={{
-                  padding: '0.75rem 1.5rem 0.75rem 1rem',
+                  padding: '0.75rem 0.5rem',
                   fontWeight: 600, fontSize: '11px',
                   color: '#64748b',
                   textTransform: 'uppercase', letterSpacing: '0.5px',
-                  textAlign: 'center', width: '160px', whiteSpace: 'nowrap',
+                  textAlign: 'center', width: '50px', maxWidth: '50px', whiteSpace: 'nowrap',
                 }}>
                   Ações
                 </th>
@@ -202,7 +202,7 @@ const GridDados = ({
                   );
                 })}
                 {temAcoes && (
-                  <td style={{ padding: '0.875rem 1.5rem 0.875rem 1rem', textAlign: 'center' }}>
+                  <td style={{ padding: '0.5rem', textAlign: 'center', width: '50px', maxWidth: '50px' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
                       {usaVisualizar && acaoVisualizar && (
                         <button onClick={() => acaoVisualizar(row)} style={btnBase} title="Visualizar"
