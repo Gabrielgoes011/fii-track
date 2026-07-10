@@ -13,9 +13,9 @@ import {
 async function listarRendimentosController(req, res) {
     try {
         const idUser = req.user.id;
-        const { mes, ano } = req.body;
+        const { mes, ano, idAtivo } = req.body;
 
-        const rendimentos = await listarRendimentos({ mes, ano, idUser });
+        const rendimentos = await listarRendimentos({ mes, ano, idUser, idAtivo });
 
         return apiResponse.success(res, 'Rendimentos listados com sucesso.', rendimentos);
 

@@ -1,7 +1,7 @@
 import { openDb } from '../config/configDb.js';
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function findRendimentos({ mes, ano, idUser }) {
+async function findRendimentos({ mes, ano, idUser, idAtivo }) {
 
     // Abre a conexão com o banco de dados
     const db = await openDb();
@@ -36,8 +36,8 @@ async function findRendimentos({ mes, ano, idUser }) {
         params.push(mes);
     }
 
-    // Adiciona filtro de ativo somente quando informado
-    if (idAtivo) {
+    // Adiciona filtro de ativo somente quando informado (null/undefined = sem filtro)
+    if (idAtivo != null && idAtivo !== '' && idAtivo !== 'Todos') {
 
         // Adiciona filtro de ativo à query e ao array de parâmetros
         query += ` AND a."idAtivo" = $${params.length + 1} `;

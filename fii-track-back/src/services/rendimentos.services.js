@@ -19,7 +19,7 @@ import {
 
 
 //#region Listar rendimentos por ano (e opcionalmente por mês)
-async function listarRendimentos({ mes, ano, idUser }) {
+async function listarRendimentos({ mes, ano, idUser, idAtivo }) {
     try {
 
         // Valida se o ano foi informado
@@ -28,7 +28,7 @@ async function listarRendimentos({ mes, ano, idUser }) {
         }
 
         // Busca os rendimentos no repositório
-        const rendimentos = await findRendimentos({ mes, ano, idUser });
+        const rendimentos = await findRendimentos({ mes, ano, idUser, idAtivo });
 
         // Retorna array vazio quando não há registros (não é um erro)
         return rendimentos;
@@ -105,7 +105,7 @@ async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser })
 
         //valuda data de rendimento 
         if (!dtRendimento)
-            throw new Error('O campo "dtRendimento" é obrigatório.'); 3
+            throw new Error('O campo "dtRendimento" é obrigatório.');
 
         //valuda valor recebido
         if (!valorRecebido || Number(valorRecebido) <= 0)
