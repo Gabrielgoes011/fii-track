@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { FaKey, FaSignOutAlt, FaChevronDown, FaBars, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaKey, FaSignOutAlt, FaChevronDown, FaBars, FaEye, FaEyeSlash, FaUserCircle } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
 import { usePrivacy } from '../../context/PrivacyContext';
+import { toastInfo } from '../../utils/responseUtils';
 
 function useUsuarioLogado() {
   return useMemo(() => {
@@ -21,7 +22,7 @@ function useUsuarioLogado() {
   }, []);
 }
 
-function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout, onTrocarSenha, onToggleSidebar }) {
+function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar }) {
   const { nome, email, iniciais } = useUsuarioLogado();
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef(null);
@@ -39,6 +40,11 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout
 
   const handleLogout = () => { setMenuAberto(false); if (onLogout) onLogout(); };
   const handleTrocarSenha = () => { setMenuAberto(false); if (onTrocarSenha) onTrocarSenha(); };
+  const handleMeuPerfil = () => {
+    setMenuAberto(false);
+    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
+    // if (onMeuPerfil) onMeuPerfil(); // Chamada desativada temporariamente
+  };
 
   return (
     <div style={{
@@ -199,6 +205,24 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout
                 <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{nome}</div>
                 {email && <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{email}</div>}
               </div>
+
+              {/* Meu Perfil */}
+              <button
+                onClick={handleMeuPerfil}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  width: '100%', padding: '12px 16px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', color: '#94a3b8', textAlign: 'left',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#f8fafc'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+              >
+                <FaUserCircle size={13} color="#64748b" />
+                Meu Perfil
+              </button>
+
 
               {/* Trocar Senha */}
               <button

@@ -9,12 +9,6 @@ import {
     calculoCardsRendimento
 } from '../services/rendimentos.services.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONTROLLER — rendimentos
-// Responsabilidade: extrair dados da requisição, chamar o service
-// e devolver a resposta HTTP. Sem regras de negócio e sem queries.
-// ─────────────────────────────────────────────────────────────────────────────
-
 //#region Listar rendimentos
 async function listarRendimentosController(req, res) {
     try {
@@ -116,17 +110,43 @@ async function getCardsRendimentos(req, res) {
         const idUser = req.user.id;
         const { mes, ano, idAtivo } = req.body;
 
+<<<<<<< Updated upstream
         const cards = await calculoCardsRendimento(mes, ano, idAtivo, idUser);
+=======
+        // Sanitiza mes: null, undefined, 'Todos', 0 ou NaN → null (busca o ano inteiro)
+        const mesSanitizado =
+            mes == null || mes === '' || mes === 'Todos' || isNaN(Number(mes))
+                ? null
+                : Number(mes);
 
-        return apiResponse.success(res, 'Dados dos cards calculados com sucesso.', cards);
+        // Sanitiza idAtivo: null, undefined, 'Todos' ou string vazia → null
+        const idAtivoSanitizado =
+            idAtivo == null || idAtivo === '' || idAtivo === 'Todos'
+                ? null
+                : Number(idAtivo);
+
+        // Sanitiza ano para número
+        const anoSanitizado = ano != null ? Number(ano) : null;
+
+        // Chama o service para calcular os dados dos cards
+        const cards = await calculoCardsRendimento(mesSanitizado, anoSanitizado, idAtivoSanitizado);
+>>>>>>> Stashed changes
+
+        //
+        return apiResponse.success(res,
+            'Dados dos cards calculados com sucesso.', cards);
     }
+    //caso ocorra algum erro, retorna a mensagem de erro
     catch (error) {
         return apiResponse.error(res, error.message);
     }
 }
 //#endregion
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 export {
     listarRendimentosController,
     carregarGraficoDashboardController,

@@ -1,11 +1,5 @@
 import { openDb } from '../config/configDb.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REPOSITÓRIO — rendimentos
-// Responsabilidade: apenas executar queries no banco de dados.
-// Nenhuma regra de negócio aqui.
-// ─────────────────────────────────────────────────────────────────────────────
-
 //#region Listar rendimentos por ano (e opcionalmente por mês)
 async function findRendimentos({ mes, ano, idUser }) {
 
@@ -21,8 +15,7 @@ async function findRendimentos({ mes, ano, idUser }) {
             b.ticker,
             c."nomeSeguimento",
             a."valorRecebido"
-        FROM rendimentos a
-        INNER JOIN ativos b
+        FROM rendimentos a INNER JOIN ativos b
             ON a."idAtivo" = b.id
         INNER JOIN seguimentos c
             ON c.id = b."idSeguimento"
@@ -30,18 +23,47 @@ async function findRendimentos({ mes, ano, idUser }) {
             a."idUser" = $1 AND
             EXTRACT(YEAR FROM a."dtRendimento") = $2
     `;
+<<<<<<< Updated upstream
     const params = [idUser, ano];
 
     // Adiciona filtro de mês somente quando informado (não é null, undefined ou "Todos")
     if (mes && mes !== 'Todos') {
+=======
+
+    // Prepara os parâmetros da query
+    const params = [ano];
+
+    // Adiciona filtro de mês somente quando informado (null = todos os meses)
+    if (mes !== null && mes !== undefined && mes !== 'Todos') {
+
+        // Adiciona filtro de mês à query e ao array de parâmetros
+>>>>>>> Stashed changes
         query += ` AND EXTRACT(MONTH FROM a."dtRendimento") = $${params.length + 1} `;
+
+        //inclui o mês no array de parâmetros
         params.push(mes);
     }
 
+<<<<<<< Updated upstream
+=======
+    // Adiciona filtro de ativo somente quando informado
+    if (idAtivo) {
+
+        // Adiciona filtro de ativo à query e ao array de parâmetros
+        query += ` AND a."idAtivo" = $${params.length + 1} `;
+
+        //inclui o id do ativo no array de parâmetros
+        params.push(idAtivo);
+    }
+
+    //finaliza query ordenando
+>>>>>>> Stashed changes
     query += ` ORDER BY a."dtRendimento" DESC `;
 
-    // Executa a query e retorna as linhas
+    // Executa a query 
     const result = await db.query(query, params);
+
+    // Retorna os rendimentos encontrados (array de objetos)
     return result.rows;
 }
 //#endregion
@@ -55,11 +77,16 @@ async function findDadosGraficoDashboard({ ano, idUser }) {
     // Total de rendimentos agrupado por mês do ano informado
     const detalheMensal = await db.query(`
         SELECT
-            EXTRACT(MONTH FROM "dtRendimento") AS mes,
-            EXTRACT(YEAR  FROM "dtRendimento") AS ano,
-            SUM("valorRecebido")               AS "totalRendimento"
+            EXTRACT(MONTH FROM "dtRendimento") mes,
+            EXTRACT(YEAR  FROM "dtRendimento") ano,
+            SUM("valorRecebido") "totalRendimento"
         FROM rendimentos
+<<<<<<< Updated upstream
         WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = $2
+=======
+        WHERE 
+            EXTRACT(YEAR FROM "dtRendimento") = $1
+>>>>>>> Stashed changes
         GROUP BY
             EXTRACT(YEAR  FROM "dtRendimento"),
             EXTRACT(MONTH FROM "dtRendimento")
@@ -69,8 +96,8 @@ async function findDadosGraficoDashboard({ ano, idUser }) {
     // Total de rendimentos agrupado por ano (todos os anos do usuário)
     const detalheAnual = await db.query(`
         SELECT
-            EXTRACT(YEAR FROM "dtRendimento") AS ano,
-            SUM("valorRecebido")              AS "totalRendimento"
+            EXTRACT(YEAR FROM "dtRendimento") ano,
+            SUM("valorRecebido") "totalRendimento"
         FROM rendimentos
         WHERE "idUser" = $1
         GROUP BY
@@ -95,11 +122,16 @@ async function findComparacaoAnual({ anos, idUser }) {
     // Agrupa rendimentos por mês/ano filtrando apenas os anos solicitados
     const result = await db.query(`
         SELECT
-            EXTRACT(MONTH FROM "dtRendimento") AS mes,
-            EXTRACT(YEAR  FROM "dtRendimento") AS ano,
-            SUM("valorRecebido")               AS "totalRendimento"
+            EXTRACT(MONTH FROM "dtRendimento") mes,
+            EXTRACT(YEAR  FROM "dtRendimento") ano,
+            SUM("valorRecebido") "totalRendimento"
         FROM rendimentos
+<<<<<<< Updated upstream
         WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = ANY($2::int[])
+=======
+        WHERE 
+            EXTRACT(YEAR FROM "dtRendimento") = ANY($1::int[])
+>>>>>>> Stashed changes
         GROUP BY ano, mes
         ORDER BY ano, mes;
     `, [idUser, anos.map(Number)]);
@@ -117,17 +149,17 @@ async function findAtivosParaModal(idUser) {
     // Busca todos os ativos do usuário com seus respectivos segmentos
     const result = await db.query(`
         SELECT
-            a.id           AS "idAtivo",
+            a.id  "idAtivo",
             a.ticker,
-            b.id           AS "idSeguimento",
+            b.id "idSeguimento",
             b."nomeSeguimento"
-        FROM ativos a
-        INNER JOIN seguimentos b
+        FROM ativos a INNER JOIN seguimentos b
             ON a."idSeguimento" = b.id
         WHERE a."idUser" = $1
         ORDER BY a.ticker ASC;
     `, [idUser]);
 
+    //retorna a lista de ativos com seus segmentos
     return result.rows;
 }
 //#endregion
@@ -174,7 +206,7 @@ async function getRendimentosFiltro(mes, ano, idAtivo, idUser) {
     //passa a query
     const result = await db.query(`
         SELECT 
-            SUM("valorRecebido") AS "totalPeriodo"
+            SUM("valorRecebido") "totalPeriodo"
         FROM rendimentos
         WHERE 
             "idUser" = $1 AND
@@ -197,7 +229,7 @@ async function getTotalAcumulado(idUser) {
     //passa a query
     const result = await db.query(`
          SELECT 
-            SUM("valorRecebido") AS "valorTotalRecebido"
+            SUM("valorRecebido") "valorTotalRecebido"
         FROM rendimentos
         WHERE "idUser" = $1
     `, [idUser]);
@@ -215,7 +247,7 @@ async function getTotalCompras(idUser) {
     //passa a query
     const result = await db.query(`
         SELECT 
-            SUM(preco * quantidade) AS "totalInvestido"
+            SUM(preco * quantidade) "totalInvestido"
         FROM operacoes
         WHERE tipo = 'Compra' AND "idUser" = $1
     `, [idUser]);
@@ -232,7 +264,7 @@ async function getTotalReinvestido(idUser) {
     // passa a query
     const result = await db.query(`
          SELECT 
-            SUM("valorRecebido") AS "totalReinvestido"
+            SUM("valorRecebido") "totalReinvestido"
         FROM rendimentos
         WHERE reinvestido = 'True' AND "idUser" = $1
     `, [idUser]);

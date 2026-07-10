@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toastSuccess, toastWarn, handleError } from '../../utils/responseUtils';
-import api from '../../config/api';
+import { authService } from '../../services/auth/authService';
 import {
   FiMail, FiLock, FiEye, FiEyeOff,
   FiTrendingUp, FiBarChart2, FiPieChart,
@@ -25,10 +25,7 @@ function Login({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     try {
-      // O interceptor do api.js já extrai o "data" do envelope { success, message, data }
-      // Então res.data aqui já é direto: { token, usuario }
-      const res = await api.post('/auth/login', { email, password });
-      const { token, usuario } = res.data;
+      const { token, usuario } = await authService.login({ email, password });
 
       localStorage.setItem('token', token);
 
