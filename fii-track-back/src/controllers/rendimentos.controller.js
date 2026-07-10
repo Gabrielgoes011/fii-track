@@ -110,9 +110,6 @@ async function getCardsRendimentos(req, res) {
         const idUser = req.user.id;
         const { mes, ano, idAtivo } = req.body;
 
-<<<<<<< Updated upstream
-        const cards = await calculoCardsRendimento(mes, ano, idAtivo, idUser);
-=======
         // Sanitiza mes: null, undefined, 'Todos', 0 ou NaN → null (busca o ano inteiro)
         const mesSanitizado =
             mes == null || mes === '' || mes === 'Todos' || isNaN(Number(mes))
@@ -128,9 +125,7 @@ async function getCardsRendimentos(req, res) {
         // Sanitiza ano para número
         const anoSanitizado = ano != null ? Number(ano) : null;
 
-        // Chama o service para calcular os dados dos cards
-        const cards = await calculoCardsRendimento(mesSanitizado, anoSanitizado, idAtivoSanitizado);
->>>>>>> Stashed changes
+        const cards = await calculoCardsRendimento(mesSanitizado, anoSanitizado, idAtivoSanitizado, idUser);
 
         //
         return apiResponse.success(res,
@@ -143,10 +138,6 @@ async function getCardsRendimentos(req, res) {
 }
 //#endregion
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 export {
     listarRendimentosController,
     carregarGraficoDashboardController,

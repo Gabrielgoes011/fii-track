@@ -1,79 +1,46 @@
 # Análise do Projeto FIITrack — Backlog, Débitos Técnicos e Roadmap
 
-> Documento gerado em 09/07/2026. Serve como referência consolidada do estado atual
-> do sistema, o que falta migrar para o padrão de 3 camadas e o que precisa ser
-> implementado ou corrigido.
+> Atualizado em 09/07/2026 após merge da branch gabriel-Dev01.
 
 ---
 
-## 1. Mudança de Conceito — Multi-usuário
+## 1. Conceito Multi-usuário — ✅ Implementado
 
-### Decisão arquitetural
+O sistema já opera em modo **multi-usuário real**. Cada usuário logado vê
+apenas seus próprios dados. A implementação está presente em todas as camadas:
 
-A partir de agora o sistema passa a ser **multi-usuário real**:
+### O que já foi feito
 
-- Cada usuário logado vê **apenas seus próprios dados**
-  (rendimentos, operações, ativos cadastrados por ele)
-- A tela de **cadastro e listagem de usuários** passa a ser
-  **exclusiva do perfil Admin**
-- Usuários comuns não terão acesso ao módulo de gestão de usuários
-
-### O que isso implica
-
-#### Back-end
-
-| Onde mudar | O que fazer |
-|---|---|
-| `verificaToken.js` | Já decodifica o token e injeta `req.user` com `id` — base já existe |
-| Todas as queries de dados (rendimentos, operações, ativos) | Adicionar filtro `WHERE "idUser" = $1` usando `req.user.id` |
-| Rotas de usuários (`/users`, `/usuario/cadastrar`, etc.) | Adicionar middleware `verificaAdmin` que checa `req.user.perfil === 'admin'` |
-| Tabela `usuarios` | Adicionar coluna `perfil VARCHAR DEFAULT 'user'` para distinguir admin/user |
-
-#### Front-end
-
-| Onde mudar | O que fazer |
-|---|---|
-| Menu lateral / sidebar | Ocultar item "Usuários" quando o perfil não for admin |
-| Página de usuários | Redirecionar para home se não for admin |
-| `localStorage` / contexto | Armazenar `perfil` do usuário após o login para uso nas guards de rota |
-
-#### Banco de dados
-
-```sql
--- Adicionar coluna de perfil na tabela de usuários
-ALTER TABLE usuarios
-ADD COLUMN perfil VARCHAR(20) NOT NULL DEFAULT 'user';
-
--- Definir o primeiro usuário como admin
-UPDATE usuarios SET perfil = 'admin' WHERE id = 1;
-
--- Adicionar idUser nas tabelas de dados (se ainda não existir)
--- (verificar se ativos, rendimentos e operações já têm idUser)
-```
-
----
-
-## 2. Rotas sem Autenticação — Bugs de Segurança
-
-Rotas que **deveriam ter `verificaToken`** mas estão abertas:
-
-| Rota | Problema | Ação |
+| Camada | Status | Detalhe |
 |---|---|---|
-| `DELETE /rendimentos/:id` | Qualquer um pode deletar rendimentos sem login | Adicionar `verificaToken` na rota |
-| `POST /cardsRendimentos` | Dados de KPIs expostos sem autenticação | Adicionar `verificaToken` na rota |
+| `verificaToken.js` | ✅ | Decodifica o JWT e injeta `req.user` (com `id`) em toda requisição protegida |
+| `rendimentos.repositories.js` | ✅ | Todas as queries filtram por `"idUser"` |
+| `meuFundos.repositories.js` | ✅ | `listar`, `cadastrar` e `contar` filtram/gravam com `idUser` |
+| `rendimentos.controller.js` | ✅ | Extrai `req.user.id` e passa para o service em todas as funções |
+| `meusFundos.controller.js` | ✅ | Passa `idUser` para o service |
+| `rendimentos.services.js` | ✅ | Repassa `idUser` para o repositório |
+| Rotas de rendimentos | ✅ | `DELETE /rendimentos/:id` e `POST /cardsRendimentos` agora têm `verificaToken` |
+| Rota `POST /criarRendimento` | ✅ | Nova rota de lançamento de rendimento implementada |
 
-**Ação imediata** — ajustar `rendimentos.routes.js`:
+### O que ainda falta para completar o multi-usuário
 
-```js
-router.delete('/rendimentos/:id', verificaToken, deleteRendimentoController);
-router.post('/cardsRendimentos', verificaToken, getCardsRendimentos);
-```
+| Módulo | O que falta |
+|---|---|
+| **Operações** | Queries de `listarOperacoes`, `lancarOperacao`, `excluirOperacao` e `carregaDadosGraficoOperacoes` ainda **não filtram por `idUser`** |
+| **Seguimentos** | Seguimentos hoje são globais — decidir se serão por usuário ou continuarão globais |
+| **Admin** | Criar coluna `perfil` na tabela `usuarios` e middleware `verificaAdmin` para proteger rotas de gestão de usuários |
 
 ---
 
-## 3. Migração para 3 Camadas — Débitos Técnicos
+## 2. Conflitos de Merge Resolvidos
 
-### Status por módulo
+O arquivo `rendimentos.repositories.js` e `rendimentos.controller.js` tinham
+marcadores de conflito git (`<<<<<<< Updated upstream` / `>>>>>>> Stashed changes`)
+que foram resolvidos mantendo a versão com `idUser` (branch gabriel-Dev01).
+
+---
+
+## 3. Migração para 3 Camadas — Status Atual
 
 | Módulo | Controller | Service | Repository | Status |
 |---|---|---|---|---|
@@ -83,66 +50,48 @@ router.post('/cardsRendimentos', verificaToken, getCardsRendimentos);
 | Meus FIIs | ✅ | ✅ | ✅ | Completo |
 | Rendimentos | ✅ | ✅ | ✅ | Completo |
 | Operações KPIs | ✅ | ✅ | ✅ | Completo |
-| **Seguimentos** | ❌ acesso direto | ❌ não existe | ❌ não existe | **Não migrado** |
-| **Operações (CRUD)** | ❌ acesso direto | ❌ não existe | ❌ não existe | **Não migrado** |
-
----
+| **Seguimentos** | ❌ acesso direto | ❌ não existe | ❌ não existe | Não migrado |
+| **Operações CRUD** | ❌ acesso direto | ❌ não existe | ❌ não existe | Não migrado |
 
 ### 3.1 Seguimentos — Não migrado
 
-**Situação:** `seguimentos.controller.js` acessa o banco com `openDb()` direto em todas as funções.
+`seguimentos.controller.js` acessa o banco com `openDb()` direto em todas as funções.
 Não existe `seguimentos.services.js` nem `seguimentos.repositories.js`.
 
-**Funções a migrar:**
-
-| Função atual (controller) | Mover para service | Mover para repository |
+| Função | Para service | Para repository |
 |---|---|---|
-| Validação de campo vazio | `seguimentos.services.js` | — |
-| Check de duplicata (`nomeSeguimento`) | `seguimentos.services.js` | `seguimentos.repositories.js` |
+| Validação de campo vazio / duplicata | `seguimentos.services.js` | — |
 | `listarSeguimentos` | `listarSeguimentos()` | `findSeguimentos()` |
 | `contarSeguimentos` | `contarSeguimentos()` | `countSeguimentos()` |
 | `cadastrarSeguimento` | `cadastrarSeguimento()` | `insertSeguimento()` |
 | `deleteSeguimento` | `excluirSeguimento()` | `deleteSeguimento()` |
 | `updateSeguimento` | `atualizarSeguimento()` | `updateSeguimento()` |
 
----
+### 3.2 Operações CRUD — Não migrado
 
-### 3.2 Operações (CRUD) — Não migrado
+`operacoes.controller.js` ainda acessa o banco diretamente para todas as operações de CRUD.
+O `operacoes.repositories.js` e `operacoes.services.js` existem mas cobrem apenas os KPIs.
 
-**Situação:** `operacoes.controller.js` tem todas as funções acessando o banco diretamente.
-O `operacoes.repositories.js` criado recentemente tem apenas `findKpisOperacoes`.
-O `operacoes.services.js` criado recentemente tem apenas `carregarKpisOperacoes`.
-
-**Funções a migrar:**
-
-| Função atual (controller) | Mover para service | Mover para repository |
+| Função | Para service | Para repository |
 |---|---|---|
 | `carregaAtivosDropList` | `carregarAtivosDropdown()` | `findAtivosDropdown()` |
-| `listarOperacoes` | `listarOperacoes()` | `findOperacoes()` |
-| `lancarOperacao` | `lancarOperacao()` — com validação de ativo existente | `insertOperacao()` |
-| `carregaDadosGraficoOperacoes` | `carregarGraficoOperacoes()` | `findGraficoOperacoes()` |
-| `excluirOperacao` | `excluirOperacao()` | `deleteOperacao()` |
-
----
+| `listarOperacoes` | `listarOperacoes()` + filtro `idUser` | `findOperacoes({ idUser })` |
+| `lancarOperacao` | `lancarOperacao()` + grava `idUser` | `insertOperacao()` |
+| `carregaDadosGraficoOperacoes` | `carregarGraficoOperacoes()` + filtro `idUser` | `findGraficoOperacoes({ idUser })` |
+| `excluirOperacao` | `excluirOperacao()` + verifica `idUser` | `deleteOperacao({ id, idUser })` |
 
 ### 3.3 Usuários — Parcialmente migrado
 
-**Funções já migradas:** `listarUsuarios`, `contarUsuarios`, `cadastrarUser`, `onOffUserController`
+**Migradas:** `listarUsuarios`, `contarUsuarios`, `cadastrarUser`, `onOffUserController`
 
-**Funções ainda com acesso direto (e fora das rotas):**
-
-| Função | Situação | Ação |
-|---|---|---|
-| `atualizarUser` | Acessa banco direto, comentário "NÃO MIGRADO" | Migrar para service/repository e expor na rota |
-| `deleteUser` | Acessa banco direto com transação manual | Migrar para repository com transação |
-
----
-
-### 3.4 Resquícios a limpar
-
-| Arquivo | Problema |
+| Função | Situação |
 |---|---|
-| `meusFundos.controller.js` | `import { openDb }` presente mas não usado — pode remover |
+| `atualizarUser` | Acessa banco direto, marcada como "NÃO MIGRADO", fora das rotas |
+| `deleteUser` | Acessa banco direto com transação manual, fora das rotas |
+
+### 3.4 Resquício a limpar
+
+`meusFundos.controller.js` tem `import { openDb }` que não é mais usado — pode remover.
 
 ---
 
@@ -150,110 +99,84 @@ O `operacoes.services.js` criado recentemente tem apenas `carregarKpisOperacoes`
 
 | Módulo | Funcionalidade | Status | Observação |
 |---|---|---|---|
-| Seguimentos | Editar seguimento | ⚠️ Em desenvolvimento | `handleEdit` e `handleUpdateSeguimento` no hook retornam apenas um toast informativo — a lógica está comentada |
-| Usuários | Editar usuário | ⚠️ Em desenvolvimento | `handleUpdateUser` e `handleEdit` no hook retornam apenas toast informativo |
-| Usuários | Resetar senha | ⚠️ Em desenvolvimento | `handleOpenModal(user, 'reset')` apenas mostra toast "será implementado em breve" |
+| Seguimentos | Editar seguimento | ⚠️ Em desenvolvimento | Lógica comentada no hook, retorna só toast |
+| Usuários | Editar usuário | ⚠️ Em desenvolvimento | Retorna só toast informativo |
+| Usuários | Resetar senha | ⚠️ Em desenvolvimento | Retorna só toast "será implementado em breve" |
 
 ---
 
-## 5. Padrão de Service nos Hooks — Inconsistências
-
-Dois arquivos no front chamam a API diretamente em vez de usar um service dedicado:
-
-| Arquivo | Problema |
-|---|---|
-| `pages/login/login.jsx` | Chama `api.post('/auth/login')` direto, sem `authService` |
-| `hooks/home/useHomeCards.jsx` | Chama `api.get('/home/cards')` direto, sem `homeService` |
-
-**Ideal:** criar `authService.jsx` e `homeService.jsx` para centralizar as chamadas, seguindo o padrão dos demais módulos.
-
----
-
-## 6. Backlog Geral — Funcionalidades Pendentes
+## 5. Backlog Geral
 
 ### Alta Prioridade
 
-- [ ] **Filtro por usuário em todas as queries** — implementar conceito multi-usuário
-  (rendimentos, operações e ativos filtrados pelo `idUser` do token)
-- [ ] **Middleware `verificaAdmin`** — criar e aplicar nas rotas de gestão de usuários
-- [ ] **Coluna `perfil` na tabela `usuarios`** — `ALTER TABLE`
-- [ ] **Corrigir rotas sem `verificaToken`** — `DELETE /rendimentos/:id` e `POST /cardsRendimentos`
-- [ ] **Lançar rendimento** — rota `POST /rendimentos/lancar` citada no README mas não existe
+- [ ] **Migrar Operações CRUD para 3 camadas** + adicionar filtro `idUser` em todas as queries
+- [ ] **Coluna `perfil` na tabela `usuarios`** + middleware `verificaAdmin`
+- [ ] **Ocultar menu "Usuários" no front para não-admins** + guard de rota
 
 ### Média Prioridade
 
-- [ ] **Migrar Seguimentos para 3 camadas** (controller + service + repository)
-- [ ] **Migrar Operações CRUD para 3 camadas** (operacoes.services + operacoes.repositories)
+- [ ] **Migrar Seguimentos para 3 camadas**
 - [ ] **Implementar edição de seguimento** (front + back)
-- [ ] **Implementar edição de usuário** (front — lógica já existe no back)
+- [ ] **Implementar edição de usuário** (front — back já tem a query)
 - [ ] **Implementar reset de senha** (front + back)
-- [ ] **Implementar `atualizarUser` e `deleteUser` migrados** e expor nas rotas
-- [ ] **Coluna `reinvestido` na tabela `operacoes`** — `ALTER TABLE operacoes ADD COLUMN reinvestido BOOLEAN NOT NULL DEFAULT false`
+- [ ] **Migrar `atualizarUser` e `deleteUser`** e expor nas rotas
+- [ ] **Coluna `reinvestido` na tabela `operacoes`**
+
+```sql
+ALTER TABLE operacoes
+ADD COLUMN reinvestido BOOLEAN NOT NULL DEFAULT false;
+```
 
 ### Baixa Prioridade / Melhorias
 
-- [ ] **Criar `authService.jsx`** no front para encapsular chamada de login
-- [ ] **Criar `homeService.jsx`** no front para encapsular chamada do dashboard
-- [ ] **Remover `import { openDb }`** desnecessário do `meusFundos.controller.js`
-- [ ] **Paginação nas rotas de listagem** (`/users`, `/operacoes`, `/rendimentos`)
-- [ ] **Upload de extrato em lote** (multer + S3 já configurados no back)
-- [ ] **Rota de refresh de token JWT**
-- [ ] **Endpoint de relatório consolidado por período**
-- [ ] **Posição consolidada da carteira** (preço médio, quantidade, valor atual)
-- [ ] **Integração com API externa** para cotação em tempo real dos FIIs
-- [ ] **Testes automatizados** (unitários e integração)
-- [ ] **Dockerização**
-- [ ] **Documentação Swagger / OpenAPI**
+- [ ] Remover `import { openDb }` desnecessário do `meusFundos.controller.js`
+- [ ] Paginação nas rotas de listagem (`/users`, `/operacoes`, `/rendimentos`)
+- [ ] Upload de extrato em lote (multer + S3 já configurados)
+- [ ] Rota de refresh de token JWT
+- [ ] Endpoint de relatório consolidado por período
+- [ ] Posição consolidada da carteira (preço médio, quantidade, valor atual)
+- [ ] Integração com API externa para cotação em tempo real
+- [ ] Testes automatizados
+- [ ] Dockerização
+- [ ] Documentação Swagger / OpenAPI
 
 ---
 
-## 7. Banco de Dados — Alterações Pendentes
+## 6. Banco de Dados — Alterações Pendentes
 
 ```sql
--- 1. Perfil do usuário (para controle admin/user)
+-- 1. Perfil do usuário (admin/user)
 ALTER TABLE usuarios
 ADD COLUMN perfil VARCHAR(20) NOT NULL DEFAULT 'user';
 
--- Definir admins manualmente
 UPDATE usuarios SET perfil = 'admin' WHERE id = <id_do_admin>;
 
--- 2. Flag de reinvestimento nas operações (para KPIs de rendimentos)
+-- 2. Flag de reinvestimento nas operações
 ALTER TABLE operacoes
 ADD COLUMN reinvestido BOOLEAN NOT NULL DEFAULT false;
-
--- 3. Verificar se ativos, rendimentos e operações têm idUser
--- (necessário para o conceito multi-usuário)
--- Se não tiverem:
--- ALTER TABLE rendimentos ADD COLUMN "idUser" INTEGER REFERENCES usuarios(id);
--- ALTER TABLE operacoes   ADD COLUMN "idUser" INTEGER REFERENCES usuarios(id);
--- ALTER TABLE ativos      ADD COLUMN "idUser" INTEGER REFERENCES usuarios(id);
 ```
 
 ---
 
-## 8. Resumo Visual — O que está pronto e o que falta
+## 7. Resumo Visual
 
 ```
 BACK-END
 ├── ✅ Login (auth)
 ├── ✅ Home/Dashboard
-├── ✅ Usuários (parcial — falta editar e deletar migrados)
-├── ✅ Meus FIIs
-├── ✅ Rendimentos (completo + KPIs)
+├── ✅ Usuários (parcial — falta editar/deletar migrados + verificaAdmin)
+├── ✅ Meus FIIs (multi-usuário implementado)
+├── ✅ Rendimentos (completo — multi-usuário + KPIs + lançamento)
 ├── ✅ Operações KPIs (GET /kpis-operacoes)
-├── ❌ Seguimentos — acesso direto, sem service/repository
-├── ❌ Operações CRUD — acesso direto, sem service/repository
-├── ❌ Filtro por idUser nas queries (multi-usuário)
-└── ❌ Middleware verificaAdmin
+├── ⚠️ Operações CRUD — sem 3 camadas e sem filtro idUser
+└── ⚠️ Seguimentos — sem 3 camadas (decisão: global ou por usuário?)
 
 FRONT-END
-├── ✅ Login
-├── ✅ Dashboard
+├── ✅ Login (authService criado)
+├── ✅ Dashboard (homeService criado)
 ├── ✅ Usuários (parcial — editar/resetar não implementados)
 ├── ✅ Meus FIIs
 ├── ✅ Seguimentos (parcial — editar não implementado)
 ├── ✅ Operações
-├── ✅ Rendimentos (com 4 KPIs)
-├── ⚠️ login.jsx chama API direto (sem authService)
-└── ⚠️ useHomeCards.jsx chama API direto (sem homeService)
+└── ✅ Rendimentos (4 KPIs)
 ```

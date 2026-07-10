@@ -23,29 +23,19 @@ async function findRendimentos({ mes, ano, idUser }) {
             a."idUser" = $1 AND
             EXTRACT(YEAR FROM a."dtRendimento") = $2
     `;
-<<<<<<< Updated upstream
+    // Prepara os parâmetros da query — primeiro o idUser, depois o ano
     const params = [idUser, ano];
-
-    // Adiciona filtro de mês somente quando informado (não é null, undefined ou "Todos")
-    if (mes && mes !== 'Todos') {
-=======
-
-    // Prepara os parâmetros da query
-    const params = [ano];
 
     // Adiciona filtro de mês somente quando informado (null = todos os meses)
     if (mes !== null && mes !== undefined && mes !== 'Todos') {
 
         // Adiciona filtro de mês à query e ao array de parâmetros
->>>>>>> Stashed changes
         query += ` AND EXTRACT(MONTH FROM a."dtRendimento") = $${params.length + 1} `;
 
         //inclui o mês no array de parâmetros
         params.push(mes);
     }
 
-<<<<<<< Updated upstream
-=======
     // Adiciona filtro de ativo somente quando informado
     if (idAtivo) {
 
@@ -57,7 +47,6 @@ async function findRendimentos({ mes, ano, idUser }) {
     }
 
     //finaliza query ordenando
->>>>>>> Stashed changes
     query += ` ORDER BY a."dtRendimento" DESC `;
 
     // Executa a query 
@@ -81,12 +70,7 @@ async function findDadosGraficoDashboard({ ano, idUser }) {
             EXTRACT(YEAR  FROM "dtRendimento") ano,
             SUM("valorRecebido") "totalRendimento"
         FROM rendimentos
-<<<<<<< Updated upstream
         WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = $2
-=======
-        WHERE 
-            EXTRACT(YEAR FROM "dtRendimento") = $1
->>>>>>> Stashed changes
         GROUP BY
             EXTRACT(YEAR  FROM "dtRendimento"),
             EXTRACT(MONTH FROM "dtRendimento")
@@ -126,12 +110,7 @@ async function findComparacaoAnual({ anos, idUser }) {
             EXTRACT(YEAR  FROM "dtRendimento") ano,
             SUM("valorRecebido") "totalRendimento"
         FROM rendimentos
-<<<<<<< Updated upstream
         WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtRendimento") = ANY($2::int[])
-=======
-        WHERE 
-            EXTRACT(YEAR FROM "dtRendimento") = ANY($1::int[])
->>>>>>> Stashed changes
         GROUP BY ano, mes
         ORDER BY ano, mes;
     `, [idUser, anos.map(Number)]);
