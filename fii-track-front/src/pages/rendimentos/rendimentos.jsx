@@ -5,7 +5,8 @@ import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
 import { toastSuccess, toastInfo } from '../../utils/responseUtils';
 import { toast } from 'react-toastify';
 import { DataCard } from '../../components/DataCard';
-import { FiPlus, FiTrash2, FiUpload } from 'react-icons/fi';
+import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmacao';
+import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle } from 'react-icons/fi';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MESES = [
@@ -22,6 +23,28 @@ const MOBILE_BP = 768;
 
 const fmt = (v) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
+
+const foiReinvestido = (valor) =>
+  valor === true || valor === 1 || valor === '1' || String(valor).toLowerCase() === 'true';
+
+function BadgeReinvestido({ valor }) {
+  const reinvestido = foiReinvestido(valor);
+  const cor = reinvestido ? '#34d399' : '#94a3b8';
+  const fundo = reinvestido ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.08)';
+  const borda = reinvestido ? 'rgba(16,185,129,0.25)' : 'rgba(148,163,184,0.18)';
+  const Icone = reinvestido ? FiRepeat : FiMinusCircle;
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px',
+      borderRadius: '999px', fontSize: '11px', fontWeight: 700,
+      color: cor, backgroundColor: fundo, border: `1px solid ${borda}`,
+    }}>
+      <Icone size={12} />
+      {reinvestido ? 'Reinvestido' : 'Não reinvestido'}
+    </span>
+  );
+}
 
 // ─── Estilos estáticos (fora do componente — não recriam a cada render) ───────
 const S = {
@@ -579,6 +602,7 @@ export default function PaginaRendimentos() {
     loadingCards,
     getCardsRendimentos,
     criarRendimento,
+    marcarComoReinvestido,
   } = useRendimentos();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
@@ -599,6 +623,8 @@ export default function PaginaRendimentos() {
 
   const [modalExclusao, setModalExclusao] = useState(false);
   const [rendimentoParaExcluir, setRendimentoParaExcluir] = useState(null);
+  const [modalReinvestir, setModalReinvestir] = useState(false);
+  const [rendimentoParaReinvestir, setRendimentoParaReinvestir] = useState(null);
 
   useEffect(() => {
     // idAtivo: 'Todos' → null (sem filtro); caso contrário busca o id pelo ticker
@@ -625,13 +651,14 @@ export default function PaginaRendimentos() {
 
   // Dados dos cards vindos do backend
   const cards = {
-    totalPeriodo:    cardsRendimentos?.totalPeriodo    ?? 0,
-    totalAcumulado:  cardsRendimentos?.totalAcumulado  ?? 0,
-    totalCompras:    cardsRendimentos?.totalCompras    ?? 0,
-    totalReinvestido:cardsRendimentos?.totalReinvestido?? 0,
-    aporteProprio:   cardsRendimentos?.aporteProprio   ?? 0,
-    yieldOnCost:     cardsRendimentos?.yieldOnCost     ?? 0,
-    percProprio:     cardsRendimentos?.percProprio     ?? 0,
+    totalPeriodo: cardsRendimentos?.totalPeriodo ?? 0,
+    totalAcumulado: cardsRendimentos?.totalAcumulado ?? 0,
+    totalCompras: cardsRendimentos?.totalCompras ?? 0,
+    totalReinvestido: cardsRendimentos?.totalReinvestido ?? 0,
+    aporteProprio: cardsRendimentos?.aporteProprio ?? 0,
+    yieldOnCost12Meses: cardsRendimentos?.yieldOnCost12Meses ?? 0,
+    retornoAcumulado: cardsRendimentos?.retornoAcumulado ?? 0,
+    percProprio: cardsRendimentos?.percProprio ?? 0,
     percReinvestido: cardsRendimentos?.percReinvestido ?? 0,
   };
 
@@ -668,6 +695,7 @@ export default function PaginaRendimentos() {
       idAtivo: dados.idAtivo,
       dtRendimento: dados.dtRendimento,
       valorRecebido: dados.valorRecebido,
+      reinvestido: dados.reinvestido,
     });
     if (ok) {
       toastSuccess('Rendimento lançado com sucesso!');
@@ -696,6 +724,30 @@ export default function PaginaRendimentos() {
     setModalExclusao(false);
     setRendimentoParaExcluir(null);
   };
+
+  const abrirModalReinvestir = (rendimento) => {
+    if (foiReinvestido(rendimento.reinvestido)) {
+      toastInfo('Este rendimento já está marcado como reinvestido.');
+      return;
+    }
+    setRendimentoParaReinvestir(rendimento);
+    setModalReinvestir(true);
+  };
+
+  const confirmarReinvestimento = () => {
+    if (!rendimentoParaReinvestir) return;
+    marcarComoReinvestido(rendimentoParaReinvestir.id);
+    toastSuccess('Rendimento marcado como reinvestido nesta sessão.');
+    setModalReinvestir(false);
+    setRendimentoParaReinvestir(null);
+  };
+
+  const fecharModalReinvestir = () => {
+    setModalReinvestir(false);
+    setRendimentoParaReinvestir(null);
+  };
+
+  const handleReinvestir = (rendimento) => abrirModalReinvestir(rendimento);
 
   const toggleAnoComp = (ano) =>
     setAnosComp(prev =>
@@ -746,19 +798,17 @@ export default function PaginaRendimentos() {
     {
       titulo: 'Data',
       acesso: 'dtRendimento',
-      width: '18%',
-      render: (val) => new Date(val).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+      width: '18%', render: (val) => new Date(val).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
     },
     {
       titulo: 'Ativo',
       acesso: 'ticker',
-      width: '15%',
-      render: (val) => <span style={S.tickerDesk}>{val}</span>,
+      width: '10%', render: (val) => <span style={S.tickerDesk}>{val}</span>,
     },
     {
       titulo: 'Segmento',
       acesso: 'nomeSeguimento',
-      width: '30%',
+      width: '20%',
       align: 'center',
       render: (val) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -772,6 +822,13 @@ export default function PaginaRendimentos() {
       width: '25%',
       align: 'center',
       render: (val) => <span className="vp" style={S.valorDesk}>{fmt(Number(val))}</span>,
+    },
+    {
+      titulo: 'Reinvestimento',
+      acesso: 'reinvestido',
+      width: '15%',
+      align: 'center',
+      render: (val) => <BadgeReinvestido valor={val} />,
     },
   ];
 
@@ -794,7 +851,7 @@ export default function PaginaRendimentos() {
                     {loadingCards ? '...' : fmt(cards.totalPeriodo)}
                   </p>
                 </div>
-                <p style={S.kpiSubInfo}>no período selecionado</p>
+                <p style={S.kpiSubInfo}>No período selecionado</p>
               </div>
 
               {/* Card 2 — Total Acumulado */}
@@ -805,7 +862,14 @@ export default function PaginaRendimentos() {
                     {loadingCards ? '...' : fmt(cards.totalAcumulado)}
                   </p>
                 </div>
-                <p style={S.kpiSubInfo}>desde o início</p>
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 700 }}>
+                    Retorno:
+                  </span>
+                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
+                    {loadingCards ? '...' : `${Number(cards.retornoAcumulado).toFixed(2)}%`}
+                  </span>
+                </div>
               </div>
 
               {/* Card 3 — Total Investido */}
@@ -817,24 +881,15 @@ export default function PaginaRendimentos() {
                   </p>
                 </div>
                 <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{
-                    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                    color: '#38bdf8',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
-                  }}>
-                    YoC
+                  <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 700 }}>
+                    YoC (12m)
                   </span>
                   <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
-                    {loadingCards ? '...' : `${Number(cards.yieldOnCost).toFixed(2)}% a.a`}
+                    {loadingCards ? '...' : `${Number(cards.yieldOnCost12Meses).toFixed(2)}% a.a.`}
                   </span>
                 </div>
               </div>
 
-              {/* Card 4 — Efeito Bola de Neve */}
               <div style={{ ...S.kpiCard, padding: kpiPadding, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={S.kpiLabelRoxo}>Efeito Bola de Neve</p>
@@ -842,7 +897,7 @@ export default function PaginaRendimentos() {
                     {loadingCards ? '...' : fmt(cards.totalReinvestido)}
                   </p>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                    gerado e reinvestido ({loadingCards ? '...' : `${Number(cards.percReinvestido).toFixed(1)}%`})
+                    Proventos reinvestidos ({loadingCards ? '...' : `${Number(cards.percReinvestido).toFixed(1)}%`})
                   </p>
                 </div>
                 <div style={{ marginTop: '12px' }}>
@@ -971,9 +1026,30 @@ export default function PaginaRendimentos() {
                             <span style={S.cardTicker}>{r.ticker}</span>
                             <span style={S.badgeSegmentoMobile}>{r.nomeSeguimento}</span>
                           </div>
-                          <button onClick={() => abrirModalExclusao(r)} style={S.btnLixeiraMobile}>
-                            <FiTrash2 size={14} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {!foiReinvestido(r.reinvestido) && (
+                              <button
+                                type="button"
+                                onClick={() => abrirModalReinvestir(r)}
+                                style={{
+                                  background: 'rgba(16,185,129,0.1)',
+                                  border: '1px solid rgba(16,185,129,0.2)',
+                                  borderRadius: '7px',
+                                  padding: '6px 8px',
+                                  cursor: 'pointer',
+                                  color: '#34d399',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                                title="Marcar como reinvestido"
+                              >
+                                <FiRepeat size={14} />
+                              </button>
+                            )}
+                            <button onClick={() => abrirModalExclusao(r)} style={S.btnLixeiraMobile}>
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
                         </div>
 
                         <div style={S.cardLinha2}>
@@ -983,6 +1059,9 @@ export default function PaginaRendimentos() {
                           <span className="vp" style={S.cardValor}>
                             + {fmt(Number(r.valorRecebido))}
                           </span>
+                        </div>
+                        <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                          <BadgeReinvestido valor={r.reinvestido} />
                         </div>
                       </div>
                     ))}
@@ -1055,6 +1134,8 @@ export default function PaginaRendimentos() {
                 coluna={colunasHistorico}
                 data={loading ? [] : filtrados}
                 itemsPerPage={10}
+                usaReinvestir
+                acaoReinvestir={abrirModalReinvestir}
                 usaExcluir
                 acaoExcluir={abrirModalExclusao}
               />
@@ -1212,6 +1293,16 @@ export default function PaginaRendimentos() {
               </div>
             </div>
           </div>
+        )}
+
+        {modalReinvestir && rendimentoParaReinvestir && (
+          <ModalConfirmacao
+            isOpen={modalReinvestir}
+            onClose={fecharModalReinvestir}
+            onConfirm={confirmarReinvestimento}
+            action="reinvestir"
+            userName={rendimentoParaReinvestir.ticker}
+          />
         )}
       </div>
     </>

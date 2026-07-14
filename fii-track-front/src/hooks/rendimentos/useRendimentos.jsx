@@ -8,7 +8,7 @@ export const useRendimentos = () => {
   const [detalheMensal,    setDetalheMensal]    = useState([]); // [{ mes, ano, totalRendimento }]
   const [detalheAnual,     setDetalheAnual]     = useState([]); // [{ ano, totalRendimento }]
   const [comparacaoAnual,  setComparacaoAnual]  = useState([]); // [{ mes, ano, totalRendimento }]
-  const [cardsRendimentos, setCardsRendimentos] = useState(null); // { totalPeriodo, totalAcumulado, totalCompras, totalReinvestido, aporteProprio, yieldOnCost, percProprio, percReinvestido }
+  const [cardsRendimentos, setCardsRendimentos] = useState(null); // { totalPeriodo, totalAcumulado, totalAcumulado12Meses, totalCompras, totalReinvestido, aporteProprio, yieldOnCost12Meses, retornoAcumulado, percProprio, percReinvestido }
   const [loading,          setLoading]          = useState(false);
   const [loadingGrafico,   setLoadingGrafico]   = useState(false);
   const [loadingComp,      setLoadingComp]      = useState(false);
@@ -58,9 +58,9 @@ export const useRendimentos = () => {
   }, []);
 
   // Cria um novo rendimento
-  const criarRendimento = useCallback(async ({ idAtivo, dtRendimento, valorRecebido }) => {
+  const criarRendimento = useCallback(async ({ idAtivo, dtRendimento, valorRecebido, reinvestido }) => {
     try {
-      await rendimentosService.criarRendimento({ idAtivo, dtRendimento, valorRecebido });
+      await rendimentosService.criarRendimento({ idAtivo, dtRendimento, valorRecebido, reinvestido });
       return true;
     } catch (error) {
       handleError(error);
@@ -102,6 +102,13 @@ export const useRendimentos = () => {
     }
   }, []);
 
+  // Atualiza apenas o estado local até existir uma rota específica para persistir o reinvestimento.
+  const marcarComoReinvestido = useCallback((id) => {
+    setRendimentos((prev) => prev.map((item) =>
+      String(item.id) === String(id) ? { ...item, reinvestido: true } : item
+    ));
+  }, []);
+
   return {
     rendimentos,
     detalheMensal,
@@ -119,5 +126,6 @@ export const useRendimentos = () => {
     getCardsRendimentos,
     criarRendimento,
     deleteRendimento,
+    marcarComoReinvestido,
   };
 };

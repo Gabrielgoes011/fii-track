@@ -11,10 +11,11 @@ async function findRendimentos({ mes, ano, idUser, idAtivo }) {
         SELECT
             a.id,
             a."dtRendimento",
-            b.id   AS "idAtivo",
+            b.id "idAtivo",
             b.ticker,
             c."nomeSeguimento",
-            a."valorRecebido"
+            a."valorRecebido",
+            a."reinvestido"
         FROM rendimentos a INNER JOIN ativos b
             ON a."idAtivo" = b.id
         INNER JOIN seguimentos c
@@ -144,15 +145,18 @@ async function findAtivosParaModal(idUser) {
 //#endregion
 
 //#region Inserir novo rendimento
-async function insertRendimento({ idAtivo, dtRendimento, valorRecebido, idUser }) {
+async function insertRendimento({ idAtivo, dtRendimento, valorRecebido, revestido, idUser }) {
 
     const db = await openDb();
 
     const result = await db.query(`
-        INSERT INTO rendimentos ("idAtivo", "dtRendimento", "valorRecebido", "idUser")
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, "idAtivo", "dtRendimento", "valorRecebido"
-    `, [idAtivo, dtRendimento, valorRecebido, idUser]);
+        INSERT INTO rendimentos 
+            ("idAtivo", "dtRendimento", "valorRecebido", "revestido", "idUser")
+        VALUES 
+            ($1, $2, $3, $4, $5)
+        RETURNING 
+            id, "idAtivo", "dtRendimento", "valorRecebido"
+    `, [idAtivo, dtRendimento, valorRecebido, revestido, idUser]);
 
     return result.rows[0];
 }
@@ -217,6 +221,26 @@ async function getTotalAcumulado(idUser) {
     return Number(result.rows[0].valorTotalRecebido) || 0;
 }
 
+// Total acumulado nos ultimos 12 meses de rendimentos do usuário 
+async function getAcumulado12Meses(idUser) {
+
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    //passa a query
+    const result = await db.query(`
+         SELECT 
+            SUM("valorRecebido") "valorTotalRecebido"
+        FROM rendimentos
+        WHERE 
+            "dtRendimento" >= CURRENT_DATE - INTERVAL '12 months'
+            AND "idUser" = $1
+    `, [idUser]);
+
+    // Extrai o valor, converte para número e garante que não retorne nulo
+    return Number(result.rows[0].valorTotalRecebido) || 0;
+}
+
 // Total investido apenas nas operações de compra do usuário
 async function getTotalCompras(idUser) {
 
@@ -263,6 +287,7 @@ export {
     deleteRendimento,
     getRendimentosFiltro,
     getTotalAcumulado,
+    getAcumulado12Meses,
     getTotalCompras,
     getTotalReinvestido
 };

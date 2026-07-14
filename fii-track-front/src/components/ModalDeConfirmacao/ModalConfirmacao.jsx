@@ -17,13 +17,15 @@ function ModalConfirmacao({ isOpen = true, onClose, onConfirm, action, userName 
         return <>Deseja <strong style={{ color: '#f59e0b' }}>inativar</strong> o usuário <strong style={{ color: '#dce8f5' }}>{userName}</strong>?</>;
       case 'reactivate':
         return <>Deseja <strong style={{ color: '#2ecc71' }}>reativar</strong> o usuário <strong style={{ color: '#dce8f5' }}>{userName}</strong>?</>;
+      case 'reinvestir':
+        return <>Deseja marcar o rendimento do ativo <strong style={{ color: '#dce8f5' }}>{userName}</strong> como <strong style={{ color: '#10b981' }}>reinvestido</strong>? Esta alteração será aplicada à visualização.</>;
       default:
         return '';
     }
   };
 
-  const confirmBg     = isDestructive ? '#c0392b' : '#0972d3';
-  const confirmBgHov  = isDestructive ? '#e74c3c' : '#1a84e8';
+  const confirmBg = isDestructive ? '#c0392b' : '#0972d3';
+  const confirmBgHov = isDestructive ? '#e74c3c' : '#1a84e8';
   const confirmShadow = isDestructive
     ? '0 2px 8px rgba(192,57,43,0.35)'
     : '0 2px 8px rgba(9,114,211,0.3)';
@@ -46,7 +48,7 @@ function ModalConfirmacao({ isOpen = true, onClose, onConfirm, action, userName 
         }}>
           {isDestructive
             ? <FiAlertTriangle size={22} color="#e74c3c" />
-            : <FiCheckCircle   size={22} color="#5dade2" />
+            : <FiCheckCircle size={22} color="#5dade2" />
           }
         </div>
 

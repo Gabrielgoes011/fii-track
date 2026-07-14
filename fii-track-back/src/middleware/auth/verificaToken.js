@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import apiResponse from '../../utils/httpResponse.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -9,21 +10,21 @@ const verificaToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      return res.status(401).json({ erro: 'Token não fornecido' });
+      return apiResponse.unauthorized(res, 'Token não fornecido.');
     }
 
-    // Separa "Bearer" do token em si
-    const token = authHeader.split(' ')[1];
+    // Valida e separa o formato "Bearer <token>"
+    const [tipo, token] = authHeader.trim().split(/\s+/);
 
-    if (!token) {
-      return res.status(401).json({ erro: 'Formato inválido. Use: Bearer <token>' });
+    if (tipo?.toLowerCase() !== 'bearer' || !token) {
+      return apiResponse.unauthorized(res, 'Formato de token inválido. Use: Bearer <token>.');
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded; // disponibiliza os dados do usuário para o controller
     next();
   } catch (error) {
-    return res.status(401).json({ erro: 'Token inválido ou expirado' });
+    return apiResponse.unauthorized(res, 'Token inválido ou expirado.');
   }
 };
 

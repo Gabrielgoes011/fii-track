@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { AiOutlineClose } from 'react-icons/ai';
 import { rendimentosService } from '../../../services/rendimentos/rendimentosService';
 
+function formatarDataLocal(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
 // ─── Estilos estáticos ────────────────────────────────────────────────────────
 const S = {
   overlay: {
@@ -22,8 +29,9 @@ const S = {
     backgroundColor: '#1e293b',
     border:          '1px solid #334155',
     borderRadius:    '16px',
-    width:           '100%',
+    width:           'calc(100% - 24px)',
     maxWidth:        '420px',
+    maxHeight:       'calc(100dvh - 24px)',
     boxShadow:       '0 24px 60px rgba(0,0,0,0.6)',
     overflow:        'hidden',
   },
@@ -58,11 +66,12 @@ const S = {
 
   form: {
     padding: '1.5rem',
+    overflowY: 'auto',
   },
 
   gridDataAtivo: {
     display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr',
     gap:                 '1rem',
     marginBottom:        '1rem',
   },
@@ -103,7 +112,7 @@ const S = {
   },
 
   wrapValor: {
-    marginBottom: '1.5rem',
+    marginBottom: '1rem',
   },
 
   previewValor: {
@@ -155,6 +164,28 @@ const S = {
     boxShadow:    '0 4px 16px rgba(16,185,129,0.3)',
     transition:   'all 0.15s',
   },
+
+  ativoOpcao: {
+    width:           '100%',
+    padding:         '0.65rem 0.75rem',
+    textAlign:       'left',
+    borderRadius:    '8px',
+    border:          '1px solid #334155',
+    background:      '#0f172a',
+    color:           '#f8fafc',
+    cursor:          'pointer',
+    fontWeight:      600,
+  },
+
+  toggle: {
+    width:           '44px',
+    height:          '24px',
+    borderRadius:    '999px',
+    border:          'none',
+    padding:         '3px',
+    cursor:          'pointer',
+    transition:      'background 0.2s',
+  },
 };
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -162,24 +193,31 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
   const [data,       setData]       = useState('');
   const [ativoId,    setAtivoId]    = useState('');
   const [valor,      setValor]      = useState('');
+  const [buscaAtivo, setBuscaAtivo] = useState('');
+  const [reinvestido, setReinvestido] = useState(false);
   const [salvando,   setSalvando]   = useState(false);
   const [ativos,     setAtivos]     = useState([]);
   const [carregando, setCarregando] = useState(false);
 
   const ativoSelecionado = ativos.find(a => String(a.idAtivo) === String(ativoId));
+  const ativosFiltrados = ativos.filter(a =>
+    a.ticker.toLowerCase().includes(buscaAtivo.toLowerCase()) ||
+    a.nomeSeguimento.toLowerCase().includes(buscaAtivo.toLowerCase())
+  );
 
   useEffect(() => {
     if (!isOpen) return;
-    setData(new Date().toISOString().split('T')[0]);
+    setData(formatarDataLocal(new Date()));
     setAtivoId('');
     setValor('');
+    setBuscaAtivo('');
+    setReinvestido(false);
 
     const buscarAtivos = async () => {
       setCarregando(true);
       try {
         const resultado = await rendimentosService.carregarAtivosModal();
         setAtivos(resultado);
-        if (resultado.length > 0) setAtivoId(String(resultado[0].idAtivo));
       } catch (err) {
         console.error('Erro ao carregar ativos:', err);
         setAtivos([]);
@@ -204,6 +242,7 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
         segmento:      ativoSelecionado?.nomeSeguimento,
         dtRendimento:  data,
         valorRecebido: Number(valor),
+        reinvestido,
       });
     } finally {
       setSalvando(false);
@@ -291,6 +330,12 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <div style={S.overlay}>
+      <style>{`
+        @keyframes abrirOpcaoAtivo {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <div style={S.modal}>
 
         {/* ── Cabeçalho ── */}
@@ -305,7 +350,29 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
           {/* Data + Ativo */}
           <div style={S.gridDataAtivo}>
             <div>
-              <label style={S.label}>Data do Recebimento</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ ...S.label, marginBottom: 0 }}>Data do Recebimento</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setData(formatarDataLocal(new Date()))}
+                    style={{ background: 'transparent', border: 'none', color: '#34d399', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ontem = new Date();
+                      ontem.setDate(ontem.getDate() - 1);
+                      setData(formatarDataLocal(ontem));
+                    }}
+                    style={{ background: 'transparent', border: 'none', color: '#94a3b8', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Ontem
+                  </button>
+                </div>
+              </div>
               <input
                 type="date"
                 value={data}
@@ -317,21 +384,42 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label style={S.label}>Ativo</label>
-              <select
-                value={ativoId}
-                onChange={e => setAtivoId(e.target.value)}
-                required
+              <label style={S.label}>Buscar ativo</label>
+              <input
+                type="search"
+                value={buscaAtivo}
+                onChange={e => {
+                  setBuscaAtivo(e.target.value);
+                  setAtivoId('');
+                }}
                 disabled={carregando}
-                style={estiloSelect}
-              >
-                {carregando
-                  ? <option>Carregando...</option>
-                  : ativos.map(a => (
-                      <option key={a.idAtivo} value={a.idAtivo}>{a.ticker}</option>
-                    ))
-                }
-              </select>
+                placeholder={carregando ? 'Carregando ativos...' : 'Digite o ticker ou segmento'}
+                style={S.input}
+              />
+              {buscaAtivo && !carregando && (
+                <div style={{ display: 'grid', gap: '6px', marginTop: '8px', maxHeight: '136px', overflowY: 'auto' }}>
+                  {ativosFiltrados.length > 0 ? ativosFiltrados.map((a, index) => (
+                    <button
+                      key={a.idAtivo}
+                      type="button"
+                      onClick={() => {
+                        setAtivoId(String(a.idAtivo));
+                        setBuscaAtivo(a.ticker);
+                      }}
+                      style={{
+                        ...S.ativoOpcao,
+                        borderColor: String(a.idAtivo) === String(ativoId) ? '#10b981' : '#334155',
+                        animation: 'abrirOpcaoAtivo 180ms ease-out both',
+                        animationDelay: `${Math.min(index * 35, 210)}ms`,
+                      }}
+                    >
+                      {a.ticker} <span style={{ color: '#94a3b8', fontWeight: 400 }}>— {a.nomeSeguimento}</span>
+                    </button>
+                  )) : (
+                    <span style={{ fontSize: '12px', color: '#94a3b8', padding: '4px 0' }}>Nenhum ativo encontrado.</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -358,6 +446,44 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
               onFocus={e => (e.target.style.borderColor = '#10b981')}
               onBlur={e  => (e.target.style.borderColor = '#334155')}
             />
+          </div>
+
+          <div style={{
+            marginBottom: '1rem',
+            padding: '0.75rem',
+            border: '1px solid #334155',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+          }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>Reinvestido</p>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#94a3b8' }}>Este provento foi usado para comprar ativos.</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={reinvestido}
+              aria-label="Provento reinvestido"
+              onClick={() => setReinvestido(atual => !atual)}
+              style={{
+                ...S.toggle,
+                background: reinvestido ? '#10b981' : '#475569',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{
+                display: 'block',
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                transform: reinvestido ? 'translateX(20px)' : 'translateX(0)',
+                transition: 'transform 0.2s',
+              }} />
+            </button>
           </div>
 
           {/* Preview do valor */}

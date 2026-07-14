@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   AiOutlineEye, AiOutlineEdit, AiOutlineDelete,
-  AiOutlineKey, AiOutlinePoweroff, AiOutlinePlayCircle, AiOutlineClose,
+  AiOutlineKey, AiOutlinePoweroff, AiOutlinePlayCircle, AiOutlineClose, AiOutlineReload,
 } from 'react-icons/ai';
 
 // Formatação de datas com fallback
@@ -15,7 +15,8 @@ try {
   formatarDataBR = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '';
   formatarDataComHora = (d) => d ? new Date(d).toLocaleString('pt-BR') : '';
 }
-
+const isReinvestido = (valor) =>
+  valor === true || valor === 1 || valor === '1' || String(valor).toLowerCase() === 'true';
 /**
  * GridDados — tabela universal da aplicação (tema dark FIITrack).
  *
@@ -30,6 +31,7 @@ const GridDados = ({
   usaVisualizar = false, acaoVisualizar,
   usaEditar = false, acaoEditar,
   usaExcluir = false, acaoExcluir,
+  usaReinvestir = false, acaoReinvestir,
   usaResetarSenha = false, acaoResetarSenha,
   usaInativar = false, acaoInativar,
   usaReativar = false, acaoReativar,
@@ -45,7 +47,7 @@ const GridDados = ({
   const [buscar, setBuscar] = useState('');
   const [currentItemsPerPage, setCurrentItemsPerPage] = useState(itemsPerPage);
 
-  const temAcoes = usaVisualizar || usaEditar || usaExcluir || usaResetarSenha || usaInativar || usaReativar;
+  const temAcoes = usaVisualizar || usaEditar || usaExcluir || usaReinvestir || usaResetarSenha || usaInativar || usaReativar;
 
   // ── filtragem ──
   const filteredData = data.filter(item => {
@@ -237,6 +239,13 @@ const GridDados = ({
                           onMouseOver={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(148,163,184,0.1)'; }}
                           onMouseOut={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; }}>
                           <AiOutlinePoweroff size={17} />
+                        </button>
+                      )}
+                      {usaReinvestir && acaoReinvestir && !isReinvestido(row.reinvestido) && (
+                        <button onClick={() => acaoReinvestir(row)} style={btnBase} title="Marcar como reinvestido"
+                          onMouseOver={e => { e.currentTarget.style.color = '#34d399'; e.currentTarget.style.background = 'rgba(16,185,129,0.1)'; }}
+                          onMouseOut={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; }}>
+                          <AiOutlineReload size={17} />
                         </button>
                       )}
                       {usaExcluir && acaoExcluir && (

@@ -37,9 +37,9 @@ export const rendimentosService = {
   },
 
   // Criar novo rendimento
-  criarRendimento: async ({ idAtivo, dtRendimento, valorRecebido }) => {
+  criarRendimento: async ({ idAtivo, dtRendimento, valorRecebido, reinvestido }) => {
     try {
-      const res = await api.post('/criarRendimento', { idAtivo, dtRendimento, valorRecebido });
+      const res = await api.post('/criarRendimento', { idAtivo, dtRendimento, valorRecebido, reinvestido });
       return res.data;
     } catch (error) { throw error; }
   },

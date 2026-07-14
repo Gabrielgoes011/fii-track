@@ -24,6 +24,7 @@ export default function DataCard({
   usaVisualizar,   acaoVisualizar,
   usaEditar,       acaoEditar,
   usaExcluir,      acaoExcluir,
+  usaReinvestir,   acaoReinvestir,
   usaResetarSenha, acaoResetarSenha,
   usaInativar,     acaoInativar,
   usaReativar,     acaoReativar,
@@ -107,6 +108,7 @@ export default function DataCard({
         usaVisualizar={usaVisualizar}     acaoVisualizar={acaoVisualizar}
         usaEditar={usaEditar}             acaoEditar={acaoEditar}
         usaExcluir={usaExcluir}           acaoExcluir={acaoExcluir}
+        usaReinvestir={usaReinvestir}     acaoReinvestir={acaoReinvestir}
         usaResetarSenha={usaResetarSenha} acaoResetarSenha={acaoResetarSenha}
         usaInativar={usaInativar}         acaoInativar={acaoInativar}
         usaReativar={usaReativar}         acaoReativar={acaoReativar}

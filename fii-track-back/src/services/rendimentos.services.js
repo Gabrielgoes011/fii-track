@@ -7,6 +7,7 @@ import {
     deleteRendimento,
     getRendimentosFiltro,
     getTotalAcumulado,
+    getAcumulado12Meses,
     getTotalCompras,
     getTotalReinvestido
 } from '../repositories/rendimentos.repositories.js';
@@ -117,6 +118,7 @@ async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser })
             idAtivo,
             dtRendimento,
             valorRecebido: Number(valorRecebido),
+            revestido: Boolean(revestido),
             idUser
         });
 
@@ -170,18 +172,25 @@ async function calculoCardsRendimento(mes, ano, idAtivo, idUser) {
         const [
             totalPeriodo,
             totalAcumulado,
+            totalAcumulado12Meses,
             totalCompras,
             totalReinvestido
         ] = await Promise.all([
             getRendimentosFiltro(mesFiltro, ano, idAtivo, idUser),
             getTotalAcumulado(idUser),
+            getAcumulado12Meses(idUser),
             getTotalCompras(idUser),
             getTotalReinvestido(idUser)
         ]);
 
-        // Calcula YoC (Yield on Cost) = (Total acumulado / Total Investido) * 100
-        const yieldOnCost = totalCompras > 0
+        // Calcula YoC (Yield on Cost) Geral desde o inicio = (Total acumulado / Total Investido) * 100
+        const retornoAcumulado = totalCompras > 0
             ? (totalAcumulado / totalCompras) * 100
+            : 0;
+
+        //calcula o YoC dos ultimos 12 meses (Total Reinvestido / Total Investido) * 100
+        const yieldOnCost12Meses = totalCompras > 0
+            ? (totalAcumulado12Meses / totalCompras) * 100
             : 0;
 
         // Calcula o Efeito Bola de Neve
@@ -202,10 +211,12 @@ async function calculoCardsRendimento(mes, ano, idAtivo, idUser) {
         return {
             totalPeriodo,
             totalAcumulado,
+            totalAcumulado12Meses,
             totalCompras,
             totalReinvestido,
             aporteProprio,
-            yieldOnCost: Number(yieldOnCost.toFixed(2)),
+            retornoAcumulado: Number(retornoAcumulado.toFixed(2)),
+            yieldOnCost12Meses: Number(yieldOnCost12Meses.toFixed(2)),
             percProprio: Number(percProprio.toFixed(1)),
             percReinvestido: Number(percReinvestido.toFixed(1))
         };
