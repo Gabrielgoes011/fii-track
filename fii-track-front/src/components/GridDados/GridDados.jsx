@@ -146,7 +146,7 @@ const GridDados = ({
                   fontWeight: 600, fontSize: '11px',
                   color: '#64748b',
                   textTransform: 'uppercase', letterSpacing: '0.5px',
-                  textAlign: 'center', width: '50px', maxWidth: '50px', whiteSpace: 'nowrap',
+                  textAlign: 'center', width: '80px', maxWidth: '80px', whiteSpace: 'nowrap',
                 }}>
                   Ações
                 </th>
@@ -204,7 +204,7 @@ const GridDados = ({
                   );
                 })}
                 {temAcoes && (
-                  <td style={{ padding: '0.5rem', textAlign: 'center', width: '50px', maxWidth: '50px' }}>
+                  <td style={{ padding: '0.5rem', textAlign: 'center', width: '80px', maxWidth: '80px' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
                       {usaVisualizar && acaoVisualizar && (
                         <button onClick={() => acaoVisualizar(row)} style={btnBase} title="Visualizar"
@@ -241,8 +241,8 @@ const GridDados = ({
                           <AiOutlinePoweroff size={17} />
                         </button>
                       )}
-                      {usaReinvestir && acaoReinvestir && !isReinvestido(row.reinvestido) && (
-                        <button onClick={() => acaoReinvestir(row)} style={btnBase} title="Marcar como reinvestido"
+                      {usaReinvestir && acaoReinvestir && (
+                        <button onClick={() => acaoReinvestir(row)} style={btnBase} title="Reinvestir"
                           onMouseOver={e => { e.currentTarget.style.color = '#34d399'; e.currentTarget.style.background = 'rgba(16,185,129,0.1)'; }}
                           onMouseOut={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; }}>
                           <AiOutlineReload size={17} />

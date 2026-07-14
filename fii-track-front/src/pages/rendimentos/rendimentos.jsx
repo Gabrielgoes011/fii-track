@@ -440,6 +440,7 @@ const S = {
 // ─── Gráfico Evolução Anual ───────────────────────────────────────────────────
 function EvolucaoAnualChart({ data }) {
   const [animate, setAnimate] = React.useState(false);
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
 
   React.useEffect(() => {
     setAnimate(false);
@@ -455,6 +456,7 @@ function EvolucaoAnualChart({ data }) {
     justifyContent: 'space-around',
     gap: '12px',
     padding: '8px 0 0',
+    minHeight: '210px',
   };
 
   const estiloColunaItem = {
@@ -462,14 +464,7 @@ function EvolucaoAnualChart({ data }) {
     flexDirection: 'column',
     alignItems: 'center',
     flex: 1,
-  };
-
-  const estiloValorLabel = {
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#94a3b8',
-    marginBottom: '6px',
-    whiteSpace: 'nowrap',
+    cursor: 'pointer',
   };
 
   const estiloAnoLabel = {
@@ -482,6 +477,7 @@ function EvolucaoAnualChart({ data }) {
   return (
     <div style={estiloWrap}>
       {data.map((item, idx) => {
+        const isHovered = hoveredIndex === idx;
         const barraAltura = animate
           ? `${Math.max((item.Valor / max) * 160, item.Valor > 0 ? 4 : 0)}px`
           : '0px';
@@ -493,11 +489,31 @@ function EvolucaoAnualChart({ data }) {
           background: 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
           borderRadius: '6px 6px 0 0',
           boxShadow: '0 4px 6px -1px rgba(96,165,250,0.35)',
-          transition: `height 0.7s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.08}s`,
+          transition: `height 0.7s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.08}s, filter 0.3s`,
+          filter: isHovered ? 'brightness(1.2)' : 'brightness(1)',
+        };
+
+        const estiloValorLabel = {
+          fontSize: '12px',
+          fontWeight: 700,
+          color: '#a5b4fc',
+          marginBottom: '8px',
+          whiteSpace: 'nowrap',
+          padding: '2px 8px',
+          background: 'rgba(15, 23, 42, 0.6)',
+          borderRadius: '6px',
+          opacity: isHovered ? 1 : 0,
+          transform: isHovered ? 'translateY(-8px)' : 'translateY(0px)',
+          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         };
 
         return (
-          <div key={idx} style={estiloColunaItem}>
+          <div
+            key={idx}
+            style={estiloColunaItem}
+            onMouseEnter={() => setHoveredIndex(idx)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
             <span style={estiloValorLabel} className="vp">{fmt(item.Valor)}</span>
             <div style={estiloBarra} title={`${item.name}: ${fmt(item.Valor)}`} />
             <span style={estiloAnoLabel}>{item.name}</span>
@@ -508,8 +524,96 @@ function EvolucaoAnualChart({ data }) {
   );
 }
 
+// ─── Gráfico Mensal (Barras) ──────────────────────────────────────────────────
+function GraficoMensalBarras({ data }) {
+  const [animate, setAnimate] = React.useState(false);
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
+
+  React.useEffect(() => {
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [data]);
+
+  const max = Math.max(...data.map(d => d.Valor || 0), 1);
+
+  const estiloWrap = {
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    gap: '8px',
+    padding: '8px 0 0',
+    minHeight: '180px',
+  };
+
+  const estiloColunaItem = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    flex: 1,
+    cursor: 'pointer',
+  };
+
+  const estiloMesLabel = {
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#64748b',
+    marginTop: '6px',
+  };
+
+  return (
+    <div style={estiloWrap}>
+      {data.map((item, idx) => {
+        const isHovered = hoveredIndex === idx;
+        const barraAltura = animate
+          ? `${Math.max((item.Valor / max) * 120, item.Valor > 0 ? 3 : 0)}px`
+          : '0px';
+
+        const estiloBarra = {
+          width: '100%',
+          maxWidth: '32px',
+          height: barraAltura,
+          background: 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
+          borderRadius: '4px 4px 0 0',
+          boxShadow: '0 2px 4px -1px rgba(96,165,250,0.25)',
+          transition: `height 0.6s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.05}s, filter 0.3s`,
+          filter: isHovered ? 'brightness(1.2)' : 'brightness(1)',
+        };
+
+        const estiloValorLabel = {
+          fontSize: '11px',
+          fontWeight: 700,
+          color: '#a5b4fc',
+          marginBottom: '6px',
+          whiteSpace: 'nowrap',
+          padding: '2px 6px',
+          background: 'rgba(15, 23, 42, 0.6)',
+          borderRadius: '4px',
+          opacity: isHovered ? 1 : 0,
+          transform: isHovered ? 'translateY(-6px)' : 'translateY(0px)',
+          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        };
+
+        return (
+          <div
+            key={idx}
+            style={estiloColunaItem}
+            onMouseEnter={() => setHoveredIndex(idx)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            <span style={estiloValorLabel} className="vp">{fmt(item.Valor)}</span>
+            <div style={estiloBarra} title={`${item.name}: ${fmt(item.Valor)}`} />
+            <span style={estiloMesLabel}>{item.name.substring(0, 3)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Gráfico de barras horizontais agrupadas ──────────────────────────────────
 function BarChartHorizontal({ data, anos }) {
+  const [hovered, setHovered] = React.useState(null);
   const anosOrdenados = [...anos].sort((a, b) => Number(a) - Number(b));
   const max = Math.max(...data.flatMap(d => anosOrdenados.map(a => d[a] || 0)), 1);
 
@@ -544,6 +648,7 @@ function BarChartHorizontal({ data, anos }) {
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
+    cursor: 'pointer',
   };
 
   const estiloValorMini = {
@@ -561,18 +666,35 @@ function BarChartHorizontal({ data, anos }) {
             <div style={estiloBarsWrap}>
               {anosOrdenados.map(ano => {
                 const val = row[ano] || 0;
+                const isHovered = hovered && hovered.mes === mi + 1 && hovered.ano === ano;
+
                 const estiloBarra = {
                   height: '10px',
                   width: `${(val / max) * 100}%`,
                   minWidth: val > 0 ? '4px' : '0',
                   backgroundColor: COR_ANOS[ano],
                   borderRadius: '0 3px 3px 0',
-                  transition: 'width 0.5s ease',
+                  transition: 'width 0.5s ease, filter 0.2s',
+                  filter: isHovered ? 'brightness(1.3) saturate(1.2)' : 'brightness(1)',
                 };
+
+                const estiloValor = {
+                  fontSize: isHovered ? '10px' : '9px',
+                  fontWeight: isHovered ? 700 : 400,
+                  color: isHovered ? '#f1f5f9' : '#64748b',
+                  transition: 'all 0.2s',
+                };
+
                 return (
-                  <div key={ano} style={estiloLinhaAno}>
+                  <div
+                    key={ano}
+                    style={estiloLinhaAno}
+                    onMouseEnter={() => setHovered({ mes: mi + 1, ano })}
+                    onMouseLeave={() => setHovered(null)}
+                  >
                     <div style={estiloBarra} title={`${ano}: ${fmt(val)}`} />
                     {val > 0 && <span className="vp" style={estiloValorMini}>{fmt(val)}</span>}
+                    {val > 0 && <span className="vp" style={estiloValor}>{fmt(val)}</span>}
                   </div>
                 );
               })}
@@ -1027,25 +1149,23 @@ export default function PaginaRendimentos() {
                             <span style={S.badgeSegmentoMobile}>{r.nomeSeguimento}</span>
                           </div>
                           <div style={{ display: 'flex', gap: '6px' }}>
-                            {!foiReinvestido(r.reinvestido) && (
-                              <button
-                                type="button"
-                                onClick={() => abrirModalReinvestir(r)}
-                                style={{
-                                  background: 'rgba(16,185,129,0.1)',
-                                  border: '1px solid rgba(16,185,129,0.2)',
-                                  borderRadius: '7px',
-                                  padding: '6px 8px',
-                                  cursor: 'pointer',
-                                  color: '#34d399',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                }}
-                                title="Marcar como reinvestido"
-                              >
-                                <FiRepeat size={14} />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => abrirModalReinvestir(r)}
+                              style={{
+                                background: 'rgba(16,185,129,0.1)',
+                                border: '1px solid rgba(16,185,129,0.2)',
+                                borderRadius: '7px',
+                                padding: '6px 8px',
+                                cursor: 'pointer',
+                                color: '#34d399',
+                                display: 'flex',
+                                alignItems: 'center',
+                              }}
+                              title="Reinvestir"
+                            >
+                              <FiRepeat size={14} />
+                            </button>
                             <button onClick={() => abrirModalExclusao(r)} style={S.btnLixeiraMobile}>
                               <FiTrash2 size={14} />
                             </button>
@@ -1184,7 +1304,7 @@ export default function PaginaRendimentos() {
                 </div>
 
                 {tipoGrafico === 'barras'
-                  ? <BarChart data={chartMensal} keys={CHART_KEYS} colors={CHART_COLORS} height={isMobile ? 100 : 150} />
+                  ? <GraficoMensalBarras data={chartMensal} />
                   : <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={isMobile ? 110 : 160} />
                 }
               </div>
