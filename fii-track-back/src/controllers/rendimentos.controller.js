@@ -76,9 +76,9 @@ async function carregarDadosModalNovoRendimentoController(req, res) {
 async function criarRendimentoController(req, res) {
     try {
         const idUser = req.user.id;
-        const { idAtivo, dtRendimento, valorRecebido } = req.body;
+        const { idAtivo, dtRendimento, valorRecebido, reinvestido } = req.body;
 
-        const resultado = await criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser });
+        const resultado = await criarRendimento({ idAtivo, dtRendimento, valorRecebido, reinvestido, idUser });
 
         return apiResponse.success(res, 'Rendimento lançado com sucesso!', resultado, 201);
 

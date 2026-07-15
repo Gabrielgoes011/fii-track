@@ -97,7 +97,7 @@ async function carregarAtivosParaModal(idUser) {
 //#endregion
 
 //#region Criar novo rendimento
-async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser }) {
+async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, reinvestido, idUser }) {
     try {
 
         // Valida campos obrigatórios
@@ -118,7 +118,7 @@ async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, idUser })
             idAtivo,
             dtRendimento,
             valorRecebido: Number(valorRecebido),
-            revestido: Boolean(revestido),
+            revestido: Boolean(reinvestido),
             idUser
         });
 
