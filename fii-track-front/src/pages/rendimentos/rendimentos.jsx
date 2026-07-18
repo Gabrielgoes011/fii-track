@@ -706,6 +706,348 @@ function BarChartHorizontal({ data, anos }) {
   );
 }
 
+// ─── Mobile Gráficos — com tap interativo ────────────────────────────────────
+function MobileGraficos({
+  chartMensal, chartAnual, chartComparacao,
+  tipoGrafico, setTipoGrafico,
+  anoGrafico, setAnoGrafico,
+  anosComp, toggleAnoComp,
+  mobileAccordion, setMobileAccordion,
+}) {
+  // tooltip de toque — { label, valor, cor }
+  const [tooltipMensal,    setTooltipMensal]    = React.useState(null);
+  const [tooltipAnual,     setTooltipAnual]     = React.useState(null);
+  const [tooltipComp,      setTooltipComp]      = React.useState(null); // { mes, ano, valor }
+
+  const maxMensal = Math.max(...chartMensal.map(d => d.Valor || 0), 1);
+  const maxAnual  = Math.max(...chartAnual.map(d => d.Valor || 0), 1);
+
+  const selectAnoStyle = {
+    backgroundColor: '#1e293b',
+    border:          '1px solid #334155',
+    color:           '#f1f5f9',
+    fontSize:        '12px',
+    padding:         '4px 8px',
+    borderRadius:    '6px',
+    outline:         'none',
+    cursor:          'pointer',
+    fontWeight:      600,
+  };
+
+  const cardStyle = {
+    backgroundColor: '#0f172a',
+    borderRadius:    '10px',
+    border:          '1px solid #1e293b',
+    padding:         '14px 12px',
+  };
+
+  const accordionWrap = {
+    backgroundColor: '#0f172a',
+    borderRadius:    '10px',
+    border:          '1px solid #1e293b',
+    overflow:        'hidden',
+  };
+
+  const accordionBtn = {
+    width:          '100%',
+    display:        'flex',
+    justifyContent: 'space-between',
+    alignItems:     'center',
+    padding:        '12px',
+    background:     'transparent',
+    border:         'none',
+    cursor:         'pointer',
+  };
+
+  // ── Tooltip flutuante ──
+  function TooltipBadge({ label, valor, cor, onClose }) {
+    return (
+      <div style={{
+        display:        'flex',
+        justifyContent: 'space-between',
+        alignItems:     'center',
+        marginTop:      '10px',
+        padding:        '8px 12px',
+        borderRadius:   '8px',
+        background:     'rgba(15,23,42,0.85)',
+        border:         `1px solid ${cor}44`,
+        backdropFilter: 'blur(6px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: cor, display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#cbd5e1' }}>{label}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 800, color: cor, fontVariantNumeric: 'tabular-nums' }}>
+            {fmt(valor)}
+          </span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}
+          >×</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+      {/* ── Gráfico Mensal (sempre visível) ── */}
+      <div style={cardStyle}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+            Rendimentos {anoGrafico}
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
+              {['barras', 'area'].map(tipo => {
+                const ativo = tipoGrafico === tipo;
+                return (
+                  <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={{
+                    padding:         '4px 8px',
+                    backgroundColor: ativo ? '#0f172a' : 'transparent',
+                    color:           ativo ? '#10b981'  : '#475569',
+                    borderRadius:    '4px',
+                    border:          'none',
+                    cursor:          'pointer',
+                    fontSize:        '10px',
+                    fontWeight:      600,
+                  }}>
+                    {tipo === 'barras' ? '▊' : '〜'}
+                  </button>
+                );
+              })}
+            </div>
+            <select value={anoGrafico} onChange={e => { setAnoGrafico(e.target.value); setTooltipMensal(null); }} style={selectAnoStyle}>
+              {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Gráfico */}
+        {tipoGrafico === 'barras' ? (
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '3px', height: '150px', padding: '0 2px' }}>
+            {chartMensal.map((item, idx) => {
+              const h     = Math.max((item.Valor / maxMensal) * 120, item.Valor > 0 ? 3 : 0);
+              const ativo = tooltipMensal?.idx === idx;
+              return (
+                <div
+                  key={idx}
+                  onClick={() => setTooltipMensal(ativo ? null : { idx, label: item.name, valor: item.Valor })}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <div style={{
+                    width:        '100%',
+                    maxWidth:     '22px',
+                    height:       `${h}px`,
+                    background:   ativo
+                      ? 'linear-gradient(180deg,#a5f3fc 0%,#06b6d4 100%)'
+                      : 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
+                    borderRadius: '3px 3px 0 0',
+                    transition:   'height 0.5s ease, background 0.2s',
+                    boxShadow:    ativo ? '0 0 10px rgba(6,182,212,0.6)' : 'none',
+                  }} />
+                  <span style={{ fontSize: '9px', color: ativo ? '#7dd3fc' : '#475569', marginTop: '4px', fontWeight: 700 }}>
+                    {item.name.substring(0, 3)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={130} />
+        )}
+
+        {/* Tooltip tap mensal */}
+        {tooltipMensal && (
+          <TooltipBadge
+            label={`${tooltipMensal.label} ${anoGrafico}`}
+            valor={tooltipMensal.valor}
+            cor="#60a5fa"
+            onClose={() => setTooltipMensal(null)}
+          />
+        )}
+        {!tooltipMensal && (
+          <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+            Toque em uma barra para ver o valor
+          </p>
+        )}
+      </div>
+
+      {/* ── Accordion Evolução Anual ── */}
+      <div style={accordionWrap}>
+        <button
+          onClick={() => { setMobileAccordion(prev => prev === 'anual' ? null : 'anual'); setTooltipAnual(null); }}
+          style={accordionBtn}
+        >
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Evolução Anual</h3>
+          <span style={{
+            fontSize:   '16px',
+            color:      '#64748b',
+            transform:  mobileAccordion === 'anual' ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}>▾</span>
+        </button>
+
+        {mobileAccordion === 'anual' && (
+          <div style={{ padding: '0 12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: '10px', height: '120px' }}>
+              {chartAnual.map((item, idx) => {
+                const h     = Math.max((item.Valor / maxAnual) * 90, item.Valor > 0 ? 3 : 0);
+                const ativo = tooltipAnual?.idx === idx;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setTooltipAnual(ativo ? null : { idx, label: item.name, valor: item.Valor })}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <div style={{
+                      width:        '100%',
+                      maxWidth:     '44px',
+                      height:       `${h}px`,
+                      background:   ativo
+                        ? 'linear-gradient(180deg,#a5f3fc 0%,#06b6d4 100%)'
+                        : 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
+                      borderRadius: '4px 4px 0 0',
+                      transition:   'height 0.5s ease, background 0.2s',
+                      boxShadow:    ativo ? '0 0 12px rgba(6,182,212,0.6)' : 'none',
+                    }} />
+                    <span style={{ fontSize: '11px', color: ativo ? '#7dd3fc' : '#64748b', marginTop: '5px', fontWeight: 700 }}>
+                      {item.name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tooltip tap anual */}
+            {tooltipAnual ? (
+              <TooltipBadge
+                label={tooltipAnual.label}
+                valor={tooltipAnual.valor}
+                cor="#60a5fa"
+                onClose={() => setTooltipAnual(null)}
+              />
+            ) : (
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+                Toque em um ano para ver o total
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Accordion Comparação Anual ── */}
+      <div style={accordionWrap}>
+        <button
+          onClick={() => { setMobileAccordion(prev => prev === 'comparacao' ? null : 'comparacao'); setTooltipComp(null); }}
+          style={accordionBtn}
+        >
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Comparação Anual</h3>
+          <span style={{
+            fontSize:   '16px',
+            color:      '#64748b',
+            transform:  mobileAccordion === 'comparacao' ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}>▾</span>
+        </button>
+
+        {mobileAccordion === 'comparacao' && (
+          <div style={{ padding: '0 12px 14px' }}>
+            {/* Filtro de anos */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              {ANOS.map(ano => {
+                const sel = anosComp.includes(ano);
+                return (
+                  <button key={ano} onClick={() => { toggleAnoComp(ano); setTooltipComp(null); }} style={{
+                    display:         'flex',
+                    alignItems:      'center',
+                    gap:             '3px',
+                    padding:         '3px 8px',
+                    borderRadius:    '9999px',
+                    border:          '1px solid',
+                    borderColor:     sel ? COR_ANOS[ano] : '#334155',
+                    backgroundColor: sel ? COR_ANOS[ano] + '22' : 'transparent',
+                    color:           sel ? COR_ANOS[ano] : '#475569',
+                    fontSize:        '10px',
+                    fontWeight:      700,
+                    cursor:          'pointer',
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '2px', backgroundColor: sel ? COR_ANOS[ano] : '#334155', display: 'inline-block' }} />
+                    {ano}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Barras agrupadas por mês — toque para ver valor */}
+            {(() => {
+              const anosAtivos = [...anosComp].sort((a, b) => Number(a) - Number(b));
+              const maxVal     = Math.max(...chartComparacao.flatMap(d => anosAtivos.map(a => d[a] || 0)), 1);
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '2px', height: '120px', padding: '0 2px' }}>
+                    {chartComparacao.map((row, mi) => {
+                      const ativoMes = tooltipComp?.mes === mi + 1;
+                      return (
+                        <div key={mi} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1px', height: '95px' }}>
+                            {anosAtivos.map(ano => {
+                              const val    = row[ano] || 0;
+                              const h      = Math.max((val / maxVal) * 80, val > 0 ? 2 : 0);
+                              const ativoItem = tooltipComp?.mes === mi + 1 && tooltipComp?.ano === ano;
+                              return (
+                                <div
+                                  key={ano}
+                                  onClick={() => setTooltipComp(ativoItem ? null : { mes: mi + 1, ano, valor: val })}
+                                  style={{
+                                    width:           `${Math.max(16 / anosAtivos.length, 3)}px`,
+                                    minWidth:        '3px',
+                                    height:          `${h}px`,
+                                    backgroundColor: COR_ANOS[ano],
+                                    borderRadius:    '2px 2px 0 0',
+                                    transition:      'height 0.4s ease, filter 0.2s',
+                                    filter:          ativoItem ? 'brightness(1.5) saturate(1.3)' : 'brightness(1)',
+                                    boxShadow:       ativoItem ? `0 0 8px ${COR_ANOS[ano]}99` : 'none',
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                          <span style={{ fontSize: '8px', color: ativoMes ? '#f1f5f9' : '#475569', marginTop: '3px', fontWeight: 700 }}>
+                            {MESES[mi].substring(0, 3)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Tooltip tap comparação */}
+                  {tooltipComp ? (
+                    <TooltipBadge
+                      label={`${MESES[tooltipComp.mes - 1]} ${tooltipComp.ano}`}
+                      valor={tooltipComp.valor}
+                      cor={COR_ANOS[tooltipComp.ano] || '#60a5fa'}
+                      onClose={() => setTooltipComp(null)}
+                    />
+                  ) : (
+                    <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+                      Toque em uma barra para ver o valor
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function PaginaRendimentos() {
 
@@ -1269,251 +1611,20 @@ export default function PaginaRendimentos() {
           {/* ── Aba Gráficos ── */}
           {abaAtiva === 'graficos' && (
             isMobile ? (
-              /* ── MOBILE: gráficos compactos ── */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-                {/* Card principal — Evolução mensal (sempre visível) */}
-                <div style={{
-                  backgroundColor: '#0f172a',
-                  borderRadius: '10px',
-                  border: '1px solid #1e293b',
-                  padding: '14px 12px',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>Evolução</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
-                        {['barras', 'area'].map(tipo => {
-                          const ativo = tipoGrafico === tipo;
-                          return (
-                            <button
-                              key={tipo}
-                              onClick={() => setTipoGrafico(tipo)}
-                              style={{
-                                padding: '4px 8px',
-                                backgroundColor: ativo ? '#0f172a' : 'transparent',
-                                color: ativo ? '#10b981' : '#475569',
-                                borderRadius: '4px',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '10px',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {tipo === 'barras' ? '▊' : '〜'}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <select
-                        value={anoGrafico}
-                        onChange={e => setAnoGrafico(e.target.value)}
-                        style={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
-                          color: '#f1f5f9',
-                          fontSize: '12px',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Gráfico mensal compacto */}
-                  {tipoGrafico === 'barras' ? (
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '3px', height: '140px', padding: '0 2px' }}>
-                      {chartMensal.map((item, idx) => {
-                        const max = Math.max(...chartMensal.map(d => d.Valor || 0), 1);
-                        const h = Math.max((item.Valor / max) * 110, item.Valor > 0 ? 3 : 0);
-                        return (
-                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                            <div style={{
-                              width: '100%',
-                              maxWidth: '20px',
-                              height: `${h}px`,
-                              background: 'linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)',
-                              borderRadius: '3px 3px 0 0',
-                              transition: 'height 0.5s ease',
-                            }} />
-                            <span style={{ fontSize: '9px', color: '#475569', marginTop: '4px', fontWeight: 600 }}>
-                              {item.name.substring(0, 3)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={120} />
-                  )}
-                </div>
-
-                {/* Accordion — Evolução Anual */}
-                <div style={{
-                  backgroundColor: '#0f172a',
-                  borderRadius: '10px',
-                  border: '1px solid #1e293b',
-                  overflow: 'hidden',
-                }}>
-                  <button
-                    onClick={() => setMobileAccordion(prev => prev === 'anual' ? null : 'anual')}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Evolução Anual</h3>
-                    <span style={{
-                      fontSize: '16px',
-                      color: '#64748b',
-                      transform: mobileAccordion === 'anual' ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s',
-                    }}>▾</span>
-                  </button>
-                  {mobileAccordion === 'anual' && (
-                    <div style={{ padding: '0 12px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: '10px', height: '110px' }}>
-                        {chartAnual.map((item, idx) => {
-                          const max = Math.max(...chartAnual.map(d => d.Valor || 0), 1);
-                          const h = Math.max((item.Valor / max) * 80, item.Valor > 0 ? 3 : 0);
-                          return (
-                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                              <span className="vp" style={{ fontSize: '9px', color: '#64748b', marginBottom: '4px', fontWeight: 600 }}>
-                                {item.Valor > 0 ? fmt(item.Valor) : ''}
-                              </span>
-                              <div style={{
-                                width: '100%',
-                                maxWidth: '40px',
-                                height: `${h}px`,
-                                background: 'linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)',
-                                borderRadius: '4px 4px 0 0',
-                                transition: 'height 0.5s ease',
-                              }} />
-                              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '5px', fontWeight: 600 }}>
-                                {item.name}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Accordion — Comparação Anual */}
-                <div style={{
-                  backgroundColor: '#0f172a',
-                  borderRadius: '10px',
-                  border: '1px solid #1e293b',
-                  overflow: 'hidden',
-                }}>
-                  <button
-                    onClick={() => setMobileAccordion(prev => prev === 'comparacao' ? null : 'comparacao')}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Comparação Anual</h3>
-                    <span style={{
-                      fontSize: '16px',
-                      color: '#64748b',
-                      transform: mobileAccordion === 'comparacao' ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s',
-                    }}>▾</span>
-                  </button>
-                  {mobileAccordion === 'comparacao' && (
-                    <div style={{ padding: '0 12px 14px' }}>
-                      {/* Botões de ano */}
-                      <div style={{ display: 'flex', gap: '4px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                        {ANOS.map(ano => {
-                          const selecionado = anosComp.includes(ano);
-                          return (
-                            <button
-                              key={ano}
-                              onClick={() => toggleAnoComp(ano)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                                padding: '3px 8px',
-                                borderRadius: '9999px',
-                                border: '1px solid',
-                                borderColor: selecionado ? COR_ANOS[ano] : '#334155',
-                                backgroundColor: selecionado ? COR_ANOS[ano] + '22' : 'transparent',
-                                color: selecionado ? COR_ANOS[ano] : '#475569',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <span style={{
-                                width: '6px', height: '6px', borderRadius: '2px',
-                                backgroundColor: selecionado ? COR_ANOS[ano] : '#334155',
-                                display: 'inline-block',
-                              }} />
-                              {ano}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Barras agrupadas verticais */}
-                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '2px', height: '120px', padding: '0 2px' }}>
-                        {(() => {
-                          const anosAtivos = [...anosComp].sort((a, b) => Number(a) - Number(b));
-                          const maxVal = Math.max(...chartComparacao.flatMap(d => anosAtivos.map(a => d[a] || 0)), 1);
-                          return chartComparacao.map((row, mi) => (
-                            <div key={mi} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1px', height: '95px' }}>
-                                {anosAtivos.map(ano => {
-                                  const val = row[ano] || 0;
-                                  const h = Math.max((val / maxVal) * 80, val > 0 ? 2 : 0);
-                                  return (
-                                    <div
-                                      key={ano}
-                                      style={{
-                                        width: `${Math.max(16 / anosAtivos.length, 3)}px`,
-                                        minWidth: '3px',
-                                        height: `${h}px`,
-                                        backgroundColor: COR_ANOS[ano],
-                                        borderRadius: '2px 2px 0 0',
-                                        transition: 'height 0.4s ease',
-                                      }}
-                                      title={`${MESES[mi]} ${ano}: ${fmt(val)}`}
-                                    />
-                                  );
-                                })}
-                              </div>
-                              <span style={{ fontSize: '8px', color: '#475569', marginTop: '3px', fontWeight: 600 }}>
-                                {MESES[mi].substring(0, 3)}
-                              </span>
-                            </div>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-              </div>
+              /* ── MOBILE: gráficos com tap interativo ── */
+              <MobileGraficos
+                chartMensal={chartMensal}
+                chartAnual={chartAnual}
+                chartComparacao={chartComparacao}
+                tipoGrafico={tipoGrafico}
+                setTipoGrafico={setTipoGrafico}
+                anoGrafico={anoGrafico}
+                setAnoGrafico={setAnoGrafico}
+                anosComp={anosComp}
+                toggleAnoComp={toggleAnoComp}
+                mobileAccordion={mobileAccordion}
+                setMobileAccordion={setMobileAccordion}
+              />
             ) : (
               /* ── DESKTOP: gráficos completos ── */
               <>
