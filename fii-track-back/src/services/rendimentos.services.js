@@ -118,7 +118,7 @@ async function criarRendimento({ idAtivo, dtRendimento, valorRecebido, reinvesti
             idAtivo,
             dtRendimento,
             valorRecebido: Number(valorRecebido),
-            revestido: Boolean(reinvestido),
+            reinvestido: Boolean(reinvestido),
             idUser
         });
 

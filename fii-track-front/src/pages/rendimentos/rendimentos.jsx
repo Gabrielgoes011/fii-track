@@ -747,6 +747,7 @@ export default function PaginaRendimentos() {
   const [rendimentoParaExcluir, setRendimentoParaExcluir] = useState(null);
   const [modalReinvestir, setModalReinvestir] = useState(false);
   const [rendimentoParaReinvestir, setRendimentoParaReinvestir] = useState(null);
+  const [mobileAccordion, setMobileAccordion] = useState(null);
 
   useEffect(() => {
     // idAtivo: 'Todos' → null (sem filtro); caso contrário busca o id pelo ticker
@@ -813,18 +814,21 @@ export default function PaginaRendimentos() {
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handleNovoRendimento = async (dados) => {
-    const ok = await criarRendimento({
-      idAtivo: dados.idAtivo,
-      dtRendimento: dados.dtRendimento,
-      valorRecebido: dados.valorRecebido,
-      reinvestido: dados.reinvestido,
-    });
-    if (ok) {
+    // O hook `criarRendimento` pode não retornar um valor, então o `if(ok)` falhava.
+    // A nova abordagem é envolver em try/catch. Se não houver erro, consideramos sucesso.
+    // O hook é responsável por mostrar o toast de erro em caso de falha.
+    try {
+      await criarRendimento({
+        idAtivo: dados.idAtivo,
+        dtRendimento: dados.dtRendimento,
+        valorRecebido: dados.valorRecebido,
+        reinvestido: dados.reinvestido,
+      });
       toastSuccess('Rendimento lançado com sucesso!');
       setModalAberto(false);
       getRendimentos({ mes: filtroMes, ano: filtroAno });
       getGrafico({ ano: anoGrafico });
-    }
+    } catch (error) { /* O hook useRendimentos já deve tratar o toast de erro */ }
   };
 
   const abrirModalExclusao = (row) => {
@@ -1264,97 +1268,346 @@ export default function PaginaRendimentos() {
 
           {/* ── Aba Gráficos ── */}
           {abaAtiva === 'graficos' && (
-            <>
-              <div style={cardBase}>
-                <div style={S.graficoMensalHeader}>
-                  <h2 style={tituloGraficoMensal}>Rendimentos por Mês</h2>
-                  <div style={S.graficoControles}>
-                    <div style={S.toggleTipoGrafico}>
-                      {['barras', 'area'].map(tipo => {
-                        const ativo = tipoGrafico === tipo;
-                        const estiloBtnTipo = {
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '6px 10px',
-                          backgroundColor: ativo ? '#0f172a' : 'transparent',
-                          color: ativo ? '#10b981' : '#64748b',
-                          borderRadius: '0.375rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
+            isMobile ? (
+              /* ── MOBILE: gráficos compactos ── */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                {/* Card principal — Evolução mensal (sempre visível) */}
+                <div style={{
+                  backgroundColor: '#0f172a',
+                  borderRadius: '10px',
+                  border: '1px solid #1e293b',
+                  padding: '14px 12px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>Evolução</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
+                        {['barras', 'area'].map(tipo => {
+                          const ativo = tipoGrafico === tipo;
+                          return (
+                            <button
+                              key={tipo}
+                              onClick={() => setTipoGrafico(tipo)}
+                              style={{
+                                padding: '4px 8px',
+                                backgroundColor: ativo ? '#0f172a' : 'transparent',
+                                color: ativo ? '#10b981' : '#475569',
+                                borderRadius: '4px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {tipo === 'barras' ? '▊' : '〜'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <select
+                        value={anoGrafico}
+                        onChange={e => setAnoGrafico(e.target.value)}
+                        style={{
+                          backgroundColor: '#1e293b',
+                          border: '1px solid #334155',
+                          color: '#f1f5f9',
                           fontSize: '12px',
-                          fontWeight: 600,
-                        };
-                        return (
-                          <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={estiloBtnTipo}>
-                            {tipo === 'barras' ? '▊ Barras' : '〜 Área'}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <select
-                      value={anoGrafico}
-                      onChange={e => setAnoGrafico(e.target.value)}
-                      style={{ ...S.select, appearance: 'none' }}
-                    >
-                      {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {tipoGrafico === 'barras'
-                  ? <GraficoMensalBarras data={chartMensal} />
-                  : <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={isMobile ? 110 : 160} />
-                }
-              </div>
-
-              <div style={gridDoisCards}>
-                <div style={cardSemMargem}>
-                  <h2 style={S.tituloCard}>Evolução Anual</h2>
-                  <EvolucaoAnualChart data={chartAnual} />
-                </div>
-
-                <div style={cardSemMargem}>
-                  <div style={S.comparacaoHeader}>
-                    <h2 style={S.tituloCardSemMargem}>Comparação Anual</h2>
-                    <div style={S.comparacaoBotoesAnos}>
-                      {ANOS.map(ano => {
-                        const selecionado = anosComp.includes(ano);
-                        const estiloBtnAno = {
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '3px 8px',
-                          borderRadius: '9999px',
-                          border: '1px solid',
-                          borderColor: selecionado ? COR_ANOS[ano] : '#334155',
-                          backgroundColor: selecionado ? COR_ANOS[ano] + '22' : 'transparent',
-                          color: selecionado ? COR_ANOS[ano] : '#64748b',
-                          fontSize: '11px',
-                          fontWeight: 700,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          outline: 'none',
                           cursor: 'pointer',
-                        };
-                        const estiloDot = {
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '2px',
-                          backgroundColor: selecionado ? COR_ANOS[ano] : '#334155',
-                          display: 'inline-block',
-                        };
+                          fontWeight: 600,
+                        }}
+                      >
+                        {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Gráfico mensal compacto */}
+                  {tipoGrafico === 'barras' ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '3px', height: '140px', padding: '0 2px' }}>
+                      {chartMensal.map((item, idx) => {
+                        const max = Math.max(...chartMensal.map(d => d.Valor || 0), 1);
+                        const h = Math.max((item.Valor / max) * 110, item.Valor > 0 ? 3 : 0);
                         return (
-                          <button key={ano} onClick={() => toggleAnoComp(ano)} style={estiloBtnAno}>
-                            <span style={estiloDot} />
-                            {ano}
-                          </button>
+                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                            <div style={{
+                              width: '100%',
+                              maxWidth: '20px',
+                              height: `${h}px`,
+                              background: 'linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)',
+                              borderRadius: '3px 3px 0 0',
+                              transition: 'height 0.5s ease',
+                            }} />
+                            <span style={{ fontSize: '9px', color: '#475569', marginTop: '4px', fontWeight: 600 }}>
+                              {item.name.substring(0, 3)}
+                            </span>
+                          </div>
                         );
                       })}
                     </div>
-                  </div>
-                  <BarChartHorizontal data={chartComparacao} anos={anosComp} />
+                  ) : (
+                    <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={120} />
+                  )}
                 </div>
+
+                {/* Accordion — Evolução Anual */}
+                <div style={{
+                  backgroundColor: '#0f172a',
+                  borderRadius: '10px',
+                  border: '1px solid #1e293b',
+                  overflow: 'hidden',
+                }}>
+                  <button
+                    onClick={() => setMobileAccordion(prev => prev === 'anual' ? null : 'anual')}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Evolução Anual</h3>
+                    <span style={{
+                      fontSize: '16px',
+                      color: '#64748b',
+                      transform: mobileAccordion === 'anual' ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}>▾</span>
+                  </button>
+                  {mobileAccordion === 'anual' && (
+                    <div style={{ padding: '0 12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: '10px', height: '110px' }}>
+                        {chartAnual.map((item, idx) => {
+                          const max = Math.max(...chartAnual.map(d => d.Valor || 0), 1);
+                          const h = Math.max((item.Valor / max) * 80, item.Valor > 0 ? 3 : 0);
+                          return (
+                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                              <span className="vp" style={{ fontSize: '9px', color: '#64748b', marginBottom: '4px', fontWeight: 600 }}>
+                                {item.Valor > 0 ? fmt(item.Valor) : ''}
+                              </span>
+                              <div style={{
+                                width: '100%',
+                                maxWidth: '40px',
+                                height: `${h}px`,
+                                background: 'linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)',
+                                borderRadius: '4px 4px 0 0',
+                                transition: 'height 0.5s ease',
+                              }} />
+                              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '5px', fontWeight: 600 }}>
+                                {item.name}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Accordion — Comparação Anual */}
+                <div style={{
+                  backgroundColor: '#0f172a',
+                  borderRadius: '10px',
+                  border: '1px solid #1e293b',
+                  overflow: 'hidden',
+                }}>
+                  <button
+                    onClick={() => setMobileAccordion(prev => prev === 'comparacao' ? null : 'comparacao')}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Comparação Anual</h3>
+                    <span style={{
+                      fontSize: '16px',
+                      color: '#64748b',
+                      transform: mobileAccordion === 'comparacao' ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}>▾</span>
+                  </button>
+                  {mobileAccordion === 'comparacao' && (
+                    <div style={{ padding: '0 12px 14px' }}>
+                      {/* Botões de ano */}
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                        {ANOS.map(ano => {
+                          const selecionado = anosComp.includes(ano);
+                          return (
+                            <button
+                              key={ano}
+                              onClick={() => toggleAnoComp(ano)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                padding: '3px 8px',
+                                borderRadius: '9999px',
+                                border: '1px solid',
+                                borderColor: selecionado ? COR_ANOS[ano] : '#334155',
+                                backgroundColor: selecionado ? COR_ANOS[ano] + '22' : 'transparent',
+                                color: selecionado ? COR_ANOS[ano] : '#475569',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span style={{
+                                width: '6px', height: '6px', borderRadius: '2px',
+                                backgroundColor: selecionado ? COR_ANOS[ano] : '#334155',
+                                display: 'inline-block',
+                              }} />
+                              {ano}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Barras agrupadas verticais */}
+                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '2px', height: '120px', padding: '0 2px' }}>
+                        {(() => {
+                          const anosAtivos = [...anosComp].sort((a, b) => Number(a) - Number(b));
+                          const maxVal = Math.max(...chartComparacao.flatMap(d => anosAtivos.map(a => d[a] || 0)), 1);
+                          return chartComparacao.map((row, mi) => (
+                            <div key={mi} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1px', height: '95px' }}>
+                                {anosAtivos.map(ano => {
+                                  const val = row[ano] || 0;
+                                  const h = Math.max((val / maxVal) * 80, val > 0 ? 2 : 0);
+                                  return (
+                                    <div
+                                      key={ano}
+                                      style={{
+                                        width: `${Math.max(16 / anosAtivos.length, 3)}px`,
+                                        minWidth: '3px',
+                                        height: `${h}px`,
+                                        backgroundColor: COR_ANOS[ano],
+                                        borderRadius: '2px 2px 0 0',
+                                        transition: 'height 0.4s ease',
+                                      }}
+                                      title={`${MESES[mi]} ${ano}: ${fmt(val)}`}
+                                    />
+                                  );
+                                })}
+                              </div>
+                              <span style={{ fontSize: '8px', color: '#475569', marginTop: '3px', fontWeight: 600 }}>
+                                {MESES[mi].substring(0, 3)}
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
-            </>
+            ) : (
+              /* ── DESKTOP: gráficos completos ── */
+              <>
+                <div style={cardBase}>
+                  <div style={S.graficoMensalHeader}>
+                    <h2 style={tituloGraficoMensal}>Rendimentos por Mês</h2>
+                    <div style={S.graficoControles}>
+                      <div style={S.toggleTipoGrafico}>
+                        {['barras', 'area'].map(tipo => {
+                          const ativo = tipoGrafico === tipo;
+                          const estiloBtnTipo = {
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px 10px',
+                            backgroundColor: ativo ? '#0f172a' : 'transparent',
+                            color: ativo ? '#10b981' : '#64748b',
+                            borderRadius: '0.375rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                          };
+                          return (
+                            <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={estiloBtnTipo}>
+                              {tipo === 'barras' ? '▊ Barras' : '〜 Área'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <select
+                        value={anoGrafico}
+                        onChange={e => setAnoGrafico(e.target.value)}
+                        style={{ ...S.select, appearance: 'none' }}
+                      >
+                        {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {tipoGrafico === 'barras'
+                    ? <GraficoMensalBarras data={chartMensal} />
+                    : <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={160} />
+                  }
+                </div>
+
+                <div style={gridDoisCards}>
+                  <div style={cardSemMargem}>
+                    <h2 style={S.tituloCard}>Evolução Anual</h2>
+                    <EvolucaoAnualChart data={chartAnual} />
+                  </div>
+
+                  <div style={cardSemMargem}>
+                    <div style={S.comparacaoHeader}>
+                      <h2 style={S.tituloCardSemMargem}>Comparação Anual</h2>
+                      <div style={S.comparacaoBotoesAnos}>
+                        {ANOS.map(ano => {
+                          const selecionado = anosComp.includes(ano);
+                          const estiloBtnAno = {
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            borderRadius: '9999px',
+                            border: '1px solid',
+                            borderColor: selecionado ? COR_ANOS[ano] : '#334155',
+                            backgroundColor: selecionado ? COR_ANOS[ano] + '22' : 'transparent',
+                            color: selecionado ? COR_ANOS[ano] : '#64748b',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          };
+                          const estiloDot = {
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '2px',
+                            backgroundColor: selecionado ? COR_ANOS[ano] : '#334155',
+                            display: 'inline-block',
+                          };
+                          return (
+                            <button key={ano} onClick={() => toggleAnoComp(ano)} style={estiloBtnAno}>
+                              <span style={estiloDot} />
+                              {ano}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <BarChartHorizontal data={chartComparacao} anos={anosComp} />
+                  </div>
+                </div>
+              </>
+            )
           )}
 
         </main>

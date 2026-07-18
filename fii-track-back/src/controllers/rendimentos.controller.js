@@ -75,11 +75,15 @@ async function carregarDadosModalNovoRendimentoController(req, res) {
 //#region Criar novo rendimento
 async function criarRendimentoController(req, res) {
     try {
+        // Obtém o ID do usuário autenticado
         const idUser = req.user.id;
+        // Obtém os dados do novo rendimento do corpo da requisição
         const { idAtivo, dtRendimento, valorRecebido, reinvestido } = req.body;
 
+        // Chama a função para criar o novo rendimento
         const resultado = await criarRendimento({ idAtivo, dtRendimento, valorRecebido, reinvestido, idUser });
 
+        // Retorna uma resposta de sucesso com os dados do novo rendimento criado
         return apiResponse.success(res, 'Rendimento lançado com sucesso!', resultado, 201);
 
     } catch (error) {

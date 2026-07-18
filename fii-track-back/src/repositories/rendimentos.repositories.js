@@ -145,18 +145,18 @@ async function findAtivosParaModal(idUser) {
 //#endregion
 
 //#region Inserir novo rendimento
-async function insertRendimento({ idAtivo, dtRendimento, valorRecebido, revestido, idUser }) {
+async function insertRendimento({ idAtivo, dtRendimento, valorRecebido, reinvestido, idUser }) {
 
     const db = await openDb();
 
     const result = await db.query(`
         INSERT INTO rendimentos 
-            ("idAtivo", "dtRendimento", "valorRecebido", "revestido", "idUser")
+            ("idAtivo", "dtRendimento", "valorRecebido", "reinvestido", "idUser")
         VALUES 
             ($1, $2, $3, $4, $5)
         RETURNING 
             id, "idAtivo", "dtRendimento", "valorRecebido"
-    `, [idAtivo, dtRendimento, valorRecebido, revestido, idUser]);
+    `, [idAtivo, dtRendimento, valorRecebido, reinvestido, idUser]);
 
     return result.rows[0];
 }

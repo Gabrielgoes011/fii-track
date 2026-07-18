@@ -10,11 +10,23 @@ import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 const MOBILE_BP = 768;
 
 const colunasFiis = [
-  { titulo: 'Ticker',       acesso: 'ticker',         width: '10%', align: 'center' },
-  { titulo: 'Nome do Fundo',acesso: 'nomeFundo',       width: '45%', align: 'left'   },
-  { titulo: 'CNPJ',         acesso: 'cnpj',            width: '18%', align: 'center' },
-  { titulo: 'Seguimento',   acesso: 'nomeSeguimento',  width: '20%', align: 'center' },
+  { titulo: 'Ticker', acesso: 'ticker', width: '10%', align: 'center' },
+  { titulo: 'Nome do Fundo', acesso: 'nomeFundo', width: '45%', align: 'left' },
+  { titulo: 'CNPJ', acesso: 'cnpj', width: '18%', align: 'center' },
+  { titulo: 'Seguimento', acesso: 'nomeSeguimento', width: '20%', align: 'center' },
 ];
+
+//
+const maskCnpj = (value) => {
+  if (!value) return '';
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1');
+};
 
 function PaginaMeusFiis() {
   const {
@@ -24,8 +36,8 @@ function PaginaMeusFiis() {
     handleOpenCreate, handleEdit, handleOpenModal, executeConfirmedAction, closeFormModal
   } = useMeusFiis();
 
-  const [isMobile,       setIsMobile]       = useState(window.innerWidth < MOBILE_BP);
-  const [isSelectOpen,   setIsSelectOpen]   = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [segmentoSearch, setSegmentoSearch] = useState('');
 
   useEffect(() => {
@@ -162,7 +174,7 @@ function PaginaMeusFiis() {
                         onChange={(e) => setFormData({ ...formData, ticker: e.target.value.toUpperCase() })}
                         style={inputStyle} autoFocus
                         onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
-                      <input type="text" placeholder="CNPJ (só números)" value={formData.cnpj || ''} maxLength={14}
+                      <input type="text" placeholder="CNPJ do fundo" value={maskCnpj(formData.cnpj || '')} maxLength={18}
                         onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, '').substring(0, 14) })}
                         style={inputStyle}
                         onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
