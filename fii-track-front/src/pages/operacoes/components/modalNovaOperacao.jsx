@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SlideModal from '../../../components/SlideModal/SlideModal';
-import API_BASE_URL from '../../../config/api';
+import api from '../../../config/api';
 
 const labelStyle = {
   display: 'block', fontSize: '12px', fontWeight: 600,
@@ -34,9 +34,11 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
     setQtde('');
     setValorUnidade('');
 
-    fetch(`${API_BASE_URL}/ativosDropList`)
-      .then(r => r.ok ? r.json() : [])
-      .then(d => setAtivosDisponiveis(d))
+    api.get('/ativosDropList')
+      .then(res => {
+        const dados = Array.isArray(res.data) ? res.data : [];
+        setAtivosDisponiveis(dados);
+      })
       .catch(() => setAtivosDisponiveis([]))
       .finally(() => setCarregando(false));
   }, [isOpen]);
@@ -60,15 +62,9 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
 
     try {
       setCarregando(true);
-      const res = await fetch(`${API_BASE_URL}/lancarOperacao`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        onClose();
-        if (onSuccess) onSuccess(payload);
-      }
+      await api.post('/lancarOperacao', payload);
+      onClose();
+      if (onSuccess) onSuccess(payload);
     } catch (err) {
       console.error(err);
     } finally {

@@ -1,28 +1,31 @@
-import { openDb } from "../config/configDb.js";
+import apiResponse from '../utils/httpResponse.js';
+import {
+    getAtivosDropListService,
+    getOperacoesService,
+    lancarOperacaoService,
+    carregaDadosGraficoOperacoesService,
+    excluirOperacaoService
+} from '../services/operacoes.services.js';
 
-//#region função listar fundos -  (ativos/inativos)
+//#region função listar fundos
 export async function carregaAtivosDropList(req, res) {
-    const db = await openDb();
-    const idUser = req.user.id;
+
     try {
-        const resultado = await db.query(`        
-        SELECT
-          id, ticker
-        FROM ativos
-        WHERE "idUser" = $1
-        `, [idUser]
-        );
-        // Verifica se a consulta retornou resultados
-        if (resultado.rows.length === 0) {
-            return res.status(200).json([]);
-        }
+        const idUser = req.user.id;
+
+        //chama service que carrega dropList de ativos
+        const resultado = await getAtivosDropListService(idUser);
+
         // Retorna os resultados  
-        res.status(200).json(resultado.rows);
+        return apiResponse.success(res, 'Ativos carregados com sucesso.', resultado);
 
     } catch (error) {
-        // Log do erro para depuração
-        console.error('Erro ao listar seguimentos:', error);
-        res.status(500).json({ error: 'Erro ao listar seguimentos.' });
+
+        // Log do erro para depuração para o dev
+        console.error('Erro ao carregar ativos para o dropdown na etapa do controller:', error);
+
+        //erro para o usuário
+        return apiResponse.error(res, 'Erro ao carregar ativos para o dropdown.');
     }
 }
 //#endregion
@@ -38,48 +41,18 @@ export async function listarOperacoes(req, res) {
         };
         const idUser = req.user.id;
 
-        //abrir conexão com o banco de dados
-        const db = await openDb();
+        //chama service que lista as operações
+        const operacoes = await getOperacoesService(idUser, campos);
 
-        //construir a query dinamicamente
-        let query = `
-            SELECT 
-                a.id, a."dtOperacao" "dataOperacao", a.tipo, b.ticker, 
-                c."nomeSeguimento" ,a.quantidade , a.preco
-            FROM 
-                operacoes a INNER JOIN ativos b
-            ON a."idAtivo" = b.id 
-            INNER JOIN seguimentos c
-            ON c.id = b."idSeguimento" 
-            WHERE 
-                a."idUser" = $1 AND
-                EXTRACT(YEAR FROM a."dtOperacao") = $2
-        `;
-        let params = [idUser, campos.ano];
-
-        //se o mês não for "Todos", adicionar a condição do mês
-        if (campos.mes !== 'Todos') {
-            query += ` AND EXTRACT(MONTH FROM a."dtOperacao") = $3`;
-            params.push(campos.mes);
-        }
-
-        query += ` ORDER BY a."dtOperacao" DESC`;
-
-        //consultar os dados
-        const operacoes = await db.query(query, params);
-
-        //verificar se a consulta retornou resultados
-        if (operacoes.rows.length === 0) {
-            return res.status(200).json([]);
-        }
-
-        //retornar os dados
-        return res.status(200).json(operacoes.rows);
+        //retornar os resultados
+        return apiResponse.success(res, 'Operações carregadas com sucesso.', operacoes);
 
     } catch (error) {
+        // Log do erro para depuração para o dev
+        console.error('Erro ao listar operações na etapa do controller:', error);
 
         //retornar um erro detalhado em caso de falha na consulta
-        return res.status(500).json({ error: 'Erro ao listar as operações.', errorDetails: error.message });
+        return apiResponse.error(res, 'Erro ao listar as operações.');
     }
 }
 //#endregion
@@ -98,34 +71,19 @@ export async function lancarOperacao(req, res) {
         };
         const idUser = req.user.id;
 
-        //abrir conexão com o banco de dados
-        const db = await openDb();
+        //chama service que lança a operação
+        const operacao = await lancarOperacaoService(idUser, dados);
 
-        //consultar se o ativo existe
-        const ativo = await db.query(`
-            SELECT id 
-            FROM ativos 
-            WHERE id = $1 AND "idUser" = $2`, [dados.idAtivo, idUser]);
+        // Retorna o ID da operação lançada
+        return apiResponse.success(res, 'Operação lançada com sucesso!', { idOperacao: operacao.id }, 201);
 
-        if (ativo.rows.length === 0) {
-            return res.status(400).json({ error: 'Ativo não encontrado.' });
-        }
-
-        const novasOperacao = await db.query(`
-            INSERT INTO operacoes
-                ("idAtivo", "dtOperacao", tipo, quantidade, preco, "idUser")
-            VALUES 
-                ($1, $2, $3, $4, $5, $6)
-            RETURNING id`,
-            [dados.idAtivo, dados.dataOperacao, dados.tipo, dados.quantidade, dados.preco, idUser]
-        );
-
-        // Retornar o ID da operação lançada
-        return res.status(201).json({ message: 'Operação lançada com sucesso!', idOperacao: novasOperacao.rows[0].id });
     } catch (error) {
 
-        // Retornar um erro detalhado em caso de falha na inserção
-        return res.status(500).json({ error: 'Erro ao lançar a operação.', errorDetails: error.message });
+        // Log do erro para depuração para o dev
+        console.error('Erro ao lançar operação na etapa do controller:', error);
+
+        //erro para o usuário
+        return apiResponse.error(res, 'Erro ao lançar a operação.');
     }
 }
 //#endregion
@@ -139,76 +97,43 @@ export async function carregaDadosGraficoOperacoes(req, res) {
         };
         const idUser = req.user.id;
 
-        //abrir conexão com o banco de dados
-        const db = await openDb();
-
-        //construir a query dinamicamente 
-        const query = `
-        SELECT 
-            EXTRACT(MONTH FROM "dtOperacao") AS mes,
-            EXTRACT(YEAR FROM "dtOperacao") AS ano,
-
-            SUM(CASE WHEN tipo = 'Compra' THEN (quantidade * preco) ELSE 0 END) AS "totalComprado",
-            SUM(CASE WHEN tipo = 'Venda' THEN (quantidade * preco) ELSE 0 END) AS "totalVendido",
-            SUM(CASE 
-                WHEN tipo = 'Compra' THEN (quantidade * preco) 
-                WHEN tipo = 'Venda' THEN -(quantidade * preco) 
-                ELSE 0 
-            END) AS "totalLiquido"
-
-        FROM operacoes
-        WHERE "idUser" = $1 AND EXTRACT(YEAR FROM "dtOperacao") = $2
-        GROUP BY EXTRACT(YEAR FROM "dtOperacao"), EXTRACT(MONTH FROM "dtOperacao")
-        ORDER BY mes;
-        `;
-
-        //executar a consulta e recuperar os dados do gráfico
-        const dadosGrafico = await db.query(query, [idUser, campos.ano]);
-
-        //verificar se a consulta retornou resultados
-        if (dadosGrafico.rows.length === 0) {
-            return res.status(200).json([]);
-        }
+        //chama service que carrega os dados do gráfico
+        const dadosGrafico = await carregaDadosGraficoOperacoesService(idUser, campos);
 
         //retornar os dados do gráfico
-        return res.status(200).json(dadosGrafico.rows);
+        return apiResponse.success(res, 'Dados do gráfico carregados com sucesso.', dadosGrafico);
 
-        //retornar um erro detalhado em caso de falha na consulta
     } catch (error) {
 
-        //retornar um erro detalhado em caso de falha na consulta
-        return res.status(500).json({ error: 'Erro ao carregar os dados do gráfico.', errorDetails: error.message });
+        // Log do erro para depuração para o dev
+        console.error('Erro ao carregar dados do gráfico na etapa do controller:', error);
+
+        //erro para o usuário
+        return apiResponse.error(res, 'Erro ao carregar os dados do gráfico.');
     }
 }
 //#endregion
 
-//#region => função para exluir uma operação
+//#region => função para excluir uma operação
 export async function excluirOperacao(req, res) {
     try {
         //envia o id no body da requisição
         const idOperacao = req.body.id;
         const idUser = req.user.id;
 
-        //abrir conexão com o banco de dados
-        const db = await openDb();
+        //chama service que exclui a operação
+        await excluirOperacaoService(idUser, idOperacao);
 
-        //excluir a operação (garante que pertence ao usuário)
-        const resultado = await db.query(`
-            DELETE 
-            FROM operacoes
-            WHERE id = $1 AND "idUser" = $2
-        `, [idOperacao, idUser]);
-
-        //verificar se a operação foi excluída 
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({ error: 'Operação não encontrada.' });
-        }
         //retornar uma mensagem de sucesso
-        return res.status(200).json({ message: 'Operação excluída com sucesso!' });
+        return apiResponse.success(res, 'Operação excluída com sucesso!');
 
     } catch (error) {
-        //retornar um erro detalhado em caso de falha na exclusão
-        return res.status(500).json({ error: 'Erro ao excluir a operação.', errorDetails: error.message });
+
+        // Log do erro para depuração para o dev
+        console.error('Erro ao excluir operação na etapa do controller:', error);
+
+        //erro para o usuário
+        return apiResponse.error(res, 'Erro ao excluir a operação.');
     }
 }
 //#endregion
@@ -221,5 +146,4 @@ export default {
     carregaDadosGraficoOperacoes,
     excluirOperacao
 }
-
 //#endregion
