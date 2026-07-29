@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
-import { handleError } from '../../utils/responseUtils';
+import { handleError, toastSuccess } from '../../utils/responseUtils';
 import { rendimentosService } from '../../services/rendimentos/rendimentosService';
-import { toast } from 'react-toastify';
 
 export const useRendimentos = () => {
   const [rendimentos,      setRendimentos]      = useState([]);
@@ -92,7 +91,7 @@ export const useRendimentos = () => {
       await rendimentosService.excluir(targetId);
       // 2. Converte para String na hora de comparar, evitando falhas de tipos diferentes (Number vs String)
       setRendimentos((prev) => prev.filter((item) => String(item.id) !== String(targetId)));
-      toast.success('Rendimento excluído com sucesso!');
+      toastSuccess('Rendimento excluído com sucesso!');
       return true; // Retorna true para o componente saber que deu certo
     } catch (error) {
       handleError(error);

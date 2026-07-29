@@ -1,27 +1,15 @@
 import React from 'react';
 import { FiSettings } from 'react-icons/fi';
+import PaginaEmDesenvolvimento from '../../components/PaginaEmDesenvolvimento/PaginaEmDesenvolvimento';
 
 function PaginaConfiguracoes() {
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #64748b, #475569)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(100,116,139,0.3)' }}>
-          <FiSettings size={20} color="#fff" />
-        </div>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Configurações</h1>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Personalize as preferências do sistema</p>
-        </div>
-      </div>
-
-      <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '14px', padding: '3rem 2rem', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(100,116,139,0.1)', border: '1px solid rgba(100,116,139,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-          <FiSettings size={28} color="#64748b" />
-        </div>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem' }}>Em desenvolvimento</h2>
-        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Esta seção estará disponível em breve!</p>
-      </div>
-    </div>
+    <PaginaEmDesenvolvimento
+      titulo="Configurações"
+      descricao="Personalize as preferências do sistema"
+      icon={FiSettings}
+      cor="#64748b"
+    />
   );
 }
 

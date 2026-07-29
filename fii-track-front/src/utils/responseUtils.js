@@ -166,33 +166,4 @@ export function handleError(error, customMsg = null) {
   toast.error(msg);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// handleApiCall — wrapper completo para chamadas axios
-//
-// Executa a chamada, trata sucesso e erro automaticamente.
-//
-// Parâmetros:
-//   apiFn      — função async que retorna a promise axios
-//   successMsg — mensagem de sucesso personalizada (opcional)
-//   errorMsg   — mensagem de erro personalizada (opcional)
-//
-// Retorna:
-//   { data, error } — data com o resultado ou error com o objeto de erro
-//
-// Exemplo:
-//   const { data, error } = await handleApiCall(
-//     () => api.post('/usuarios', payload),
-//     'Usuário criado com sucesso!'
-//   );
-//   if (data) { ... atualiza estado ... }
-// ─────────────────────────────────────────────────────────────────────────────
-export async function handleApiCall(apiFn, successMsg = null, errorMsg = null) {
-  try {
-    const response = await apiFn();
-    handleResponse(response, successMsg);
-    return { data: response.data, error: null };
-  } catch (error) {
-    handleError(error, errorMsg);
-    return { data: null, error };
-  }
-}
+

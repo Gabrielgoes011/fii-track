@@ -3,9 +3,9 @@ import { BarChart, AreaChart } from '../../components/Charts';
 import NovoRendimentoModal from './components/modalNovoRendimento';
 import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
 import { toastSuccess, toastInfo } from '../../utils/responseUtils';
-import { toast } from 'react-toastify';
 import { DataCard } from '../../components/DataCard';
 import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmacao';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle } from 'react-icons/fi';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -19,7 +19,6 @@ const CHART_KEYS = ['Valor'];
 const CHART_COLORS = { Valor: 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)' };
 const AREA_COLORS = { Valor: '#3b82f6' };
 const COR_ANOS = { '2023': '#f59e0b', '2024': '#ef4444', '2025': '#3b82f6', '2026': '#10b981' };
-const MOBILE_BP = 768;
 
 const fmt = (v) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
@@ -1069,13 +1068,7 @@ export default function PaginaRendimentos() {
     marcarComoReinvestido,
   } = useRendimentos();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
+  const isMobile = useIsMobile();
   const [filtroAtivo, setFiltroAtivo] = useState('Todos');
   const [filtroMes, setFiltroMes] = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
   const [filtroAno, setFiltroAno] = useState(String(new Date().getFullYear()));
@@ -1431,7 +1424,7 @@ export default function PaginaRendimentos() {
               <div>
                 <div style={{ ...S.mobileHeader, justifyContent: 'flex-end', gap: '8px' }}>
                   <button
-                    onClick={() => toast.info('Importação via Excel em desenvolvimento.')}
+                    onClick={() => toastInfo('Importação via Excel em desenvolvimento.')}
                     style={{ ...S.btnNovoMobile, background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
                     onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.45)'; }}
                     onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)'; }}
@@ -1542,7 +1535,7 @@ export default function PaginaRendimentos() {
                 onBotaoClick={() => setModalAberto(true)}
                 botaoExtra={
                   <button
-                    onClick={() => toast.info('Importação via Excel em desenvolvimento.')}
+                    onClick={() => toastInfo('Importação via Excel em desenvolvimento.')}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       padding: '0.5rem 1rem',

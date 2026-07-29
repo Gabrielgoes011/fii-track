@@ -15,7 +15,6 @@ import Login from './pages/login/login';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './styles/global.css';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { PrivacyProvider } from './context/PrivacyContext';
 

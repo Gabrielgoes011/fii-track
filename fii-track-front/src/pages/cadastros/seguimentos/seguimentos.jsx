@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect } from 'react';
 import { GridDados } from '../../../components/GridDados';
 import { useSeguimentos } from '../../../hooks/cadastros/useSeguimentos';
 import ModalConfirmacao from '../../../components/ModalDeConfirmacao/ModalConfirmacao';
 import SkeletonTable from '../../../components/SkeletonTable/SkeletonTable';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
-
-const MOBILE_BP = 768;
 
 const colunasSeguimentos = [
   { titulo: 'Seguimento', acesso: 'nome', width: '100', align: 'center' }
@@ -21,12 +18,7 @@ function PaginaSeguimentos() {
     handleOpenCreate, handleEdit, handleOpenModal, executeConfirmedAction, closeFormModal
   } = useSeguimentos();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     getSeguimentos();
@@ -103,9 +95,6 @@ function PaginaSeguimentos() {
                 coluna={colunasSeguimentos} data={seguimentos} itemsPerPage={10}
                 labelpesquisa="Buscar seguimentos..." usaVisualizar={false}
                 usaEditar acaoEditar={handleEdit} usaExcluir acaoExcluir={(item) => handleOpenModal(item, 'delete')}
-                usaResetarSenha={false} usaInativar={false} usaReativar={false}
-                paddingHead="14px 12px" paddingBody="13px 12px"
-                tamanhoFontBody="14px" tamanhoFontHead="14px"
               />
             )}
           </section>
@@ -132,7 +121,6 @@ function PaginaSeguimentos() {
 
         {showModal && <ModalConfirmacao onClose={() => setShowModal(false)} onConfirm={executeConfirmedAction} action={modalAction} userName={itemSelected?.nome} />}
       </main>
-      <ToastContainer autoClose={3000} position="top-right" />
     </div>
   );
 }

@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { GridDados } from '../../../components/GridDados';
 import { useUsuarios } from '../../../hooks/cadastros/useUsuarios';
 import ModalFormulario from '../../../components/ModalFormulario/ModalFormulario';
 import ModalConfirmacao from '../../../components/ModalDeConfirmacao/ModalConfirmacao';
 import SkeletonTable from '../../../components/SkeletonTable/SkeletonTable';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { FiPlus, FiEdit2, FiTrash2, FiRefreshCw, FiUserX, FiUserCheck, FiKey } from 'react-icons/fi';
-
-const MOBILE_BP = 768;
 
 const colunasUsuarios = [
   { titulo: 'Nome',  acesso: 'nome',  width: '25%', align: 'left'   },
@@ -25,13 +22,7 @@ function PaginaUsuarios() {
     handleOpenCreate, handleEdit, handleOpenModal, executeConfirmedAction, closeFormModal
   } = useUsuarios();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
+  const isMobile = useIsMobile();
   useEffect(() => {
     getUsers();
     getDashboard();
@@ -158,8 +149,6 @@ function PaginaUsuarios() {
                 usaResetarSenha={activeTab === 'ativos'} acaoResetarSenha={(user) => handleOpenModal(user, 'reset')}
                 usaInativar={activeTab === 'ativos'} acaoInativar={(user) => handleOpenModal(user, 'inactivate')}
                 usaReativar={activeTab === 'inativos'} acaoReativar={(user) => handleOpenModal(user, 'reactivate')}
-                paddingHead="14px 12px" paddingBody="13px 12px"
-                tamanhoFontBody="14px" tamanhoFontHead="14px"
               />
             )}
             <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#475569' }}>
@@ -177,7 +166,6 @@ function PaginaUsuarios() {
         )}
 
       </main>
-      <ToastContainer autoClose={3000} position="top-right" />
     </div>
   );
 }

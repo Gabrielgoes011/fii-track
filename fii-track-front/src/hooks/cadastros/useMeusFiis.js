@@ -126,11 +126,7 @@ export const useMeusFiis = () => {
   };
 
   const handleOpenModal = (item, action) => {
-    console.log('🔍 Item selecionado para ação:', item); // DEBUG
-    console.log('Tem ID?', item?.id); // DEBUG
-    
     if (!item || !item.id) {
-      console.warn('⚠️ Item sem ID:', item);
       toastWarn('Erro ao selecionar fundo. Item inválido.');
       return;
     }

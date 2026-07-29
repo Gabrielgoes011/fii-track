@@ -6,6 +6,7 @@ import { BarChart, AreaChart } from '../../components/Charts';
 import { useOperacoes } from '../../hooks/operacoes/useOperacoes';
 import { DataCard } from '../../components/DataCard';
 import SlideModal from '../../components/SlideModal/SlideModal';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const CHART_KEYS   = ['Compra', 'Venda', 'Liquido'];
 const CHART_COLORS = {
@@ -22,8 +23,6 @@ const MESES = [
   ['09','Setembro'], ['10','Outubro'], ['11','Novembro'], ['12','Dezembro'],
 ];
 
-const MOBILE_BP = 768;
-
 export default function PaginaOperacoes() {
   const [anoSelecionado,       setAnoSelecionado]       = useState('2026');
   const [mesSelecionado,       setMesSelecionado]       = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
@@ -31,14 +30,9 @@ export default function PaginaOperacoes() {
   const [tipoGrafico,          setTipoGrafico]          = useState('barras');
   const [modalExclusaoAberto,  setModalExclusaoAberto]  = useState(false);
   const [operacaoParaExcluir,  setOperacaoParaExcluir]  = useState(null);
-  const [isMobile,             setIsMobile]             = useState(window.innerWidth < MOBILE_BP);
   const [graficoAberto,        setGraficoAberto]        = useState(false);
 
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   const {
     operacoes, chartData, loading,

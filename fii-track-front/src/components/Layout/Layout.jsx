@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
 import { usePrivacy } from '../../context/PrivacyContext';
-
-// breakpoint mobile
-const MOBILE_BP = 768;
+import { MOBILE_BP } from '../../hooks/useIsMobile';
 
 function Layout({ children, onLogout }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);

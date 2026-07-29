@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { GridDados } from '../../../components/GridDados';
 import { useMeusFiis } from '../../../hooks/cadastros/useMeusFiis';
 import ModalConfirmacao from '../../../components/ModalDeConfirmacao/ModalConfirmacao';
 import SkeletonTable from '../../../components/SkeletonTable/SkeletonTable';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
-
-const MOBILE_BP = 768;
 
 const colunasFiis = [
   { titulo: 'Ticker', acesso: 'ticker', width: '10%', align: 'center' },
@@ -16,7 +13,6 @@ const colunasFiis = [
   { titulo: 'Seguimento', acesso: 'nomeSeguimento', width: '20%', align: 'center' },
 ];
 
-//
 const maskCnpj = (value) => {
   if (!value) return '';
   return value
@@ -36,15 +32,9 @@ function PaginaMeusFiis() {
     handleOpenCreate, handleEdit, handleOpenModal, executeConfirmedAction, closeFormModal
   } = useMeusFiis();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
+  const isMobile = useIsMobile();
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [segmentoSearch, setSegmentoSearch] = useState('');
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
   useEffect(() => {
     getFiis();
@@ -225,7 +215,6 @@ function PaginaMeusFiis() {
 
         {showModal && <ModalConfirmacao onClose={() => setShowModal(false)} onConfirm={executeConfirmedAction} action={modalAction} userName={itemSelected?.ticker} />}
       </main>
-      <ToastContainer autoClose={3000} position="top-right" />
     </div>
   );
 }

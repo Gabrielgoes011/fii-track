@@ -24,17 +24,6 @@ api.interceptors.request.use(
 );
 
 // Interceptor de RESPONSE — padroniza respostas e trata erros
-//exemplo de uso
-/*
-api.get('/usuarios')
-  .then(response => {
-    console.log(response.data);
-  })
-  .catch(error => {
-    console.error(error);
-  }
-);
-*/
 
 api.interceptors.response.use(
   (response) => {

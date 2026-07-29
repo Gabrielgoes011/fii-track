@@ -3,20 +3,7 @@ import {
   AiOutlineEye, AiOutlineEdit, AiOutlineDelete,
   AiOutlineKey, AiOutlinePoweroff, AiOutlinePlayCircle, AiOutlineClose, AiOutlineReload,
 } from 'react-icons/ai';
-
-// Formatação de datas com fallback
-let formatarDataBR;
-let formatarDataComHora;
-try {
-  const dateUtils = require('../../utils/dateUtils');
-  formatarDataBR = dateUtils.formatarDataBR || ((d) => d ? new Date(d).toLocaleDateString('pt-BR') : '');
-  formatarDataComHora = dateUtils.formatarDataComHora || ((d) => d ? new Date(d).toLocaleString('pt-BR') : '');
-} catch {
-  formatarDataBR = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '';
-  formatarDataComHora = (d) => d ? new Date(d).toLocaleString('pt-BR') : '';
-}
-const isReinvestido = (valor) =>
-  valor === true || valor === 1 || valor === '1' || String(valor).toLowerCase() === 'true';
+import { formatarDataBR, formatarDataComHora } from '../../utils/dateUtils';
 /**
  * GridDados — tabela universal da aplicação (tema dark FIITrack).
  *
@@ -35,12 +22,6 @@ const GridDados = ({
   usaResetarSenha = false, acaoResetarSenha,
   usaInativar = false, acaoInativar,
   usaReativar = false, acaoReativar,
-  // props legadas
-  paddingHead = '4px 8px',
-  paddingBody = '4px 8px',
-  tamanhoIcones = 'fs-5',
-  tamanhoFontBody = '13px',
-  tamanhoFontHead = '13px',
   _embutido = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);

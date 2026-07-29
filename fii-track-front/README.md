@@ -1,6 +1,6 @@
-# API Node — Frontend
+# FIITrack — Frontend
 
-Interface web para gerenciamento de carteira de FIIs (Fundos de Investimento Imobiliário). Construída com **React 19**, **Vite** e **Tailwind CSS**.
+Interface web para gerenciamento de carteira de FIIs (Fundos de Investimento Imobiliário). Construída com **React 19** e **Vite**, usando inline styles como padrão de estilização.
 
 ---
 
@@ -13,8 +13,7 @@ Interface web para gerenciamento de carteira de FIIs (Fundos de Investimento Imo
 | axios | ^1.13.6 | Requisições HTTP |
 | react-toastify | ^11.0.5 | Notificações toast |
 | react-icons | ^5.6.0 | Ícones |
-| react-bootstrap | ^2.10.10 | Componentes de UI |
-| tailwindcss | ^3.4.19 | Estilização utilitária |
+| @vercel/speed-insights | ^2.0.0 | Métricas de performance |
 | vite | ^8.0.10 | Bundler / dev server |
 
 ---
@@ -22,68 +21,84 @@ Interface web para gerenciamento de carteira de FIIs (Fundos de Investimento Imo
 ## Estrutura do Projeto
 
 ```
-api-nodefront/
-├── public/
-├── src/
-│   ├── App.jsx                 # Roteamento principal e controle de autenticação
-│   ├── index.jsx               # Entry point React
-│   ├── components/
-│   │   ├── Charts/             # Componentes de gráficos
-│   │   ├── DataCard/           # Card de dados genérico
-│   │   ├── EmptyState/         # Estado vazio de tabelas/listas
-│   │   ├── Layout/             # Layout principal com sidebar
-│   │   ├── ModalDeConfirmacao/ # Modal de confirmação de ações
-│   │   ├── ModalFormulario/    # Modal genérico de formulário
-│   │   ├── ResponsiveForm/     # Formulário responsivo
-│   │   ├── Sidebar/            # Menu lateral de navegação
-│   │   ├── SkeletonLoader/     # Loading skeleton
-│   │   ├── SkeletonTable/      # Loading skeleton para tabelas
-│   │   ├── TableAcoes/         # Tabela com ações (editar/deletar)
-│   │   ├── Toast/              # Wrapper de notificações
-│   │   └── TopBar/             # Barra superior
-│   ├── config/                 # Configurações globais (axios, etc.)
-│   ├── hooks/                  # Custom hooks
-│   ├── pages/
-│   │   ├── Dashboard/          # ✅ Dashboard com cards de navegação e stats
-│   │   ├── login/              # ✅ Tela de login com autenticação JWT
-│   │   ├── cadastros/
-│   │   │   ├── usuarios/       # ✅ CRUD de usuários
-│   │   │   ├── meusFundos/     # ✅ CRUD de FIIs da carteira
-│   │   │   └── seguimentos/    # ✅ CRUD de segmentos
-│   │   ├── operacoes/          # ✅ Compras e vendas — lançamento e histórico
-│   │   ├── rendimentos/        # ✅ Rendimentos — lançamento e histórico
-│   │   ├── controleAtivos/     # 🚧 Em desenvolvimento
-│   │   ├── precificacao/       # 🚧 Em desenvolvimento
-│   │   ├── relatorios/         # 🚧 Em desenvolvimento
-│   │   ├── Usuarios/           # ✅ Gestão de usuários (admin)
-│   │   └── Configuracoes/      # 🚧 Em desenvolvimento
-│   ├── services/               # Camada de serviços (chamadas à API)
-│   ├── styles/
-│   │   └── global.css          # Estilos globais
-│   └── utils/                  # Utilitários e helpers
-└── index.html
+src/
+├── App.jsx                      # Roteamento principal e controle de autenticação
+├── index.jsx                    # Entry point React
+├── components/
+│   ├── Charts/                  # Gráficos (BarChart, AreaChart)
+│   ├── DataCard/                # Card de dados/KPI
+│   ├── GridDados/               # Tabela universal com busca e paginação
+│   ├── Layout/                  # Layout com sidebar e topbar
+│   ├── ModalDeConfirmacao/      # Modal de confirmação de ações
+│   ├── ModalFormulario/         # Modal de formulário (usado em Usuários)
+│   ├── PaginaEmDesenvolvimento/ # Placeholder para páginas em construção
+│   ├── Sidebar/                 # Menu lateral de navegação
+│   ├── SkeletonTable/           # Loading skeleton para tabelas
+│   ├── SlideModal/              # Modal lateral deslizante
+│   ├── TopBar/                  # Barra superior
+│   └── ValorPrivado/            # Wrapper para ocultar valores financeiros
+├── config/
+│   └── api.js                   # Cliente axios com interceptores de token e 401
+├── context/
+│   └── PrivacyContext.jsx       # Contexto do modo privacidade
+├── hooks/
+│   ├── useIsMobile.js           # Detecta breakpoint mobile (< 768px)
+│   ├── cadastros/
+│   │   ├── useMeusFiis.js
+│   │   ├── useSeguimentos.js
+│   │   └── useUsuarios.js
+│   ├── home/
+│   │   └── useHomeCards.js
+│   ├── operacoes/
+│   │   └── useOperacoes.js
+│   └── rendimentos/
+│       └── useRendimentos.js
+├── pages/
+│   ├── login/                   # ✅ Login com autenticação JWT
+│   ├── dashboard/               # ✅ Dashboard com cards e stats
+│   ├── rendimentos/             # ✅ Rendimentos — lançamento e histórico
+│   ├── operacoes/               # ✅ Compras e vendas — lançamento e histórico
+│   ├── cadastros/
+│   │   ├── meusFundos/          # ✅ CRUD de FIIs da carteira
+│   │   ├── seguimentos/         # ✅ CRUD de seguimentos
+│   │   └── usuarios/            # ✅ CRUD de usuários
+│   ├── controleAtivos/          # 🚧 Em desenvolvimento
+│   ├── precificacao/            # 🚧 Em desenvolvimento
+│   ├── relatorios/              # 🚧 Em desenvolvimento
+│   └── configuracoes/           # 🚧 Em desenvolvimento
+├── services/
+│   ├── auth/authService.js
+│   ├── cadastros/
+│   │   ├── meusFiisService.js
+│   │   ├── seguimentosService.js
+│   │   └── usuariosService.js
+│   ├── home/homeService.js
+│   ├── operacoes/operacoesService.js
+│   └── rendimentos/rendimentosService.js
+├── styles/
+│   └── global.css               # Reset, tipografia, scrollbar, modo privacidade
+└── utils/
+    ├── dateUtils.js             # formatarDataBR, formatarDataComHora
+    └── responseUtils.js         # toastSuccess/Error/Warn/Info, handleError, handleResponse
 ```
 
 ---
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) v18+ (recomendado LTS)
-- npm
-- Backend rodando (ver `api-nodeback/README.md`)
+- Node.js v18+
+- Backend rodando (ver `fii-track-back/README.md`)
 
 ---
 
 ## Instalação
 
 ```bash
-cd api-nodefront
+cd fii-track-front
 npm install
 ```
 
 ### Variáveis de ambiente
-
-Copie o `.env.example` e configure a URL do backend:
 
 ```bash
 cp .env.example .env.development
@@ -98,10 +113,10 @@ VITE_API_URL=http://localhost:3000
 ## Scripts
 
 ```bash
-npm run dev       # Desenvolvimento (modo development)
+npm run dev       # Desenvolvimento
 npm run demo      # Modo demo
 npm run build     # Build de produção
-npm run preview   # Preview do build de produção
+npm run preview   # Preview do build
 ```
 
 ---
@@ -110,41 +125,45 @@ npm run preview   # Preview do build de produção
 
 | Rota | Página | Status |
 |---|---|---|
-| `/login` | Login | ✅ Pronto |
-| `/` | Dashboard | ✅ Pronto |
-| `/rendimentos` | Rendimentos | ✅ Pronto |
-| `/operacoes` | Compras e Vendas | ✅ Pronto |
-| `/cadastros/meusfiis` | Meus FIIs | ✅ Pronto |
-| `/cadastros/seguimentos` | Seguimentos | ✅ Pronto |
-| `/cadastros/usuarios` | Usuários | ✅ Pronto |
-| `/controle-ativos` | Controle de Ativos | 🚧 Em desenvolvimento |
-| `/precificacao` | Precificação | 🚧 Em desenvolvimento |
-| `/relatorios` | Relatórios | 🚧 Em desenvolvimento |
-| `/configuracoes` | Configurações | 🚧 Em desenvolvimento |
+| `/login` | Login | ✅ |
+| `/` | Dashboard | ✅ |
+| `/rendimentos` | Rendimentos | ✅ |
+| `/operacoes` | Operações | ✅ |
+| `/cadastros/meusfiis` | Meus FIIs | ✅ |
+| `/cadastros/seguimentos` | Seguimentos | ✅ |
+| `/cadastros/usuarios` | Usuários | ✅ |
+| `/controle-ativos` | Controle de Ativos | 🚧 |
+| `/precificacao` | Precificação | 🚧 |
+| `/relatorios` | Relatórios | 🚧 |
+| `/configuracoes` | Configurações | 🚧 |
 
-> Todas as rotas exceto `/login` são protegidas. Sem token válido no `localStorage`, o usuário é redirecionado para `/login` automaticamente.
+Todas as rotas exceto `/login` são protegidas. Sem token válido o usuário é redirecionado automaticamente.
 
 ---
 
 ## Autenticação
 
-O token JWT é armazenado no `localStorage` e enviado automaticamente via interceptor do axios em todas as requisições. Ao receber um `401`, o interceptor dispara o evento `unauthorized`, que desloga o usuário e redireciona para o login.
+Token JWT armazenado no `localStorage`, anexado automaticamente via interceptor do axios em toda requisição. Ao receber `401`, o interceptor dispara o evento `unauthorized`, desloga o usuário e redireciona para `/login`.
 
 ---
 
-## 📋 Backlog
+## Padrões do Projeto
+
+Ver [`PADROES.md`](./PADROES.md) para guia completo de como criar novas páginas, hooks, services e usar os componentes.
+
+---
+
+## Backlog
 
 ### Em andamento
 
 - [ ] Controle de Ativos — posição consolidada da carteira (preço médio, quantidade total, valor de mercado)
 - [ ] Precificação — cotação em tempo real dos FIIs
 
-### Pendências
+### Pendentes
 
-- [ ] Página de Relatórios — exportação de dados por período (PDF / Excel)
-- [ ] Página de Configurações — preferências do usuário e configurações da conta
-- [ ] Gráfico de evolução patrimonial no Dashboard com dados reais da API
-- [ ] Responsividade mobile completa
+- [ ] Relatórios — exportação por período (PDF / Excel)
+- [ ] Configurações — preferências do usuário
+- [ ] Gráfico de evolução patrimonial no Dashboard com dados reais
 - [ ] Tema claro (atualmente apenas dark mode)
-- [ ] Testes automatizados com React Testing Library
-- [ ] Internacionalização (i18n)
+- [ ] Testes automatizados
