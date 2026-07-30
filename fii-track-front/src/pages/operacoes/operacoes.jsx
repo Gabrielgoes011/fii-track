@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AiOutlineBarChart, AiOutlineAreaChart } from 'react-icons/ai';
-import { FiAlertTriangle, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiAlertTriangle, FiPlus, FiTrash2, FiRepeat } from 'react-icons/fi';
 import NovaOperacaoModal from './components/modalNovaOperacao';
 import { BarChart, AreaChart } from '../../components/Charts';
 import { useOperacoes } from '../../hooks/operacoes/useOperacoes';
@@ -93,7 +93,18 @@ export default function PaginaOperacoes() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
-      <main style={{ maxWidth: '60rem', margin: '0 auto', padding: isMobile ? '0.5rem 0' : '1rem 0.5rem' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0' : '1rem 0.5rem' }}>
+
+        {/* ── Header ── */}
+        <header style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.25rem' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}>
+            <FiRepeat size={20} color="#fff" />
+          </div>
+          <div>
+            <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Operações</h1>
+            <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Histórico de compras e vendas dos seus ativos</p>
+          </div>
+        </header>
 
         {/* ── Seção do Gráfico ── */}
         <div style={{

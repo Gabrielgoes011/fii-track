@@ -1,0 +1,18 @@
+import api from '../../config/api';
+
+export const controleAtivosService = {
+  listar: async () => {
+    const res = await api.get('/controle-ativos');
+    return res.data;
+  },
+
+  salvarPrecoTeto: async (idAtivo, precoTeto) => {
+    const res = await api.put(`/controle-ativos/preco-teto/${idAtivo}`, { precoTeto });
+    return res.data;
+  },
+
+  salvarPercIdeal: async (idAtivo, percIdeal) => {
+    const res = await api.put(`/controle-ativos/perc-ideal/${idAtivo}`, { percIdeal });
+    return res.data;
+  },
+};

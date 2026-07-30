@@ -6,7 +6,7 @@ import { toastSuccess, toastInfo } from '../../utils/responseUtils';
 import { DataCard } from '../../components/DataCard';
 import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmacao';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign } from 'react-icons/fi';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MESES = [
@@ -1228,7 +1228,7 @@ export default function PaginaRendimentos() {
   const cardSemMargem = { ...cardBase, marginBottom: 0 };
 
   const estiloMain = {
-    maxWidth: '60rem',
+    maxWidth: '100%',
     margin: '0 auto',
     padding: isMobile ? '0.5rem 0' : '1rem 0.5rem',
   };
@@ -1299,6 +1299,17 @@ export default function PaginaRendimentos() {
     <>
       <div style={S.paginaRaiz}>
         <main style={estiloMain}>
+
+          {/* ── Header ── */}
+          <header style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.25rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}>
+              <FiDollarSign size={20} color="#fff" />
+            </div>
+            <div>
+              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Rendimentos</h1>
+              <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Proventos recebidos e histórico de reinvestimentos</p>
+            </div>
+          </header>
 
           {/* ── KPIs ── */}
           <div style={cardBase}>

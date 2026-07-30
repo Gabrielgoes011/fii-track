@@ -58,6 +58,7 @@ function Layout({ children, onLogout }) {
       <div style={{
         marginLeft: (!isMobile && sidebarOpen) ? '250px' : '0px',
         flex: 1,
+        minWidth: 0,
         background: '#0a0f1e',
         minHeight: '100vh',
         position: 'relative',
