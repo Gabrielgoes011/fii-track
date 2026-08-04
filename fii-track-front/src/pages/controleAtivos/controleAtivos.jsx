@@ -1,195 +1,411 @@
 import { useEffect, useState } from 'react';
-import { FiLayers, FiRefreshCw, FiEdit2 } from 'react-icons/fi';
+import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiTrash2, FiCheck, FiX, FiBriefcase } from 'react-icons/fi';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
-import SlideModal from '../../components/SlideModal/SlideModal';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useControleAtivos } from '../../hooks/controleAtivos/useControleAtivos';
+import { toastWarn } from '../../utils/responseUtils';
 
 // ─── Formatadores ─────────────────────────────────────────────────────────────
 const fmt = (v) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
-
 const fmtSinal = (v) => {
   if (v === null || v === undefined) return '—';
   return (v > 0 ? '+' : '') + fmt(v);
 };
-
 const fmtPerc = (v, casas = 2) => {
   if (v === null || v === undefined) return '—';
   return (v > 0 ? '+' : '') + (v * 100).toFixed(casas).replace('.', ',') + '%';
 };
-
 const fmtPercSemSinal = (v, casas = 2) => {
   if (v === null || v === undefined) return '—';
   return (v * 100).toFixed(casas).replace('.', ',') + '%';
 };
-
-const corRent  = (v) => (v == null ? '#94a3b8' : v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8');
-const corDesc  = (v) => (v == null ? '#64748b' : v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8');
-// ─────────────────────────────────────────────────────────────────────────────
+const corRent = (v) => (v == null ? '#94a3b8' : v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8');
 
 const BADGE = {
-  aportar:    { bg: 'rgba(16,185,129,0.15)',  cor: '#4ade80',  borda: 'rgba(16,185,129,0.3)',  txt: 'Aportar'      },
-  equilibrio: { bg: 'rgba(251,191,36,0.15)',  cor: '#fbbf24',  borda: 'rgba(251,191,36,0.3)',  txt: 'Equilíbrio'   },
-  acima:      { bg: 'rgba(248,113,113,0.15)', cor: '#f87171',  borda: 'rgba(248,113,113,0.3)', txt: 'Acima Ideal'  },
+  aportar:    { bg: 'rgba(59,130,246,0.12)', cor: '#60a5fa', borda: 'rgba(59,130,246,0.3)', txt: 'Aportar' },
+  equilibrio: { bg: 'rgba(16,185,129,0.12)', cor: '#4ade80', borda: 'rgba(16,185,129,0.3)', txt: 'Equilíbrio' },
+  acima:      { bg: 'rgba(251,191,36,0.12)', cor: '#fbbf24', borda: 'rgba(251,191,36,0.3)', txt: 'Acima Ideal' },
 };
 
-// ─── Sub-componente: linha da tabela ───────────────────────────────────────────
-function LinhaAtivo({ row, onEditar, isOdd }) {
-  const bgLinha = isOdd ? 'rgba(255,255,255,0.01)' : 'transparent';
-  const td = (extra = {}) => ({
-    padding: '0.7rem 0.6rem', borderBottom: '1px solid #1e293b',
-    fontSize: '12px', color: '#cbd5e1',
-    fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
-    background: bgLinha, ...extra,
-  });
-
-  const cfg = BADGE[row.acaoEquilibrio] ?? BADGE.equilibrio;
-
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld }) {
   return (
-    <tr
-      onMouseOver={(e) => { [...e.currentTarget.children].forEach(c => { c.style.background = 'rgba(16,185,129,0.04)'; }); }}
-      onMouseOut={(e)  => { [...e.currentTarget.children].forEach(c => { c.style.background = bgLinha; }); }}
-    >
-      {/* 1 - Ativo */}
-      <td style={{ ...td(), textAlign: 'left', position: 'sticky', left: 0, background: bgLinha, zIndex: 1, borderRight: '1px solid #1e293b' }}>
-        <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '13px' }}>{row.ticker}</span>
-      </td>
-      {/* 2 - Segmento */}
-      <td style={{ ...td(), textAlign: 'left', color: '#94a3b8' }}>{row.segmento}</td>
-      {/* 3 - Cotação */}
-      <td style={{ ...td(), textAlign: 'right' }}>{fmt(row.cotacao)}</td>
-      {/* 4 - Quant. */}
-      <td style={{ ...td(), textAlign: 'center' }}>{row.quantidade}</td>
-      {/* 5 - Preço Médio */}
-      <td style={{ ...td(), textAlign: 'right' }}>{fmt(row.precoMedio)}</td>
-      {/* 6 - Custo */}
-      <td style={{ ...td(), textAlign: 'right' }}>{fmt(row.custo)}</td>
-      {/* 7 - Valor Atual */}
-      <td style={{ ...td(), textAlign: 'right', color: '#e2e8f0' }}>{fmt(row.valorAtual)}</td>
-      {/* 8 - Rent. R$ */}
-      <td style={{ ...td(), textAlign: 'right', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</td>
-      {/* 9 - Rent. % */}
-      <td style={{ ...td(), textAlign: 'right', color: corRent(row.rentabilidadePerc) }}>{fmtPerc(row.rentabilidadePerc)}</td>
-      {/* 10 - Rent. + Proventos */}
-      <td style={{ ...td(), textAlign: 'right', color: corRent(row.rentabilidadeTotalPerc) }}>{fmtPerc(row.rentabilidadeTotalPerc)}</td>
-      {/* 11 - Desconto */}
-      <td style={{ ...td(), textAlign: 'right', color: corDesc(row.desconto) }}>
-        {row.desconto != null ? fmtPerc(row.desconto) : '—'}
-      </td>
-      {/* 12 - % Atual */}
-      <td style={{ ...td(), textAlign: 'right' }}>{fmtPercSemSinal(row.percAtual)}</td>
-      {/* 13 - Ação Equilíbrio (Badge) */}
-      <td style={{ ...td(), textAlign: 'center' }}>
-        <span style={{
-          background: cfg.bg, color: cfg.cor, border: `1px solid ${cfg.borda}`,
-          borderRadius: '9999px', padding: '3px 10px',
-          fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap',
+    <div style={{
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '14px',
+    }}>
+      {Icon && (
+        <div style={{
+          width: '38px', height: '38px', borderRadius: '10px',
+          background: `${cor}15`, border: `1px solid ${cor}30`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          {cfg.txt}
-        </span>
-      </td>
-      {/* 14 - C/V Equilíbrio */}
-      <td style={{ ...td(), textAlign: 'right', color: corRent(row.valorEquilibrio) }}>
-        {fmtSinal(row.valorEquilibrio)}
-      </td>
-      {/* 15 - Editar (Px Teto / % Ideal) */}
-      <td style={{ ...td(), textAlign: 'center' }}>
-        <button
-          onClick={() => onEditar(row)}
-          title="Editar Preço Teto e % Ideal"
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '28px', height: '28px', padding: 0,
-            background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
-            borderRadius: '7px', color: '#a78bfa', cursor: 'pointer',
-          }}
-        >
-          <FiEdit2 size={13} />
-        </button>
-      </td>
-    </tr>
+          <Icon size={18} color={cor} />
+        </div>
+      )}
+      <div>
+        <p style={{ margin: 0, fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+        <p style={{ margin: '2px 0 0', fontSize: '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
+          {ld ? '···' : valor}
+        </p>
+        {sub && <p style={{ margin: '1px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
+      </div>
+    </div>
   );
 }
 
-// ─── Sub-componente: modal de edição de metas (Px Teto / % Ideal) ─────────────
-function ModalEditarMetas({ row, onClose, onSalvarPrecoTeto, onSalvarPercIdeal }) {
-  const [precoTeto, setPrecoTeto] = useState('');
-  const [percIdeal, setPercIdeal] = useState('');
+// ─── Empty State ──────────────────────────────────────────────────────────────
+function EmptyState({ onAdd }) {
+  return (
+    <div style={{
+      background: '#0f172a', border: '2px dashed #1e293b', borderRadius: '16px',
+      padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', textAlign: 'center', gap: '12px',
+    }}>
+      <div style={{
+        width: '56px', height: '56px', borderRadius: '14px',
+        background: 'rgba(100,116,139,0.1)', border: '1px solid #334155',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <FiBriefcase size={24} color="#64748b" />
+      </div>
+      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>Sua carteira está vazia</h3>
+      <p style={{ margin: 0, fontSize: '13px', color: '#64748b', maxWidth: '360px', lineHeight: 1.5 }}>
+        Defina sua estratégia! Adicione o primeiro Fundo Imobiliário informando seu objetivo, segmento e percentual alvo ideal para começar a monitorar.
+      </p>
+      <button onClick={onAdd} style={{
+        marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '10px 20px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+        color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 600,
+        fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
+      }}>
+        <FiPlus size={16} /> Adicionar Primeiro Ativo
+      </button>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    if (!row) return;
-    setPrecoTeto(row.precoTeto ?? '');
-    setPercIdeal(row.percIdeal != null ? (row.percIdeal * 100).toFixed(2) : '');
-  }, [row]);
+// ─── Formulário Inline (Adicionar/Editar — fundo laranja) ─────────────────────
+function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos, ativosPorSegmento }) {
+  const [objetivo, setObjetivo] = useState(inicial?.objetivo ?? 'Renda');
+  const [segmento, setSegmento] = useState(inicial?.segmento ?? '');
+  const [ticker, setTicker] = useState(inicial?.ticker ?? '');
+  const [percIdeal, setPercIdeal] = useState(inicial?.percIdeal != null ? (inicial.percIdeal * 100).toFixed(2) : '');
 
-  const inputStyle = {
-    width: '100%', padding: '10px 12px',
-    background: '#0f172a', border: '1px solid #334155',
-    borderRadius: '8px', color: '#f8fafc',
-    fontSize: '14px', outline: 'none',
-    fontVariantNumeric: 'tabular-nums',
-  };
-
-  const labelStyle = { fontSize: '12px', color: '#94a3b8', marginBottom: '6px', display: 'block' };
+  const tickersDisponiveis = segmento ? (ativosPorSegmento[segmento] || []) : [];
 
   const handleSalvar = () => {
-    onSalvarPrecoTeto(row.idAtivo, precoTeto);
-    onSalvarPercIdeal(row.idAtivo, percIdeal);
-    onClose();
+    if (!segmento || !ticker || !percIdeal) {
+      toastWarn('Preencha todos os campos.');
+      return;
+    }
+    onSalvar({ objetivo, segmento, ticker, percIdeal: parseFloat(percIdeal) / 100 });
   };
 
   return (
-    <SlideModal isOpen={!!row} onClose={onClose} title={row ? `Metas — ${row.ticker}` : ''} width="360px">
-      {row && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={labelStyle}>Preço Teto</label>
-            <input
-              type="number" step="0.01" min="0"
-              value={precoTeto}
-              onChange={(e) => setPrecoTeto(e.target.value)}
-              onFocus={(e) => { e.target.style.borderColor = '#10b981'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#334155'; }}
-              style={inputStyle}
-              placeholder="—"
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>% Ideal na carteira</label>
-            <input
-              type="number" step="0.1" min="0" max="100"
-              value={percIdeal}
-              onChange={(e) => setPercIdeal(e.target.value)}
-              onFocus={(e) => { e.target.style.borderColor = '#10b981'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#334155'; }}
-              style={inputStyle}
-              placeholder="—"
-            />
-          </div>
+    <div style={{
+      background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.25)',
+      borderRadius: '12px', padding: '16px', marginBottom: '10px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FiEdit2 size={14} color="#fb923c" />
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#fb923c' }}>
+            {inicial ? 'Editando Ativo' : 'Adicionando Novo Ativo'}
+          </span>
+        </div>
+        {inicial && onExcluir && (
+          <button onClick={() => onExcluir(inicial.idAtivo)} style={{
+            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: '7px', padding: '5px 8px', cursor: 'pointer', color: '#f87171',
+            display: 'flex', alignItems: 'center',
+          }}>
+            <FiTrash2 size={14} />
+          </button>
+        )}
+      </div>
 
-          <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
-            <button
-              onClick={onClose}
-              style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #243040', color: '#7a8fa8', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSalvar}
-              style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(139,92,246,0.35)' }}
-            >
-              Salvar
-            </button>
+      {/* Campos do formulário */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Objetivo</label>
+          <select value={objetivo} onChange={e => setObjetivo(e.target.value)} style={{
+            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
+            borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', cursor: 'pointer',
+          }}>
+            <option value="Renda">Renda</option>
+            <option value="Ganho de Capital">Ganho de Capital</option>
+            <option value="Oportunidade">Oportunidade</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Segmento</label>
+          <select value={segmento} onChange={e => { setSegmento(e.target.value); setTicker(''); }} style={{
+            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
+            borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', cursor: 'pointer',
+          }}>
+            <option value="">Selecione...</option>
+            {segmentos.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Ativo (Ticker)</label>
+          <select value={ticker} onChange={e => setTicker(e.target.value)} disabled={!segmento} style={{
+            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
+            borderRadius: '8px', color: segmento ? '#f1f5f9' : '#475569', fontSize: '13px', outline: 'none',
+            cursor: segmento ? 'pointer' : 'not-allowed', opacity: segmento ? 1 : 0.6,
+          }}>
+            <option value="">Selecione...</option>
+            {tickersDisponiveis.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>% Ideal na Carteira</label>
+          <div style={{ position: 'relative' }}>
+            <input type="number" min="0" max="100" step="0.1" value={percIdeal} onChange={e => setPercIdeal(e.target.value)} style={{
+              width: '100%', padding: '8px 30px 8px 10px', background: '#0f172a', border: '1px solid #334155',
+              borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+            }} placeholder="0" />
+            <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#fb923c', fontWeight: 700, fontSize: '13px' }}>%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Botões */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <button onClick={onCancelar} style={{
+          display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px',
+          background: 'transparent', border: '1px solid #334155', borderRadius: '8px',
+          color: '#94a3b8', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+        }}>
+          <FiX size={13} /> Cancelar
+        </button>
+        <button onClick={handleSalvar} style={{
+          display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px',
+          background: 'linear-gradient(135deg, #f97316, #ea580c)', border: 'none', borderRadius: '8px',
+          color: '#fff', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(249,115,22,0.3)',
+        }}>
+          <FiCheck size={13} /> Salvar e Calcular
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Barra de Progresso (% Atual vs % Ideal) ─────────────────────────────────
+function BarraProgresso({ atual, ideal }) {
+  const percAtual = (atual ?? 0) * 100;
+  const percIdeal = (ideal ?? 0) * 100;
+  const ratio = percIdeal > 0 ? Math.min((percAtual / percIdeal) * 100, 100) : 0;
+  const corBarra = percAtual > percIdeal ? '#fbbf24' : percAtual >= percIdeal * 0.9 ? '#4ade80' : '#60a5fa';
+
+  return (
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b', marginBottom: '3px' }}>
+        <span style={{ fontWeight: 600, color: '#cbd5e1' }}>{percAtual.toFixed(2)}%</span>
+        <span>/ {percIdeal.toFixed(2)}%</span>
+      </div>
+      <div style={{ height: '5px', background: '#1e293b', borderRadius: '9999px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${ratio}%`, background: corBarra, borderRadius: '9999px', transition: 'width 0.4s ease' }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Linha do Ativo (Card expansível) ─────────────────────────────────────────
+function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
+  const cfg = BADGE[row.acaoEquilibrio] ?? BADGE.equilibrio;
+  const isNeg = (row.rentabilidadePerc ?? 0) < 0;
+
+  return (
+    <div style={{
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      overflow: 'hidden', transition: 'box-shadow 0.2s',
+      boxShadow: expandido ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+      borderLeft: isMobile ? `3px solid ${cfg.cor}` : undefined,
+    }}>
+      {/* ── Linha colapsada ── */}
+      <div
+        onClick={onToggle}
+        style={{
+          padding: isMobile ? '12px 12px' : '12px 16px',
+          cursor: 'pointer', transition: 'background 0.15s',
+        }}
+        onMouseOver={e => { if (!isMobile) e.currentTarget.style.background = 'rgba(16,185,129,0.03)'; }}
+        onMouseOut={e => { if (!isMobile) e.currentTarget.style.background = 'transparent'; }}
+      >
+        {isMobile ? (
+          /* ── MOBILE: layout compacto de card ── */
+          <>
+            {/* Linha 1: Ticker + Badge + Ações */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>{row.ticker}</span>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>{row.segmento}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{
+                  background: cfg.bg, color: cfg.cor, border: `1px solid ${cfg.borda}`,
+                  borderRadius: '9999px', padding: '2px 8px', fontSize: '10px', fontWeight: 600,
+                }}>
+                  {cfg.txt}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEditar(row); }}
+                  style={{
+                    width: '26px', height: '26px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
+                    borderRadius: '6px', color: '#a78bfa', cursor: 'pointer',
+                  }}
+                >
+                  <FiEdit2 size={11} />
+                </button>
+                <FiChevronDown size={14} color="#64748b" style={{
+                  transition: 'transform 0.2s', transform: expandido ? 'rotate(180deg)' : 'rotate(0deg)',
+                }} />
+              </div>
+            </div>
+
+            {/* Linha 2: Saldo + Rentabilidade (lado a lado) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+              <div>
+                <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Saldo</span>
+                <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
+                <p style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>{row.quantidade} cotas</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Rent.</span>
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
+                  {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
+                </p>
+                <p style={{ margin: 0, fontSize: '10px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
+              </div>
+            </div>
+
+            {/* Linha 3: Barra de progresso */}
+            <BarraProgresso atual={row.percAtual} ideal={row.percIdeal} />
+          </>
+        ) : (
+          /* ── DESKTOP: layout em linha ── */
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {/* Bloco 1: Ativo + Segmento */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1.2' }}>
+              <div style={{
+                width: '34px', height: '34px', borderRadius: '8px', background: '#1e293b',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '10px', fontWeight: 800, color: '#94a3b8', flexShrink: 0,
+              }}>
+                {row.ticker?.substring(0, 2)}
+              </div>
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{row.ticker}</span>
+                <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>{row.segmento}</span>
+              </div>
+            </div>
+
+            {/* Bloco 2: Saldo Atual */}
+            <div style={{ flex: '1', minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
+              <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>{row.quantidade} cotas a {fmt(row.cotacao)}</p>
+            </div>
+
+            {/* Bloco 3: Rentabilidade */}
+            <div style={{ flex: '0.8', minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
+                {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
+              </p>
+              <p style={{ margin: 0, fontSize: '11px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
+            </div>
+
+            {/* Bloco 4: Balanceamento */}
+            <div style={{ flex: '1.2', minWidth: 0 }}>
+              <BarraProgresso atual={row.percAtual} ideal={row.percIdeal} />
+            </div>
+
+            {/* Bloco 5: Badge status */}
+            <div style={{ flex: '0.6', display: 'flex', justifyContent: 'center' }}>
+              <span style={{
+                background: cfg.bg, color: cfg.cor, border: `1px solid ${cfg.borda}`,
+                borderRadius: '9999px', padding: '4px 12px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap',
+              }}>
+                {cfg.txt}
+              </span>
+            </div>
+
+            {/* Bloco 6: Ações */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '70px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onEditar(row); }}
+                style={{
+                  width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
+                  borderRadius: '7px', color: '#a78bfa', cursor: 'pointer',
+                }}
+                title="Editar metas"
+              >
+                <FiEdit2 size={12} />
+              </button>
+              <FiChevronDown size={16} color="#64748b" style={{
+                transition: 'transform 0.2s', transform: expandido ? 'rotate(180deg)' : 'rotate(0deg)',
+              }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Painel expandido (detalhes financeiros) ── */}
+      {expandido && (
+        <div style={{
+          padding: '14px 16px', borderTop: '1px solid #1e293b',
+          background: 'rgba(255,255,255,0.015)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+            <AiOutlineInfoCircle size={12} color="#475569" />
+            <span style={{ fontSize: '11px', color: '#475569', fontWeight: 600 }}>Detalhes Financeiros</span>
+          </div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+            gap: '10px',
+          }}>
+            {/* Preço Médio vs Atual */}
+            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Médio vs Atual</p>
+              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.precoMedio)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
+            </div>
+            {/* Preço Teto & Desconto */}
+            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
+              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{row.precoTeto ? fmt(row.precoTeto) : '—'}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: corRent(row.desconto) }}>
+                {row.desconto != null ? `Desc: ${fmtPerc(row.desconto)}` : '—'}
+              </p>
+            </div>
+            {/* Rent. + Proventos */}
+            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Rent. + Proventos</p>
+              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.rentabilidadeTotalPerc) }}>{fmtPerc(row.rentabilidadeTotalPerc)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Considerando dividendos</p>
+            </div>
+            {/* Valor para Equilíbrio */}
+            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Valor para Equilíbrio</p>
+              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.valorEquilibrio) }}>{fmtSinal(row.valorEquilibrio)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>
+                {row.valorEquilibrio > 0 ? 'Falta aportar' : 'Acima do ideal'}
+              </p>
+            </div>
           </div>
         </div>
       )}
-    </SlideModal>
+    </div>
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
+// ─── Componente Principal ─────────────────────────────────────────────────────
 export default function PaginaControleAtivos() {
   const isMobile = useIsMobile();
   const {
@@ -198,253 +414,180 @@ export default function PaginaControleAtivos() {
     handleSalvarPrecoTeto, handleSalvarPercIdeal,
   } = useControleAtivos();
 
-  const [ordenacao, setOrdenacao] = useState({ campo: 'ticker', direcao: 'asc' });
+  const [expandido, setExpandido] = useState(null);
+  const [showFormInline, setShowFormInline] = useState(false);
   const [ativoEmEdicao, setAtivoEmEdicao] = useState(null);
 
   useEffect(() => { getCarteira(); }, [getCarteira]);
 
-  // ── Ordenação ──────────────────────────────────────────────────────────────
-  const toggleOrdenacao = (campo) => {
-    setOrdenacao((prev) => ({
-      campo,
-      direcao: prev.campo === campo && prev.direcao === 'asc' ? 'desc' : 'asc',
-    }));
+  // Dados derivados para o formulário
+  const segmentos = [...new Set(ativos.map(a => a.segmento))];
+  const ativosPorSegmento = ativos.reduce((acc, a) => {
+    if (!acc[a.segmento]) acc[a.segmento] = [];
+    if (!acc[a.segmento].includes(a.ticker)) acc[a.segmento].push(a.ticker);
+    return acc;
+  }, {});
+
+  const handleToggleExpand = (idAtivo) => {
+    setExpandido(prev => prev === idAtivo ? null : idAtivo);
   };
 
-  const dadosOrdenados = [...ativos].sort((a, b) => {
-    const mult = ordenacao.direcao === 'asc' ? 1 : -1;
-    const va = a[ordenacao.campo], vb = b[ordenacao.campo];
-    if (va === null || va === undefined) return 1;
-    if (vb === null || vb === undefined) return -1;
-    if (typeof va === 'string') return mult * va.localeCompare(vb);
-    return mult * (va - vb);
-  });
-
-  // ── Totais do rodapé ───────────────────────────────────────────────────────
-  const totalCusto       = ativos.reduce((s, a) => s + (a.custo ?? 0), 0);
-  const totalValorAtual  = ativos.reduce((s, a) => s + (a.valorAtual ?? 0), 0);
-  const totalRentReais   = ativos.reduce((s, a) => s + (a.rentabilidadeReais ?? 0), 0);
-  const totalPercAtual   = ativos.reduce((s, a) => s + (a.percAtual ?? 0), 0);
-  const totalPercIdeal   = ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0);
-  const totalEquilibrio  = ativos.reduce((s, a) => s + (a.valorEquilibrio ?? 0), 0);
-  const rentGeralPerc    = totalCusto > 0 ? (totalValorAtual / totalCusto) - 1 : 0;
-
-  // ── Cabeçalho da tabela ────────────────────────────────────────────────────
-  const thBase = {
-    padding: '0.65rem 0.6rem', background: 'rgba(16,185,129,0.06)',
-    borderBottom: '1px solid rgba(16,185,129,0.15)',
-    fontSize: '10px', fontWeight: 700, color: '#64748b',
-    textTransform: 'uppercase', letterSpacing: '0.5px',
-    whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
+  const handleAbrirFormulario = () => {
+    setAtivoEmEdicao(null);
+    setShowFormInline(true);
   };
 
-  const ThCol = ({ campo, label, align = 'right' }) => {
-    const ativo = ordenacao.campo === campo;
-    return (
-      <th
-        style={{ ...thBase, textAlign: align }}
-        onClick={() => toggleOrdenacao(campo)}
-      >
-        {label} {ativo ? (ordenacao.direcao === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.3 }}>⇅</span>}
-      </th>
-    );
+  const handleEditarAtivo = (row) => {
+    setAtivoEmEdicao(row);
+    setShowFormInline(true);
   };
 
-  // ── KPI Card inline ────────────────────────────────────────────────────────
-  const KpiCard = ({ label, valor, sub, cor }) => (
-    <div style={{
-      background: '#0f172a', border: '1px solid #1e293b',
-      borderRadius: '12px', padding: '1rem',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-      flex: '1 1 200px', // permite que o grid comprima o card
-    }}>
-      <p style={{ margin: 0, fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-      <p style={{ margin: '0.35rem 0 0', fontSize: '1.25rem', fontWeight: 700, color: cor ?? '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
-        {loading ? '···' : valor}
-      </p>
-      {sub && <p style={{ margin: '2px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{loading ? '' : sub.txt}</p>}
-    </div>
-  );
+  const handleSalvarFormulario = (dados) => {
+    // TODO: Chamar API para salvar ativo na carteira
+    // await controleAtivosService.salvarAtivo(dados);
+    if (dados.percIdeal != null && ativoEmEdicao) {
+      handleSalvarPercIdeal(ativoEmEdicao.idAtivo, (dados.percIdeal * 100).toFixed(2));
+    }
+    setShowFormInline(false);
+    setAtivoEmEdicao(null);
+  };
+
+  const handleExcluirAtivo = (idAtivo) => {
+    // TODO: Chamar API para excluir ativo da carteira
+    // await controleAtivosService.excluir(idAtivo);
+    setShowFormInline(false);
+    setAtivoEmEdicao(null);
+  };
 
   const corRentResumo = resumo ? corRent(resumo.rentabilidadeReais) : '#94a3b8';
-  const somaPercIdeal = totalPercIdeal;
-  const corSomaIdeal  = Math.abs(somaPercIdeal - 1) < 0.001 ? '#4ade80' : '#f87171';
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'Inter, sans-serif', padding: isMobile ? '1rem 0.75rem' : '2rem 1rem' }}>
-      <main style={{ maxWidth: '100%' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0' : '1rem 0.5rem' }}>
 
         {/* ── Header ── */}
-        <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}>
               <FiLayers size={20} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Controle de Ativos</h1>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Posição consolidada da carteira</p>
+              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Carteira de FIIs</h1>
+              <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Gestão de ativos e rebalanceamento inteligente</p>
             </div>
           </div>
-
-          <button
-            onClick={atualizarCotacoes}
-            disabled={loadingCotacoes || loading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '0.55rem 1rem', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-              color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600,
-              cursor: loadingCotacoes ? 'not-allowed' : 'pointer',
-              fontSize: '13px', boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
-              opacity: loadingCotacoes ? 0.7 : 1, transition: 'all 0.2s',
-            }}
-          >
-            <FiRefreshCw size={14} style={{ animation: loadingCotacoes ? 'spin 1s linear infinite' : 'none' }} />
-            {loadingCotacoes ? 'Atualizando...' : 'Atualizar Cotações'}
+          <button onClick={handleAbrirFormulario} style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '0.55rem 1rem', background: 'linear-gradient(135deg, #1e40af, #1d4ed8)',
+            color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600,
+            fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(30,64,175,0.3)',
+          }}>
+            <FiPlus size={14} /> Adicionar Ativo
           </button>
         </header>
 
         {/* ── KPI Cards ── */}
         <div style={{
-          backgroundColor: '#0f172a', borderRadius: '0.75rem',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)', border: '1px solid #1e293b',
-          padding: isMobile ? '1rem' : '1.5rem', marginBottom: '1.5rem',
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: '10px', marginBottom: '1.25rem',
         }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '0.75rem',
-          }}>
-            <KpiCard label="Custo Total"      valor={fmt(resumo?.custoTotal)}        cor="#60a5fa" />
-            <KpiCard label="Valor Atual"      valor={fmt(resumo?.valorAtualTotal)}    cor="#10b981" />
-            <KpiCard
-              label="Rentabilidade"
-              valor={fmtSinal(resumo?.rentabilidadeReais)}
-              sub={{ txt: fmtPerc(resumo?.rentabilidadePerc), cor: corRentResumo }}
-              cor={corRentResumo}
-            />
-            <KpiCard label="Total Proventos"  valor={fmt(resumo?.totalProventos)}     cor="#a78bfa" />
+          <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} />
+          <KpiCard icon={FiLayers} label="Saldo Atual" valor={fmt(resumo?.valorAtualTotal)} cor="#10b981" loading={loading} />
+          <KpiCard
+            icon={FiRefreshCw} label="Rentabilidade Global"
+            valor={fmtSinal(resumo?.rentabilidadeReais)}
+            sub={{ txt: fmtPerc(resumo?.rentabilidadePerc), cor: corRentResumo }}
+            cor={corRentResumo} loading={loading}
+          />
+        </div>
+
+        {/* ── Aviso cotações ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <AiOutlineInfoCircle size={12} color="#475569" />
+            <span style={{ fontSize: '11px', color: '#475569' }}>
+              Hover e clique para detalhes/edição
+              {resumo?.dataAtualizacaoCotacoes && ` · Atualização: ${resumo.dataAtualizacaoCotacoes}`}
+            </span>
           </div>
+          <button onClick={atualizarCotacoes} disabled={loadingCotacoes || loading} style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            padding: '6px 12px', background: 'rgba(139,92,246,0.1)',
+            border: '1px solid rgba(139,92,246,0.25)', borderRadius: '8px',
+            color: '#a78bfa', fontSize: '11px', fontWeight: 600, cursor: loadingCotacoes ? 'not-allowed' : 'pointer',
+            opacity: loadingCotacoes ? 0.6 : 1,
+          }}>
+            <FiRefreshCw size={12} style={{ animation: loadingCotacoes ? 'spin 1s linear infinite' : 'none' }} />
+            {loadingCotacoes ? 'Atualizando...' : 'Atualizar Cotações'}
+          </button>
         </div>
 
-        {/* ── Aviso Brapi ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1rem' }}>
-          <AiOutlineInfoCircle size={12} color="#475569" />
-          <span style={{ fontSize: '11px', color: '#475569' }}>
-            Cotações baseadas no fechamento do último dia útil · Fonte: Brapi
-            {resumo?.dataAtualizacaoCotacoes && ` · ${resumo.dataAtualizacaoCotacoes}`}
-          </span>
-        </div>
-
-        {/* ── Tabela ── */}
-        {loading ? (
-          <SkeletonTable rows={10} cols={8} />
-        ) : (
-          <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto', width: '100%' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thBase, textAlign: 'left', position: 'sticky', left: 0, zIndex: 2, background: 'rgba(16,185,129,0.06)', borderRight: '1px solid rgba(16,185,129,0.15)', minWidth: '80px' }} onClick={() => toggleOrdenacao('ticker')}>
-                      Ativo {ordenacao.campo === 'ticker' ? (ordenacao.direcao === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.3 }}>⇅</span>}
-                    </th>
-                    <ThCol campo="segmento"              label="Segmento"        align="left"   />
-                    <ThCol campo="cotacao"               label="Cotação"                        />
-                    <ThCol campo="quantidade"            label="Quant."          align="center" />
-                    <ThCol campo="precoMedio"            label="Px Médio"                       />
-                    <ThCol campo="custo"                 label="Custo"                          />
-                    <ThCol campo="valorAtual"            label="Valor Atual"                    />
-                    <ThCol campo="rentabilidadeReais"    label="Rent. R$"                       />
-                    <ThCol campo="rentabilidadePerc"     label="Rent. %"                        />
-                    <ThCol campo="rentabilidadeTotalPerc" label="Rent.+Prov."                   />
-                    <ThCol campo="desconto"              label="Desconto"                       />
-                    <ThCol campo="percAtual"             label="% Atual"                        />
-                    <ThCol campo="acaoEquilibrio"        label="Ação"            align="center" />
-                    <ThCol campo="valorEquilibrio"       label="C/V Equilíbrio"                 />
-                    <th style={{ ...thBase, textAlign: 'center', minWidth: '60px', cursor: 'default' }}>Metas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dadosOrdenados.map((row, i) => (
-                    <LinhaAtivo
-                      key={row.idAtivo}
-                      row={row}
-                      onEditar={setAtivoEmEdicao}
-                      isOdd={i % 2 !== 0}
-                    />
-                  ))}
-                </tbody>
-                {/* ── Linha de totais ── */}
-                <tfoot>
-                  <tr style={{ background: 'rgba(16,185,129,0.06)', borderTop: '2px solid rgba(16,185,129,0.2)' }}>
-                    {/* Ativo */}
-                    <td style={{ padding: '0.7rem 0.6rem', fontSize: '12px', fontWeight: 700, color: '#f8fafc', position: 'sticky', left: 0, background: 'rgba(16,185,129,0.06)', zIndex: 1, borderRight: '1px solid #1e293b', whiteSpace: 'nowrap' }}>
-                      Total
-                    </td>
-                    {/* Segmento */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* Cotação */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* Quant. */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* Px Médio */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* Custo */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: '#60a5fa', fontVariantNumeric: 'tabular-nums' }}>{fmt(totalCusto)}</td>
-                    {/* Valor Atual */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: '#10b981', fontVariantNumeric: 'tabular-nums' }}>{fmt(totalValorAtual)}</td>
-                    {/* Rent. R$ */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: corRent(totalRentReais), fontVariantNumeric: 'tabular-nums' }}>{fmtSinal(totalRentReais)}</td>
-                    {/* Rent. % */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: corRent(rentGeralPerc), fontVariantNumeric: 'tabular-nums' }}>{fmtPerc(rentGeralPerc)}</td>
-                    {/* Rent.+Prov. */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* Desconto */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* % Atual */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>{fmtPercSemSinal(totalPercAtual)}</td>
-                    {/* Ação */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                    {/* C/V Equilíbrio */}
-                    <td style={{ padding: '0.7rem 0.6rem', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: corRent(totalEquilibrio), fontVariantNumeric: 'tabular-nums' }}>{fmtSinal(totalEquilibrio)}</td>
-                    {/* Metas */}
-                    <td style={{ padding: '0.7rem 0.6rem' }} />
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* ── Rodapé com indicador de % ideal ── */}
-            <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', background: 'rgba(255,255,255,0.01)' }}>
-              <span style={{ fontSize: '11px', color: '#475569' }}>
-                {ativos.length} ativos · {isMobile ? '' : 'Clique nos cabeçalhos para ordenar'}
-              </span>
-              <span style={{ fontSize: '12px', fontWeight: 600 }}>
-                Soma % Ideal:{' '}
-                <span style={{ color: corSomaIdeal }}>
-                  {fmtPercSemSinal(somaPercIdeal)} de 100,00%
-                </span>
-                {Math.abs(somaPercIdeal - 1) >= 0.001 && (
-                  <span style={{ color: '#f87171', fontSize: '11px', marginLeft: '6px' }}>
-                    ⚠ Ajuste as metas para somar 100%
-                  </span>
-                )}
-              </span>
-            </div>
+        {/* ── Cabeçalho da tabela (desktop only) ── */}
+        {!isMobile && ativos.length > 0 && (
+          <div style={{
+            display: 'flex', padding: '10px 16px', marginBottom: '6px',
+            fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px',
+          }}>
+            <span style={{ flex: '1.2' }}>Ativo / Setor</span>
+            <span style={{ flex: '1' }}>Posição Atual</span>
+            <span style={{ flex: '0.8' }}>Rentabilidade</span>
+            <span style={{ flex: '1.2' }}>Atual / Ideal %</span>
+            <span style={{ flex: '0.6', textAlign: 'center' }}>Status</span>
+            <span style={{ width: '70px' }} />
           </div>
         )}
+
+        {/* ── Conteúdo principal ── */}
+        {loading ? (
+          <SkeletonTable rows={8} cols={5} />
+        ) : ativos.length === 0 && !showFormInline ? (
+          <EmptyState onAdd={handleAbrirFormulario} />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+            {/* Formulário inline */}
+            {showFormInline && (
+              <FormularioInline
+                inicial={ativoEmEdicao}
+                segmentos={segmentos}
+                ativosPorSegmento={ativosPorSegmento}
+                onCancelar={() => { setShowFormInline(false); setAtivoEmEdicao(null); }}
+                onSalvar={handleSalvarFormulario}
+                onExcluir={handleExcluirAtivo}
+              />
+            )}
+
+            {/* Lista de ativos */}
+            {ativos.map(row => (
+              <LinhaAtivo
+                key={row.idAtivo}
+                row={row}
+                expandido={expandido === row.idAtivo}
+                onToggle={() => handleToggleExpand(row.idAtivo)}
+                onEditar={handleEditarAtivo}
+                isMobile={isMobile}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Rodapé com soma % ideal */}
+        {ativos.length > 0 && (
+          <div style={{ marginTop: '12px', padding: '10px 16px', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: '#475569' }}>{ativos.length} ativos na carteira</span>
+            <span style={{ fontSize: '12px', fontWeight: 600 }}>
+              Soma % Ideal:{' '}
+              <span style={{ color: Math.abs(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0) - 1) < 0.001 ? '#4ade80' : '#f87171' }}>
+                {fmtPercSemSinal(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0))} de 100,00%
+              </span>
+            </span>
+          </div>
+        )}
+
       </main>
 
-      <ModalEditarMetas
-        row={ativoEmEdicao}
-        onClose={() => setAtivoEmEdicao(null)}
-        onSalvarPrecoTeto={handleSalvarPrecoTeto}
-        onSalvarPercIdeal={handleSalvarPercIdeal}
-      />
-
-      {/* ── CSS animação do botão ── */}
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
