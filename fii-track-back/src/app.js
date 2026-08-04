@@ -7,6 +7,7 @@ import operacoesRoutes from './routes/operacoes.routes.js'; // importa as rotas 
 import rendimentosRoutes from './routes/rendimentos.routes.js'; // importa as rotas de rendimentos
 import authRoutes from './routes/auth/auth.routes.js'; // importa as rotas de autenticação
 import homeRoutes from './routes/home.routes.js'; // importa as rotas do home/dashboard
+import controleAtivosRoutes from './routes/controleAtivos.routes.js'; // importa as rotas de controle de ativos
 
 const app = express(); //cria uma aplicação express
 app.use(cors()); //habilita o cors para todas as rotas
@@ -29,6 +30,7 @@ app.use('/', seguimentosRoutes); // Usa as rotas de segmentos
 app.use('/', meusFundosRoutes); // Usa as rotas de meus fundos
 app.use('/', operacoesRoutes);  // Usa as rotas de operações
 app.use('/', rendimentosRoutes); // Usa as rotas de rendimentos
+app.use('/', controleAtivosRoutes); // Usa as rotas de controle de ativos
 
 
 //exporta o app para ser usado em outros arquivos

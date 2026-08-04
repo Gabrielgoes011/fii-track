@@ -6,6 +6,16 @@ export const controleAtivosService = {
     return res.data;
   },
 
+  listarSegmentos: async () => {
+    const res = await api.get('/controle-ativos/segmentos');
+    return res.data;
+  },
+
+  listarAtivosPorSegmento: async (idSegmento) => {
+    const res = await api.get(`/controle-ativos/segmentos/${idSegmento}/ativos`);
+    return res.data;
+  },
+
   salvarPrecoTeto: async (idAtivo, precoTeto) => {
     const res = await api.put(`/controle-ativos/preco-teto/${idAtivo}`, { precoTeto });
     return res.data;

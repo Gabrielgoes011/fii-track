@@ -4,7 +4,8 @@ import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useControleAtivos } from '../../hooks/controleAtivos/useControleAtivos';
-import { toastWarn } from '../../utils/responseUtils';
+import { controleAtivosService } from '../../services/controleAtivos/controleAtivosService';
+import { toastWarn, handleError } from '../../utils/responseUtils';
 
 // ─── Formatadores ─────────────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -88,20 +89,27 @@ function EmptyState({ onAdd }) {
 }
 
 // ─── Formulário Inline (Adicionar/Editar — fundo laranja) ─────────────────────
-function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos, ativosPorSegmento }) {
+function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos, ativos, segmentoIdInicial, loadingAtivos, onSegmentoChange }) {
   const [objetivo, setObjetivo] = useState(inicial?.objetivo ?? 'Renda');
-  const [segmento, setSegmento] = useState(inicial?.segmento ?? '');
+  const [segmentoId, setSegmentoId] = useState(inicial?.segmentoId ?? segmentoIdInicial ?? '');
   const [ticker, setTicker] = useState(inicial?.ticker ?? '');
   const [percIdeal, setPercIdeal] = useState(inicial?.percIdeal != null ? (inicial.percIdeal * 100).toFixed(2) : '');
 
-  const tickersDisponiveis = segmento ? (ativosPorSegmento[segmento] || []) : [];
+  const selectedSegmento = segmentos?.find((s) => String(s.idSeguimento) === String(segmentoId));
+  const tickersDisponiveis = segmentoId ? (ativos?.map((a) => a.ticker) || []) : [];
 
   const handleSalvar = () => {
-    if (!segmento || !ticker || !percIdeal) {
+    if (!segmentoId || !ticker || !percIdeal) {
       toastWarn('Preencha todos os campos.');
       return;
     }
-    onSalvar({ objetivo, segmento, ticker, percIdeal: parseFloat(percIdeal) / 100 });
+    onSalvar({
+      objetivo,
+      segmentoId,
+      segmentoNome: selectedSegmento?.nomeSeguimento || '',
+      ticker,
+      percIdeal: parseFloat(percIdeal) / 100,
+    });
   };
 
   return (
@@ -142,23 +150,30 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Segmento</label>
-          <select value={segmento} onChange={e => { setSegmento(e.target.value); setTicker(''); }} style={{
+          <select value={segmentoId} onChange={e => {
+              const value = e.target.value;
+              setSegmentoId(value);
+              setTicker('');
+              onSegmentoChange?.(value);
+            }} style={{
             width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
             borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', cursor: 'pointer',
           }}>
             <option value="">Selecione...</option>
-            {segmentos.map(s => <option key={s} value={s}>{s}</option>)}
+            {segmentos.map(s => (
+              <option key={s.idSeguimento} value={s.idSeguimento}>{s.nomeSeguimento}</option>
+            ))}
           </select>
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Ativo (Ticker)</label>
-          <select value={ticker} onChange={e => setTicker(e.target.value)} disabled={!segmento} style={{
+          <select value={ticker} onChange={e => setTicker(e.target.value)} disabled={!segmentoId || loadingAtivos} style={{
             width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
-            borderRadius: '8px', color: segmento ? '#f1f5f9' : '#475569', fontSize: '13px', outline: 'none',
-            cursor: segmento ? 'pointer' : 'not-allowed', opacity: segmento ? 1 : 0.6,
+            borderRadius: '8px', color: segmentoId ? '#f1f5f9' : '#475569', fontSize: '13px', outline: 'none',
+            cursor: segmentoId && !loadingAtivos ? 'pointer' : 'not-allowed', opacity: segmentoId && !loadingAtivos ? 1 : 0.6,
           }}>
-            <option value="">Selecione...</option>
-            {tickersDisponiveis.map(t => <option key={t} value={t}>{t}</option>)}
+            <option value="">{loadingAtivos ? 'Carregando ativos...' : 'Selecione...'}</option>
+            {tickersDisponiveis.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
@@ -417,11 +432,56 @@ export default function PaginaControleAtivos() {
   const [expandido, setExpandido] = useState(null);
   const [showFormInline, setShowFormInline] = useState(false);
   const [ativoEmEdicao, setAtivoEmEdicao] = useState(null);
+  const [segmentos, setSegmentos] = useState([]);
+  const [ativosSegmentoDropdown, setAtivosSegmentoDropdown] = useState([]);
+  const [segmentoSelecionadoId, setSegmentoSelecionadoId] = useState('');
+  const [loadingSegmentos, setLoadingSegmentos] = useState(false);
+  const [loadingAtivosSegmento, setLoadingAtivosSegmento] = useState(false);
 
-  useEffect(() => { getCarteira(); }, [getCarteira]);
+  useEffect(() => {
+    getCarteira();
+    loadSegmentos();
+  }, [getCarteira]);
 
-  // Dados derivados para o formulário
-  const segmentos = [...new Set(ativos.map(a => a.segmento))];
+  useEffect(() => {
+    if (segmentoSelecionadoId) {
+      loadAtivosPorSegmento(segmentoSelecionadoId);
+    } else {
+      setAtivosSegmentoDropdown([]);
+    }
+  }, [segmentoSelecionadoId]);
+
+  const loadSegmentos = async () => {
+    setLoadingSegmentos(true);
+    try {
+      const data = await controleAtivosService.listarSegmentos();
+      setSegmentos(data || []);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoadingSegmentos(false);
+    }
+  };
+
+  const loadAtivosPorSegmento = async (idSegmento) => {
+    if (!idSegmento) {
+      setAtivosSegmentoDropdown([]);
+      return;
+    }
+    setLoadingAtivosSegmento(true);
+    try {
+      const data = await controleAtivosService.listarAtivosPorSegmento(idSegmento);
+      setAtivosSegmentoDropdown(data || []);
+    } catch (error) {
+      handleError(error);
+      setAtivosSegmentoDropdown([]);
+    } finally {
+      setLoadingAtivosSegmento(false);
+    }
+  };
+
+  // Dados derivados para o formulário de edição/adicionar
+  const carteiraSegmentos = [...new Set(ativos.map(a => a.segmento))];
   const ativosPorSegmento = ativos.reduce((acc, a) => {
     if (!acc[a.segmento]) acc[a.segmento] = [];
     if (!acc[a.segmento].includes(a.ticker)) acc[a.segmento].push(a.ticker);
@@ -434,11 +494,16 @@ export default function PaginaControleAtivos() {
 
   const handleAbrirFormulario = () => {
     setAtivoEmEdicao(null);
+    setSegmentoSelecionadoId('');
+    setAtivosSegmentoDropdown([]);
     setShowFormInline(true);
   };
 
   const handleEditarAtivo = (row) => {
-    setAtivoEmEdicao(row);
+    const segmentoEncontrado = segmentos.find((s) => s.nomeSeguimento === row.segmento);
+    const segmentoId = segmentoEncontrado ? String(segmentoEncontrado.idSeguimento) : '';
+    setAtivoEmEdicao({ ...row, segmentoId });
+    setSegmentoSelecionadoId(segmentoId);
     setShowFormInline(true);
   };
 
@@ -551,8 +616,11 @@ export default function PaginaControleAtivos() {
               <FormularioInline
                 inicial={ativoEmEdicao}
                 segmentos={segmentos}
-                ativosPorSegmento={ativosPorSegmento}
-                onCancelar={() => { setShowFormInline(false); setAtivoEmEdicao(null); }}
+                ativos={ativosSegmentoDropdown}
+                segmentoIdInicial={segmentoSelecionadoId}
+                loadingAtivos={loadingAtivosSegmento}
+                onSegmentoChange={setSegmentoSelecionadoId}
+                onCancelar={() => { setShowFormInline(false); setAtivoEmEdicao(null); setSegmentoSelecionadoId(''); setAtivosSegmentoDropdown([]); }}
                 onSalvar={handleSalvarFormulario}
                 onExcluir={handleExcluirAtivo}
               />
