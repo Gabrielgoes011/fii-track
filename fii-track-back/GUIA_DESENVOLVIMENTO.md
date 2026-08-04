@@ -48,33 +48,51 @@ src/
 ├── config/
 │   ├── configDb.js          # Pool de conexão PostgreSQL
 │   ├── env.js               # Variáveis de ambiente
-│   └── s3.js                # Configuração AWS S3
+│   └── s3.js                # Configuração AWS S3 (⚠️ dependência não instalada, não usado hoje)
 ├── controllers/
 │   ├── home.controller.js
 │   ├── login.controller.js
+│   ├── operacoes.controller.js
+│   ├── rendimentos.controller.js
 │   └── cadastros/
-│       ├── usuario.controller.js
-│       └── seguimentos.controller.js
+│       ├── usuario.controller.js         # atualizarUser/deleteUser ainda fora do padrão
+│       ├── meusFundos.controller.js
+│       └── seguimentos.controller.js     # ainda acessa o banco direto (não migrado)
 ├── middleware/
 │   └── auth/
-│       └── verificaJWT.js   # Middleware de autenticação
+│       └── verificaToken.js   # Middleware de autenticação
 ├── repositories/
 │   ├── home.repositories.js
+│   ├── login.repositories.js
+│   ├── operacoes.repositories.js
+│   ├── rendimentos.repositories.js
 │   └── cadastros/
-│       └── usuarios.repositories.js
+│       ├── usuarios.repositories.js
+│       └── meuFundos.repositories.js
 ├── routes/
+│   ├── home.routes.js
+│   ├── meusFundos.routes.js
+│   ├── operacoes.routes.js
+│   ├── rendimentos.routes.js
+│   ├── seguimentos.routes.js
 │   ├── usuarios.routes.js
 │   └── auth/
 │       └── auth.routes.js
 ├── services/
 │   ├── home.services.js
+│   ├── login.services.js
+│   ├── operacoes.services.js
+│   ├── rendimentos.services.js
 │   └── cadastros/
-│       └── usuarios.services.js
+│       ├── usuarios.services.js
+│       └── meusFundos.services.js
 └── utils/
     ├── dateUtils.js         # Formatação de datas
     ├── httpResponse.js      # Padronização de respostas
     └── validaUser.js        # Validação de usuários
 ```
+
+> `seguimentos` é o único módulo que ainda não segue esse padrão — o controller acessa `openDb()` diretamente, sem `service` nem `repository`.
 
 ---
 
@@ -258,16 +276,16 @@ if (!validaUser.isValidPassword(password)) {
 
 ## 🔐 Middlewares
 
-### `verificaJWT.js` - Autenticação
+### `verificaToken.js` - Autenticação
 
 Middleware que valida o token JWT em requisições protegidas.
 
 #### Uso
 
 ```javascript
-import verificaJWT from '../middleware/auth/verificaJWT.js';
+import verificaToken from '../middleware/auth/verificaToken.js';
 
-router.get('/dados-protegidos', verificaJWT, minhaFuncaoController);
+router.get('/dados-protegidos', verificaToken, minhaFuncaoController);
 ```
 
 #### Como Funciona
@@ -291,10 +309,10 @@ async function meusController(req, res) {
 #### Implementação
 
 ```javascript
-router.post('/usuarios', verificaJWT, cadastrarUser);
-router.get('/usuarios', verificaJWT, listarUsuarios);
-router.put('/usuarios/:id', verificaJWT, atualizarUser);
-router.delete('/usuarios/:id', verificaJWT, deleteUser);
+router.post('/usuarios', verificaToken, cadastrarUser);
+router.get('/usuarios', verificaToken, listarUsuarios);
+router.put('/usuarios/:id', verificaToken, atualizarUser);
+router.delete('/usuarios/:id', verificaToken, deleteUser);
 ```
 
 ---
@@ -305,7 +323,7 @@ router.delete('/usuarios/:id', verificaJWT, deleteUser);
 
 ```javascript
 import express from 'express';
-import verificaJWT from '../middleware/auth/verificaJWT.js';
+import verificaToken from '../middleware/auth/verificaToken.js';
 import {
   listarUsuarios,
   cadastrarUser,
@@ -317,33 +335,33 @@ import {
 const router = express.Router();
 
 // GET — Listar (protegido)
-router.get('/usuarios', verificaJWT, listarUsuarios);
+router.get('/usuarios', verificaToken, listarUsuarios);
 //   → Chamada: GET /usuarios
 //   → Esperado: Array de usuários
 //   → Status: 200
 
 // GET — Contar (protegido)
-router.get('/usuarios/dash/count', verificaJWT, contarUsuarios);
+router.get('/usuarios/dash/count', verificaToken, contarUsuarios);
 //   → Chamada: GET /usuarios/dash/count
 //   → Esperado: { ativos: 5, inativos: 2, total: 7 }
 //   → Status: 200
 
 // POST — Criar (protegido)
-router.post('/usuario/cadastrar', verificaJWT, cadastrarUser);
+router.post('/usuario/cadastrar', verificaToken, cadastrarUser);
 //   → Chamada: POST /usuario/cadastrar
 //   → Body: { nome, email, password, cpf }
 //   → Esperado: Novo usuário criado
 //   → Status: 201
 
 // PUT — Atualizar (protegido)
-router.put('/usuarios/update/:id', verificaJWT, atualizarUser);
+router.put('/usuarios/update/:id', verificaToken, atualizarUser);
 //   → Chamada: PUT /usuarios/update/123
 //   → Body: { nome, email, ... campos a atualizar }
 //   → Esperado: Usuário atualizado
 //   → Status: 200
 
 // DELETE — Deletar (protegido)
-router.delete('/usuarios/delete/:id', verificaJWT, deleteUser);
+router.delete('/usuarios/delete/:id', verificaToken, deleteUser);
 //   → Chamada: DELETE /usuarios/delete/123
 //   → Esperado: Confirmação de deleção
 //   → Status: 204
@@ -771,12 +789,12 @@ Criar endpoint para listar seguimentos:
 **routes/seguimentos.routes.js:**
 ```javascript
 import express from 'express';
-import verificaJWT from '../middleware/auth/verificaJWT.js';
+import verificaToken from '../middleware/auth/verificaToken.js';
 import { listarSeguimentos } from '../controllers/cadastros/seguimentos.controller.js';
 
 const router = express.Router();
 
-router.get('/seguimentos', verificaJWT, listarSeguimentos);
+router.get('/seguimentos', verificaToken, listarSeguimentos);
 
 export default router;
 ```
@@ -817,7 +835,7 @@ export async function listarTodos() {
 
 **Rota:**
 ```javascript
-router.post('/seguimento/cadastrar', verificaJWT, cadastrarSeguimento);
+router.post('/seguimento/cadastrar', verificaToken, cadastrarSeguimento);
 ```
 
 **Controller:**
@@ -878,7 +896,7 @@ export async function criar({ nome, descricao }) {
 
 **Rota:**
 ```javascript
-router.delete('/seguimentos/delete/:id', verificaJWT, deletarSeguimento);
+router.delete('/seguimentos/delete/:id', verificaToken, deletarSeguimento);
 ```
 
 **Controller:**
@@ -948,5 +966,5 @@ export async function deletarSeguimento(req, res) {
 
 ---
 
-**Última atualização:** 09/06/2026  
-**Versão:** 1.0
+**Última atualização:** 30/07/2026  
+**Versão:** 1.1

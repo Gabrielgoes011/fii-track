@@ -1,177 +1,157 @@
 # Documentação — KPIs de Rendimentos (Dashboard Cards)
 
-> Guia para implementar no back-end os dados necessários para os 4 cards da tela de Rendimentos do FII Track.
-> Os cards foram atualizados para incluir o indicador YoC e o gráfico proporcional do Efeito Bola de Neve.
+> Status: ✅ **Implementado** (backend e frontend).
+> Última atualização: **30/07/2026**
+>
+> Este documento descreve o cálculo implementado dos KPIs da tela de Rendimentos (cards + Efeito Bola de Neve).
 
 ---
 
-## Visão geral dos 4 cards
+## Endpoint
 
-| # | Card | Cor | Campos do JSON | Fonte de dados |
-|---|---|---|---|---|
-| 1 | **Total Recebido** | Verde | `totalRecebidoPeriodo` | Tabela `rendimentos` (filtrado por período) |
-| 2 | **Total Acumulado** | Amarelo | `totalAcumulado` | Tabela `rendimentos` (histórico completo) |
-| 3 | **Total Investido + YoC** | Azul | `totalInvestido`, `yoc` | Tabela `operacoes` e cálculo de rendimento histórico |
-| 4 | **Efeito Bola de Neve** | Roxo / Indigo | `totalReinvestido`, `aporteProprio`, `percProprio`, `percReinvestido` | Tabela `operacoes` (compras normais vs. reinvestidas) |
+```
+POST /cardsRendimentos
+Authorization: Bearer <token>
+```
+
+**Body:**
+```json
+{ "mes": 7, "ano": 2026, "idAtivo": null }
+```
+
+- `mes`: número de `1` a `12`, ou `null`/`"Todos"` para o ano inteiro
+- `ano`: obrigatório
+- `idAtivo`: opcional — filtra os KPIs por um ativo específico (`null`/`"Todos"` = todos os ativos)
+
+Controller: `getCardsRendimentos` em `src/controllers/rendimentos.controller.js`
+Service: `calculoCardsRendimento` em `src/services/rendimentos.services.js`
+Repository: funções `getRendimentosFiltro`, `getTotalAcumulado`, `getAcumulado12Meses`, `getTotalCompras`, `getTotalReinvestido` em `src/repositories/rendimentos.repositories.js`
 
 ---
 
-## Estrutura do JSON Esperada pelo Front-end
-
-O front-end passará os parâmetros de filtro `mes` e `ano` na query string e espera receber um objeto consolidado no seguinte formato:
+## Resposta
 
 ```json
 {
   "success": true,
-  "message": "KPIs carregados com sucesso.",
+  "message": "Dados dos cards calculados com sucesso.",
   "data": {
-    "totalRecebidoPeriodo": 4850.25,
+    "totalPeriodo": 4850.25,
     "totalAcumulado": 46837.41,
-    "totalInvestido": 125560.52,
+    "totalAcumulado12Meses": 12300.10,
+    "totalCompras": 125560.52,
     "totalReinvestido": 18450.00,
     "aporteProprio": 107110.52,
-    "yoc": 37.30,
+    "retornoAcumulado": 37.30,
+    "yieldOnCost12Meses": 9.8,
     "percProprio": 85.3,
     "percReinvestido": 14.7
   }
 }
 ```
 
+No frontend, esse objeto fica disponível no hook `useRendimentos` como `cardsRendimentos` (ver `getCardsRendimentos` em `src/hooks/rendimentos/useRendimentos.js`).
+
 ---
 
-## Definições e Fórmulas de Cálculo no Back-end
+## Definições e Fórmulas (implementadas em `calculoCardsRendimento`)
 
-### 1. `totalRecebidoPeriodo`
-* **Definição:** Soma de todos os rendimentos recebidos no mês e ano selecionados.
-* **Query sugerida:**
-  ```sql
-  SELECT SUM("valorRecebido") AS "totalRecebidoPeriodo"
-  FROM rendimentos
-  WHERE 
-    ("mes" = :mes OR :mes = 'Todos') 
-    AND "ano" = :ano;
-  ```
+As 5 queries do repositório rodam em paralelo (`Promise.all`) para performance.
+
+### 1. `totalPeriodo`
+Soma de `valorRecebido` da tabela `rendimentos` filtrado por `mes`/`ano`/`idAtivo` (todos opcionais exceto `ano`).
+Repository: `getRendimentosFiltro`.
 
 ### 2. `totalAcumulado`
-* **Definição:** Soma histórica de todos os rendimentos recebidos desde o início.
-* **Query sugerida:**
-  ```sql
-  SELECT SUM("valorRecebido") AS "totalAcumulado"
-  FROM rendimentos;
-  ```
+Soma histórica de todos os rendimentos recebidos pelo usuário, sem filtro de período.
+Repository: `getTotalAcumulado`.
 
-### 3. `totalInvestido`
-* **Definição:** Soma total das compras de ativos realizadas.
-* **Query sugerida:**
-  ```sql
-  SELECT SUM("valorTotal") AS "totalInvestido"
-  FROM operacoes
-  WHERE "tipoOperacao" = 'COMPRA';
-  ```
+### 3. `totalAcumulado12Meses`
+Soma dos rendimentos recebidos nos últimos 12 meses (`dtRendimento >= CURRENT_DATE - INTERVAL '12 months'`).
+Repository: `getAcumulado12Meses`.
 
-### 4. `totalReinvestido`
-* **Definição:** Soma total das compras marcadas como proventos reinvestidos (`reinvestido = true`).
-* **Query sugerida:**
-  ```sql
-  SELECT SUM("valorTotal") AS "totalReinvestido"
-  FROM operacoes
-  WHERE "tipoOperacao" = 'COMPRA' AND "reinvestido" = true;
-  ```
+### 4. `totalCompras`
+Soma de `preco * quantidade` das operações do tipo `'Compra'`.
+Repository: `getTotalCompras`.
 
-### 5. `aporteProprio`
-* **Cálculo:** `totalInvestido - totalReinvestido`
+### 5. `totalReinvestido`
+Soma de `valorRecebido` dos rendimentos marcados com `reinvestido = true`.
+Repository: `getTotalReinvestido`.
 
-### 6. `yoc` (Yield on Cost)
-* **Cálculo:** `(totalAcumulado / totalInvestido) * 100`
-* **Nota:** Retornar como valor numérico float (ex: `37.30`). Se `totalInvestido` for 0, retornar `0.00`.
+> **Atenção:** a coluna `reinvestido` está na tabela **`rendimentos`**, não em `operacoes`. Um rendimento reinvestido é aquele cujo valor recebido foi usado para comprar mais cotas do próprio fundo — a flag fica no registro do provento, não na operação de compra.
 
-### 7. `percProprio` e `percReinvestido`
-* **Cálculo `percReinvestido`:** `(totalReinvestido / totalInvestido) * 100`
-* **Cálculo `percProprio`:** `(aporteProprio / totalInvestido) * 100` (ou `100 - percReinvestido`)
-* **Nota:** Retornar como float de um dígito decimal (ex: `85.3` e `14.7`). Se `totalInvestido` for 0, retornar `0.0` para ambos.
+### 6. `aporteProprio`
+```
+aporteProprio = totalCompras - totalReinvestido
+```
+Representa o quanto saiu do bolso do investidor (sem contar o que "se pagou sozinho" via reinvestimento).
+
+### 7. `retornoAcumulado` (YoC — Yield on Cost desde o início)
+```
+retornoAcumulado = totalCompras > 0 ? (totalAcumulado / totalCompras) * 100 : 0
+```
+Arredondado para 2 casas decimais.
+
+### 8. `yieldOnCost12Meses`
+```
+yieldOnCost12Meses = totalCompras > 0 ? (totalAcumulado12Meses / totalCompras) * 100 : 0
+```
+Arredondado para 2 casas decimais.
+
+### 9. `percProprio` e `percReinvestido` (Efeito Bola de Neve)
+```
+percProprio      = totalCompras > 0 ? (aporteProprio / totalCompras) * 100 : 0
+percReinvestido  = totalCompras > 0 ? (totalReinvestido / totalCompras) * 100 : 0
+```
+Ambos arredondados para 1 casa decimal.
 
 ---
 
-## Endpoint no Back-end
+## Frontend
 
-### Rota
-```
-GET /kpis-rendimentos?mes=XX&ano=YYYY
-```
-* **Parâmetros Query:** 
-  * `mes`: String (`'01'` a `'12'` ou `'Todos'`)
-  * `ano`: String (`'2023'` a `'2026'`)
-* **Segurança:** Requer middleware de autenticação (ex: `verificaToken`).
-
----
-
-## Alteração Necessária no Banco de Dados
-
-Caso ainda não possua a coluna `reinvestido` na tabela `operacoes`, execute a migration ou script SQL abaixo:
-
-```sql
-ALTER TABLE operacoes
-ADD COLUMN reinvestido BOOLEAN NOT NULL DEFAULT false;
-```
-*(As compras passadas assumem automaticamente `false`, significando que vieram do bolso)*
-
----
-
-## Onde conectar no Front-end
-
-### 1. Atualizar em `rendimentosService.jsx`
+### `rendimentosService.js`
 ```js
-kpisRendimentos: async ({ mes, ano }) => {
-  const res = await api.get('/kpis-rendimentos', { params: { mes, ano } });
-  return res.data; // Retorna { totalRecebidoPeriodo, totalAcumulado, ... }
+cardsRendimentos: async ({ mes, ano, idAtivo }) => {
+  const res = await api.post('/cardsRendimentos', {
+    mes: mes ? Number(mes) : null,
+    ano: Number(ano),
+    idAtivo: idAtivo ? Number(idAtivo) : null,
+  });
+  return res.data;
 },
 ```
 
-### 2. Atualizar em `useRendimentos.jsx`
-Substituir o estado antigo por:
+### `useRendimentos.js`
 ```js
-const [kpis, setKpis] = useState(null);
+const [cardsRendimentos, setCardsRendimentos] = useState(null);
+const [loadingCards, setLoadingCards] = useState(false);
 
-const getKpis = useCallback(async ({ mes, ano }) => {
+const getCardsRendimentos = useCallback(async ({ mes, ano, idAtivo }) => {
+  setLoadingCards(true);
   try {
-    const data = await rendimentosService.kpisRendimentos({ mes, ano });
-    setKpis(data);
+    const data = await rendimentosService.cardsRendimentos({ mes, ano, idAtivo });
+    setCardsRendimentos(data || null);
   } catch (error) {
     handleError(error);
+  } finally {
+    setLoadingCards(false);
   }
 }, []);
 ```
-E disparar no `useEffect` de filtros na página ou no hook.
 
-### 3. No arquivo `rendimentos.jsx`
-Substituir o mock fixo `const apiResponse = { ... }` pelo estado retornado pelo hook:
-```js
-const {
-  rendimentos,
-  loading,
-  kpis, // Novo estado retornado pelo hook
-  ...
-} = useRendimentos();
-
-// Usar kpis retornado do backend ou o mock de fallback para segurança
-const apiResponse = kpis ?? {
-  totalRecebidoPeriodo: 0,
-  totalAcumulado: 0,
-  totalInvestido: 0,
-  totalReinvestido: 0,
-  aporteProprio: 0,
-  yoc: 0,
-  percProprio: 100,
-  percReinvestido: 0
-};
-```
+A página `rendimentos.jsx` consome `cardsRendimentos` do hook e renderiza os cards de Total do Período, Total Acumulado, YoC e o Efeito Bola de Neve.
 
 ---
 
-## Resumo das tarefas (Checklist para o Back-end)
+## Lançamento de Rendimento (relacionado)
 
-- [ ] Executar migration para adicionar `reinvestido` na tabela `operacoes`
-- [ ] Criar a query consolidada ou service para calcular as 8 propriedades do dashboard
-- [ ] Criar controlador `getKpisRendimentos`
-- [ ] Configurar a rota `GET /kpis-rendimentos` com parâmetros de query
-- [ ] Integrar no Front-end substituindo o objeto mockado `apiResponse` pelo estado dinâmico `kpis`
+O card "Efeito Bola de Neve" depende da flag `reinvestido`, definida no momento do lançamento:
+
+```
+POST /criarRendimento
+Body: { "idAtivo": 1, "dtRendimento": "2026-07-15", "valorRecebido": 95.50, "reinvestido": true }
+```
+
+Controller: `criarRendimentoController` → Service: `criarRendimento` → Repository: `insertRendimento`.
+
+Exclusão: `DELETE /rendimentos/:id` (garante que o rendimento pertence ao `idUser` logado antes de excluir).

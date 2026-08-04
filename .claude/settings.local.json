@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"exit:$?\")",
+      "Bash(powershell -Command \"\\(Get-Content GUIA_DESENVOLVIMENTO.md -Raw\\) -replace 'verificaJWT', 'verificaToken' | Set-Content -NoNewline GUIA_DESENVOLVIMENTO.md\")",
+      "Bash(sed -i 's/verificaJWT/verificaToken/g' GUIA_DESENVOLVIMENTO.md)"
+    ]
+  }
+}

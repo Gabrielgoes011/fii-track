@@ -11,7 +11,7 @@ Aplicação fullstack para controle e acompanhamento de carteira de Fundos de In
 ```
 fii-track/
 ├── fii-track-back/   # API REST — Node.js + Express + PostgreSQL
-└── fii-track-front/  # SPA — React + Vite + Tailwind CSS
+└── fii-track-front/  # SPA — React + Vite (estilização via inline styles)
 ```
 
 ---
@@ -27,11 +27,14 @@ fii-track/
 | pg (node-postgres) | ^8.20.0 | Conexão com PostgreSQL (Pool) |
 | jsonwebtoken | ^9.0.3 | Autenticação JWT |
 | bcrypt | ^6.0.0 | Hash de senhas |
-| multer | ^2.1.1 | Upload de arquivos |
-| @aws-sdk/client-s3 | ^3.x | Armazenamento S3 (AWS) |
+| cross-env | ^7.0.3 | Define `NODE_ENV` de forma multiplataforma no script `start` |
+| multer | ^2.1.1 | Upload de arquivos (configurado, ainda não usado em nenhuma rota) |
 | dotenv | ^17.x | Variáveis de ambiente |
 | uuid | ^13.x | Geração de IDs únicos |
+| cors | ^2.8.5 | Liberação de CORS |
 | nodemon | ^3.x | Hot-reload em desenvolvimento |
+
+> ⚠️ `src/config/s3.js` importa `@aws-sdk/client-s3`, mas esse pacote **não está mais** no `package.json`/`node_modules`. O arquivo não é usado por nenhum controller hoje, então não quebra a aplicação — mas vai quebrar assim que alguém tentar reativar o upload de fotos/extratos. Ver backlog.
 
 ### Arquitetura
 
@@ -46,7 +49,7 @@ Routes  →  Controller  →  Service  →  Repository  →  Banco de Dados
 - **Service** — contém as regras de negócio e validações
 - **Repository** — executa diretamente as queries SQL
 
-> Módulos ainda não migrados (ex: `operacoes`, `rendimentos`) têm a lógica diretamente no controller. A migração é incremental.
+> `operacoes` e `rendimentos` já seguem as 3 camadas por completo. `seguimentos` ainda acessa o banco direto no controller, e `usuarios` está parcialmente migrado (`atualizarUser`/`deleteUser` ainda fora do padrão). Detalhes em [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md).
 
 ### Middleware de Autenticação
 
@@ -89,8 +92,8 @@ Authorization: Bearer <token>
 | GET | `/users` | Lista usuários |
 | GET | `/users/dash/count` | Conta total de usuários |
 | POST | `/usuario/cadastrar` | Cadastra novo usuário |
-| PUT | `/users/update/:id` | Atualiza dados do usuário |
-| PUT | `/inativaUser/:id` | Inativa ou reativa usuário |
+| PUT | `/users/update/:id` | Atualiza dados do usuário (⚠️ bug: query aponta para tabela antiga `dbo."tabUser"`) |
+| PUT | `/users/on-off/:id` | Inativa ou reativa usuário |
 | DELETE | `/users/delete/:id` | Remove usuário |
 
 #### Seguimentos (Segmentos)
@@ -123,10 +126,13 @@ Authorization: Bearer <token>
 #### Rendimentos
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/rendimentos` | Lista rendimentos filtrados por mês/ano |
+| POST | `/rendimentos` | Lista rendimentos filtrados por mês/ano/ativo |
 | POST | `/carregarGraficoDashboard` | Dados do gráfico do dashboard por ano |
 | POST | `/carregarComparacaoAnual` | Comparativo de rendimentos entre anos |
 | GET | `/carregarDadosModalNovoRendimento` | Ativos disponíveis para lançar rendimento |
+| POST | `/criarRendimento` | Lança um novo rendimento (aceita flag `reinvestido`) |
+| DELETE | `/rendimentos/:id` | Exclui um rendimento |
+| POST | `/cardsRendimentos` | KPIs da tela de Rendimentos (ver [`DOCUMENTACAO_KPIs_RENDIMENTOS.md`](fii-track-back/DOCUMENTACAO_KPIs_RENDIMENTOS.md)) |
 
 ### Como Executar
 
@@ -150,11 +156,12 @@ O servidor sobe em `http://localhost:3000`.
 | React | ^19.x | UI |
 | Vite | ^8.x | Bundler / Dev server |
 | React Router DOM | ^7.x | Roteamento SPA |
-| Tailwind CSS | ^3.x | Estilização utilitária |
 | Axios | ^1.x | Requisições HTTP |
 | React Toastify | ^11.x | Notificações |
-| React Bootstrap | ^2.x | Componentes de UI |
 | React Icons | ^5.x | Ícones |
+| @vercel/speed-insights | ^2.x | Métricas de performance |
+
+> Estilização é feita via **inline styles** (não há Tailwind CSS nem React Bootstrap no `package.json` — remova essas menções se encontrar em código ou docs antigos).
 
 ### Páginas
 
@@ -165,9 +172,9 @@ O servidor sobe em `http://localhost:3000`.
 | `/rendimentos` | Rendimentos | ✅ Pronto |
 | `/operacoes` | Compras e Vendas | ✅ Pronto |
 | `/cadastros/meusfiis` | Meus FIIs | ✅ Pronto |
-| `/cadastros/seguimentos` | Seguimentos | ✅ Pronto |
-| `/cadastros/usuarios` | Usuários | 🚧 Em desenvolvimento |
-| `/controle-ativos` | Controle de Ativos | 🚧 Em desenvolvimento |
+| `/cadastros/seguimentos` | Seguimentos | ⚠️ CRUD pronto — edição pendente |
+| `/cadastros/usuarios` | Usuários | ⚠️ CRUD pronto — edição e reset de senha pendentes |
+| `/controle-ativos` | Controle de Ativos | 🧪 UI completa — dados mockados, backend pendente |
 | `/precificacao` | Precificação | 🚧 Em desenvolvimento |
 | `/relatorios` | Relatórios | 🚧 Em desenvolvimento |
 | `/configuracoes` | Configurações | 🚧 Em desenvolvimento |
@@ -212,10 +219,14 @@ Tabelas principais:
 
 ## Atualizações Recentes
 
-- Cards do Dashboard agora navegam para as telas correspondentes ao clicar (`/rendimentos`, `/operacoes`, `/controle-ativos`)
+- KPIs de Rendimentos implementados de ponta a ponta (`POST /cardsRendimentos`) — cards de Total do Período, Acumulado, YoC e Efeito Bola de Neve
+- Lançamento e exclusão de rendimento implementados (`POST /criarRendimento`, `DELETE /rendimentos/:id`), incluindo flag `reinvestido`
+- Exclusão de operação agora valida que a operação pertence ao usuário logado
+- Tela de Controle de Ativos construída no frontend (KPIs, tabela de 16 colunas, inputs editáveis, badges) — ainda rodando sobre dados mockados, aguardando backend
+- Cards do Dashboard navegam para as telas correspondentes ao clicar (`/rendimentos`, `/operacoes`, `/controle-ativos`)
 - Senha padrão de novos usuários (`Track@123`) armazenada com hash `bcrypt` (10 rounds)
 - Login agora valida senha com `bcrypt.compare`
-- Módulo de usuários migrado para `Controller → Service → Repository`
+- Módulo de usuários migrado parcialmente para `Controller → Service → Repository`
 - Rota de cadastro de usuário alterada de `POST /cadUsers` para `POST /usuario/cadastrar`
 - Rota de edição de fundo padronizada para `PUT /meusFundos/editar/:id`
 
@@ -223,9 +234,11 @@ Tabelas principais:
 
 ## 📋 Backlog
 
+> Backlog completo e detalhado (com specs) em [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md).
+
 ### 🚧 Em andamento
 
-- [ ] **Controle de Ativos** — tela e endpoints para posição consolidada da carteira (preço médio, quantidade total, valor de mercado)
+- [ ] **Controle de Ativos** — backend completo (o frontend já está pronto e usa dados mockados)
 - [ ] **Precificação** — integração com API externa para cotação em tempo real dos FIIs
 
 ### 🔐 Autenticação
@@ -236,36 +249,30 @@ Tabelas principais:
 
 - [ ] Corrigir query do `atualizarUser` — referencia tabela antiga (`dbo."tabUser"`) em vez de `usuarios`
 - [ ] Corrigir `validaEmailExistente` no `validaUser.js` — mesma referência errada
+- [ ] Migrar `atualizarUser` e `deleteUser` para `Service`/`Repository`
+- [ ] Coluna `perfil` (admin/user) + middleware `verificaAdmin`
+- [ ] Implementar edição de usuário e reset de senha no frontend (hoje só exibem toast)
 - [ ] Reativar validações de senha comentadas (confirmação, tamanho mínimo, letra maiúscula)
 - [ ] Validação real de CPF (dígitos verificadores)
 
 ### 🏷️ Seguimentos
 
+- [ ] Migrar módulo inteiro para `Controller → Service → Repository` (hoje acessa o banco direto)
+- [ ] Implementar edição de seguimento no frontend (hoje só exibe toast — lógica comentada no hook)
 - [ ] Bloquear `deleteSeguimento` se houver ativos vinculados ao seguimento
 - [ ] Corrigir mensagem de erro no `catch` do `contarSeguimentos` ("Erro ao contar usuários" → "Erro ao contar seguimentos")
 - [ ] Implementar log de alterações (aguardando tabela de logs)
 
-### 📦 Meus Fundos
-
-- [ ] Migrar `contarFundosAtivos` para a camada Service/Repository
-
 ### 📊 Operações
 
-- [ ] Migrar módulo inteiro para `Controller → Service → Repository`
+- [ ] Criar endpoint `POST /cardsOperacoes` (total aportado, vendido e capital líquido) — spec pronta em `ANALISE_PROJETO.md`
 - [ ] Validar campo `tipo` em `lancarOperacao` (aceitar apenas `'Compra'` ou `'Venda'`)
-- [ ] Verificar propriedade da operação antes de excluir (qualquer usuário autenticado pode excluir hoje)
-
-### 💰 Rendimentos
-
-- [ ] Migrar módulo inteiro para `Controller → Service → Repository`
-- [ ] Criar `POST /rendimentos/lancar` para salvar novo rendimento
-- [ ] Criar rotas de edição e exclusão de rendimento
 
 ### 🛠️ Geral
 
-- [ ] Adotar `httpResponse.js` nos controllers (arquivo existe mas não está sendo usado)
+- [ ] Resolver dependência quebrada do S3 (`@aws-sdk/client-s3` não está mais instalado, mas `src/config/s3.js` ainda o importa)
 - [ ] Paginação nas rotas de listagem (`/users`, `/operacoes`, `/rendimentos`)
-- [ ] Upload de extrato para lançamento em lote (multer + S3 já configurados)
+- [ ] Upload de extrato para lançamento em lote (multer + S3 já configurados, mas não conectados a nenhuma rota)
 - [ ] Página de Relatórios — exportação por período (PDF / Excel)
 - [ ] Página de Configurações — preferências do usuário
 

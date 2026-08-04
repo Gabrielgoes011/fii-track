@@ -14,39 +14,44 @@ API RESTful para gerenciamento de carteira de FIIs (Fundos de Investimento Imobi
 | bcrypt | ^6.0.0 | Hash de senhas |
 | dotenv | ^17.4.2 | Variáveis de ambiente |
 | uuid | ^13.0.0 | Geração de IDs únicos |
-| multer | ^2.1.1 | Upload de arquivos |
-| @aws-sdk/client-s3 | ^3.1009.0 | Integração com S3 |
-| pg | ^8.20.0 | Driver PostgreSQL (reserva) |
+| multer | ^2.1.1 | Upload de arquivos (configurado, ainda sem rota que o use) |
 | cors | ^2.8.5 | Liberação de CORS |
+| cross-env | ^7.0.3 | Define `NODE_ENV` de forma multiplataforma no script `start` |
 | nodemon | ^3.1.14 | Hot reload em desenvolvimento |
+
+> ⚠️ `src/config/s3.js` importa `@aws-sdk/client-s3`, mas o pacote não está mais no `package.json` nem instalado em `node_modules`. Nenhum controller importa `s3.js` hoje, então isso não quebra a aplicação — mas vai quebrar assim que alguém tentar reativar o upload de fotos/extratos para S3.
 
 ---
 
 ## Estrutura do Projeto
 
 ```
-api-nodeback/
+fii-track-back/
 ├── db/
-│   └── createDb.sql        # Script de criação das tabelas (PostgreSQL)
+│   └── createDb.sql        # Dump antigo do schema (PostgreSQL) — não reflete 100% do schema atual
 ├── src/
-│   ├── app.js              # Configuração do Express e registro de rotas
+│   ├── app.js               # Configuração do Express e registro de rotas
 │   ├── config/
-│   │   ├── configDb.js     # Conexão com o banco de dados
-│   │   ├── env.js          # Carregamento das variáveis de ambiente
-│   │   └── s3.js           # Configuração do cliente S3
+│   │   ├── configDb.js      # Conexão com o banco de dados
+│   │   ├── env.js           # Carregamento das variáveis de ambiente
+│   │   └── s3.js            # Configuração do cliente S3 (⚠️ dependência não instalada, não usado por nenhum controller)
 │   ├── controllers/
+│   │   ├── home.controller.js
 │   │   ├── login.controller.js
 │   │   ├── operacoes.controller.js
 │   │   ├── rendimentos.controller.js
 │   │   └── cadastros/
 │   │       ├── meusFundos.controller.js
-│   │       ├── seguimentos.controller.js
-│   │       └── usuario.controller.js
+│   │       ├── seguimentos.controller.js   # ainda acessa o banco direto (não migrado)
+│   │       └── usuario.controller.js       # atualizarUser/deleteUser ainda não migrados
 │   ├── middleware/
 │   │   └── auth/
 │   │       └── verificaToken.js    # Middleware de autenticação JWT
 │   ├── repositories/
+│   │   ├── home.repositories.js
 │   │   ├── login.repositories.js
+│   │   ├── operacoes.repositories.js
+│   │   ├── rendimentos.repositories.js
 │   │   └── cadastros/
 │   │       ├── meuFundos.repositories.js
 │   │       └── usuarios.repositories.js
@@ -60,14 +65,21 @@ api-nodeback/
 │   │   ├── seguimentos.routes.js
 │   │   └── usuarios.routes.js
 │   ├── services/
+│   │   ├── home.services.js
+│   │   ├── login.services.js
+│   │   ├── operacoes.services.js
+│   │   ├── rendimentos.services.js
 │   │   └── cadastros/
 │   │       ├── meusFundos.services.js
 │   │       └── usuarios.services.js
 │   └── utils/
+│       ├── dateUtils.js        # Formatação/conversão de datas
 │       ├── httpResponse.js     # Helpers de resposta HTTP padronizada
 │       └── validaUser.js       # Validações de campos de usuário
 └── server.js                   # Entry point — sobe o servidor
 ```
+
+> **Seguimentos** é o único módulo ainda sem `service`/`repository` — o controller acessa `openDb()` diretamente. Ver backlog em [`ANALISE_PROJETO.md`](../ANALISE_PROJETO.md).
 
 ---
 
@@ -145,12 +157,12 @@ Authorization: Bearer <token>
 
 | Método | Rota | Descrição | Auth |
 |---|---|---|---|
-| GET | `/users` | Listar todos os usuários | ✅ |
-| GET | `/users/dash/count` | Contar total de usuários | ✅ |
+| GET | `/users` | Listar todos os usuários (`?status=on\|off`) | ✅ |
+| GET | `/users/dash/count` | Contar total de usuários (ativos/inativos/total) | ✅ |
 | POST | `/usuario/cadastrar` | Cadastrar novo usuário | ✅ |
-| PUT | `/users/update/:id` | Atualizar usuário | ✅ |
-| PUT | `/inativaUser/:id` | Inativar / reativar usuário | ✅ |
-| DELETE | `/users/delete/:id` | Deletar usuário | ✅ |
+| PUT | `/users/update/:id` | Atualizar usuário (⚠️ acessa banco direto, query referencia tabela antiga `dbo."tabUser"` — endpoint quebrado) | ✅ |
+| PUT | `/users/on-off/:id` | Inativar / reativar usuário | ✅ |
+| DELETE | `/users/delete/:id` | Deletar usuário (acessa banco direto, fora do padrão service/repository) | ✅ |
 
 **Body POST /usuario/cadastrar:**
 ```json
@@ -196,10 +208,20 @@ Authorization: Bearer <token>
 
 | Método | Rota | Descrição | Auth |
 |---|---|---|---|
-| POST | `/rendimentos` | Listar rendimentos por mês/ano | ✅ |
-| POST | `/carregarGraficoDashboard` | Dados do gráfico por ano | ✅ |
+| POST | `/rendimentos` | Listar rendimentos por mês/ano/ativo | ✅ |
+| POST | `/carregarGraficoDashboard` | Dados do gráfico por ano (mensal + anual) | ✅ |
 | POST | `/carregarComparacaoAnual` | Comparação entre anos | ✅ |
 | GET | `/carregarDadosModalNovoRendimento` | Dados para modal de lançamento | ✅ |
+| POST | `/criarRendimento` | Lança um novo rendimento | ✅ |
+| DELETE | `/rendimentos/:id` | Exclui um rendimento | ✅ |
+| POST | `/cardsRendimentos` | KPIs da tela (total período, acumulado, YoC, Efeito Bola de Neve) | ✅ |
+
+**Body POST /criarRendimento:**
+```json
+{ "idAtivo": 1, "dtRendimento": "2026-07-15", "valorRecebido": 95.50, "reinvestido": false }
+```
+
+Detalhes completos dos KPIs em [`DOCUMENTACAO_KPIs_RENDIMENTOS.md`](./DOCUMENTACAO_KPIs_RENDIMENTOS.md).
 
 ---
 
@@ -214,17 +236,24 @@ Valida o JWT no header `Authorization: Bearer <token>`. Em caso de token inváli
 
 ## 📋 Backlog
 
+> Backlog completo e detalhado (com specs) em [`ANALISE_PROJETO.md`](../ANALISE_PROJETO.md).
+
 ### Em andamento
 
-- [ ] Controle de Ativos — endpoints para posição consolidada da carteira (preço médio, quantidade, valor atual)
-- [ ] Precificação — integração com API externa para cotação em tempo real dos FIIs
+- [ ] Controle de Ativos — endpoints para posição consolidada da carteira (preço médio, quantidade, valor atual). O frontend já está pronto e aguardando (`GET /controle-ativos`, `PUT /controle-ativos/preco-teto/:id`, `PUT /controle-ativos/perc-ideal/:id`)
+- [ ] Cards de Operações — `POST /cardsOperacoes` (total aportado, vendido, capital líquido)
+- [ ] Precificação — integração com API externa (Brapi) para cotação em tempo real dos FIIs
 
 ### Pendências
 
+- [ ] Corrigir `atualizarUser` — query referencia tabela antiga `dbo."tabUser"` em vez de `usuarios`
+- [ ] Migrar `atualizarUser` e `deleteUser` para `Service`/`Repository`
+- [ ] Migrar Seguimentos inteiro para `Controller → Service → Repository`
+- [ ] Coluna `perfil` na tabela `usuarios` + middleware `verificaAdmin`
+- [ ] Resolver dependência quebrada do S3 (`@aws-sdk/client-s3` não instalado, mas ainda importado em `src/config/s3.js`)
 - [ ] Rota de refresh de token JWT
 - [ ] Paginação nas rotas de listagem (`/users`, `/operacoes`, `/rendimentos`)
-- [ ] Cadastro de rendimento via `POST /rendimentos/lancar`
-- [ ] Upload de extrato para lançamento em lote de rendimentos / operações (multer + S3 já configurados)
+- [ ] Upload de extrato para lançamento em lote de rendimentos / operações (multer já configurado, S3 pendente de dependência)
 - [ ] Endpoint de relatório consolidado por período
 - [ ] Testes automatizados (unitários e de integração)
 - [ ] Dockerização da aplicação

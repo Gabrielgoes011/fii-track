@@ -47,6 +47,8 @@ src/
 │   │   ├── useMeusFiis.js
 │   │   ├── useSeguimentos.js
 │   │   └── useUsuarios.js
+│   ├── controleAtivos/
+│   │   └── useControleAtivos.js  # ⚠️ ainda usa MOCK_DATA — backend não existe
 │   ├── home/
 │   │   └── useHomeCards.js
 │   ├── operacoes/
@@ -56,22 +58,23 @@ src/
 ├── pages/
 │   ├── login/                   # ✅ Login com autenticação JWT
 │   ├── dashboard/               # ✅ Dashboard com cards e stats
-│   ├── rendimentos/             # ✅ Rendimentos — lançamento e histórico
+│   ├── rendimentos/             # ✅ Rendimentos — lançamento, histórico e KPIs
 │   ├── operacoes/               # ✅ Compras e vendas — lançamento e histórico
 │   ├── cadastros/
 │   │   ├── meusFundos/          # ✅ CRUD de FIIs da carteira
-│   │   ├── seguimentos/         # ✅ CRUD de seguimentos
-│   │   └── usuarios/            # ✅ CRUD de usuários
-│   ├── controleAtivos/          # 🚧 Em desenvolvimento
-│   ├── precificacao/            # 🚧 Em desenvolvimento
-│   ├── relatorios/              # 🚧 Em desenvolvimento
-│   └── configuracoes/           # 🚧 Em desenvolvimento
+│   │   ├── seguimentos/         # ⚠️ CRUD — edição ainda não implementada
+│   │   └── usuarios/            # ⚠️ CRUD — edição e reset de senha ainda não implementados
+│   ├── controleAtivos/          # 🧪 UI completa (KPIs + tabela de 16 colunas), dados mockados — aguardando backend
+│   ├── precificacao/            # 🚧 Placeholder (PaginaEmDesenvolvimento)
+│   ├── relatorios/              # 🚧 Placeholder (PaginaEmDesenvolvimento)
+│   └── configuracoes/           # 🚧 Placeholder (PaginaEmDesenvolvimento)
 ├── services/
 │   ├── auth/authService.js
 │   ├── cadastros/
 │   │   ├── meusFiisService.js
 │   │   ├── seguimentosService.js
 │   │   └── usuariosService.js
+│   ├── controleAtivos/controleAtivosService.js
 │   ├── home/homeService.js
 │   ├── operacoes/operacoesService.js
 │   └── rendimentos/rendimentosService.js
@@ -130,9 +133,9 @@ npm run preview   # Preview do build
 | `/rendimentos` | Rendimentos | ✅ |
 | `/operacoes` | Operações | ✅ |
 | `/cadastros/meusfiis` | Meus FIIs | ✅ |
-| `/cadastros/seguimentos` | Seguimentos | ✅ |
-| `/cadastros/usuarios` | Usuários | ✅ |
-| `/controle-ativos` | Controle de Ativos | 🚧 |
+| `/cadastros/seguimentos` | Seguimentos | ⚠️ edição pendente |
+| `/cadastros/usuarios` | Usuários | ⚠️ edição/reset de senha pendentes |
+| `/controle-ativos` | Controle de Ativos | 🧪 UI completa, dados mockados |
 | `/precificacao` | Precificação | 🚧 |
 | `/relatorios` | Relatórios | 🚧 |
 | `/configuracoes` | Configurações | 🚧 |
@@ -155,13 +158,19 @@ Ver [`PADROES.md`](./PADROES.md) para guia completo de como criar novas páginas
 
 ## Backlog
 
+> Backlog completo e detalhado (com specs) em [`ANALISE_PROJETO.md`](../ANALISE_PROJETO.md).
+
 ### Em andamento
 
-- [ ] Controle de Ativos — posição consolidada da carteira (preço médio, quantidade total, valor de mercado)
+- [ ] Controle de Ativos — UI já implementada (`useControleAtivos.js` usa `MOCK_DATA`); falta o backend real (`GET /controle-ativos`, `PUT /controle-ativos/preco-teto/:id`, `PUT /controle-ativos/perc-ideal/:id`) para trocar o mock pela chamada real
 - [ ] Precificação — cotação em tempo real dos FIIs
 
 ### Pendentes
 
+- [ ] Implementar edição de seguimento (hoje só exibe toast — lógica comentada em `useSeguimentos.js`)
+- [ ] Implementar edição de usuário e reset de senha (hoje só exibem toast em `useUsuarios.js`)
+- [ ] Cards de Operações — total aportado, vendido e capital líquido na tela de Operações
+- [ ] Ocultar menu "Usuários" para não-admins quando a coluna `perfil` existir no backend
 - [ ] Relatórios — exportação por período (PDF / Excel)
 - [ ] Configurações — preferências do usuário
 - [ ] Gráfico de evolução patrimonial no Dashboard com dados reais

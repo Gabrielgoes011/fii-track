@@ -1,7 +1,7 @@
 # Spec — Tela Controle de Ativos
 
-> Versão: 1.0 — 29/07/2026
-> Status: Aguardando aprovação antes do desenvolvimento
+> Versão: 1.1 — 30/07/2026
+> Status: **Frontend implementado** (`controleAtivos.jsx`, `useControleAtivos.js`, `controleAtivosService.js`) rodando sobre `MOCK_DATA` no hook. **Backend não implementado** — nenhuma rota/controller/service/repository de `controleAtivos` existe ainda. Ver checklist na seção 9 e status consolidado em [`ANALISE_PROJETO.md`](../../../../../ANALISE_PROJETO.md).
 
 ---
 
@@ -523,22 +523,24 @@ CREATE TABLE IF NOT EXISTS metas_carteira (
 - [ ] Registrar router no `app.js`
 
 ### Frontend
-- [ ] `controleAtivosService.js` criado
-- [ ] `useControleAtivos.js` criado
-- [ ] `controleAtivos.jsx` — header com 4 KPI cards
-- [ ] Aviso de cotação (fonte Brapi)
-- [ ] Tabela com 16 colunas e scroll horizontal
-- [ ] Inputs editáveis com estado local por linha
-- [ ] Badges de equilíbrio
-- [ ] Linha de totais no rodapé
-- [ ] Ordenação por cabeçalho
-- [ ] Skeleton no loading inicial
-- [ ] Botão "Atualizar Cotações" com loading state
-- [ ] `toastSuccess` e `handleError` em todas as interações
-- [ ] `useIsMobile` para ajuste de padding
-- [ ] Rota `/controle-ativos` no `App.jsx`
-- [ ] Item no `Sidebar.jsx`
-- [ ] Remover `PaginaEmDesenvolvimento` atual da rota
+- [x] `controleAtivosService.js` criado (já aponta para os endpoints reais — só falta o backend responder)
+- [x] `useControleAtivos.js` criado (⚠️ ainda com `MOCK_DATA` — trocar por chamadas reais do service quando o backend existir)
+- [x] `controleAtivos.jsx` — header com 4 KPI cards
+- [x] Aviso de cotação (fonte Brapi)
+- [x] Tabela com 16 colunas e scroll horizontal
+- [x] Inputs editáveis com estado local por linha
+- [x] Badges de equilíbrio
+- [x] Linha de totais no rodapé
+- [x] Ordenação por cabeçalho
+- [x] Skeleton no loading inicial
+- [x] Botão "Atualizar Cotações" com loading state
+- [x] `toastSuccess` e `handleError` em todas as interações
+- [x] `useIsMobile` para ajuste de padding
+- [x] Rota `/controle-ativos` no `App.jsx`
+- [x] Item no `Sidebar.jsx`
+- [x] Remover `PaginaEmDesenvolvimento` atual da rota
+
+> Único item pendente no frontend: trocar `MOCK_DATA` por `controleAtivosService.listar()` real assim que o backend (checklist abaixo) existir.
 
 ---
 
