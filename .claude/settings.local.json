@@ -3,7 +3,25 @@
     "allow": [
       "Bash(echo \"exit:$?\")",
       "Bash(powershell -Command \"\\(Get-Content GUIA_DESENVOLVIMENTO.md -Raw\\) -replace 'verificaJWT', 'verificaToken' | Set-Content -NoNewline GUIA_DESENVOLVIMENTO.md\")",
-      "Bash(sed -i 's/verificaJWT/verificaToken/g' GUIA_DESENVOLVIMENTO.md)"
+      "Bash(sed -i 's/verificaJWT/verificaToken/g' GUIA_DESENVOLVIMENTO.md)",
+      "Bash(python -c \"from PIL import Image; print\\('ok', Image.__version__ if hasattr\\(Image,'__version__'\\) else 'ok'\\)\")",
+      "Bash(ls /c/Windows/Fonts/ | grep -i \"arialbd\\\\|seguisb\\\\|segoeuib\\\\|calibrib\" )",
+      "Read(//c/Windows/Fonts//**)",
+      "Bash(python gen_icon.py)",
+      "Bash(cp __TRACKED_VAR__/favicon.ico public/favicon.ico)",
+      "Bash(cp __TRACKED_VAR__/apple-touch-icon.png public/apple-touch-icon.png)",
+      "Bash(cp __TRACKED_VAR__/icon-192.png public/icon-192.png)",
+      "Bash(cp __TRACKED_VAR__/icon-512.png public/icon-512.png)",
+      "Bash(node -e \"try{require.resolve\\('playwright'\\);console.log\\('yes'\\)}catch\\(e\\){console.log\\('no'\\)}\")",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=1600,900 --virtual-time-budget=4000 --screenshot=\"C:/Users/Suporte/AppData/Local/Temp/claude/c--Users-Fkl-Teste-Desktop-Estudos-e-Projetos-api-Node/de2d6dda-b8f5-4441-9e9a-66d01f02419c/scratchpad/login-desktop2.png\" http://localhost:8080/)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=390,844 --virtual-time-budget=4000 --screenshot=\"C:/Users/Suporte/AppData/Local/Temp/claude/c--Users-Fkl-Teste-Desktop-Estudos-e-Projetos-api-Node/de2d6dda-b8f5-4441-9e9a-66d01f02419c/scratchpad/login-mobile.png\" http://localhost:8080/)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=390,844 --virtual-time-budget=4000 --screenshot=\"C:/Users/Suporte/AppData/Local/Temp/claude/c--Users-Fkl-Teste-Desktop-Estudos-e-Projetos-api-Node/de2d6dda-b8f5-4441-9e9a-66d01f02419c/scratchpad/login-mobile-debug.png\" http://localhost:8080/)",
+      "Bash(npm install *)",
+      "Bash(grep -E \"^\\(react|vite\\)$\")",
+      "Bash(curl -sf http://localhost:8080)",
+      "Bash(node \"C:\\\\Users\\\\Suporte\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Fkl-Teste-Desktop-Estudos-e-Projetos-api-Node\\\\de2d6dda-b8f5-4441-9e9a-66d01f02419c\\\\scratchpad\\\\inspect.js\")",
+      "Bash(cp \"C:\\\\Users\\\\Suporte\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Fkl-Teste-Desktop-Estudos-e-Projetos-api-Node\\\\de2d6dda-b8f5-4441-9e9a-66d01f02419c\\\\scratchpad\\\\inspect.js\" \"c:\\\\Users\\\\Fkl Teste\\\\Desktop\\\\Estudos e Projetos\\\\api-Node\\\\fii-track-front\\\\inspect-temp.cjs\")",
+      "Bash(node inspect-temp.cjs)"
     ]
   }
 }

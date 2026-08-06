@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toastSuccess, toastWarn, handleError } from '../../utils/responseUtils';
 import { authService } from '../../services/auth/authService';
@@ -15,11 +15,22 @@ function Login({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [mounted, setMounted]       = useState(false);
+  const [tilt, setTilt]             = useState({ x: 0, y: 0 });
+  const lpRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  // leve parallax 3D seguindo o mouse (só desktop, painel esquerdo)
+  const handleLpMouseMove = (e) => {
+    const rect = lpRef.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 .. 0.5
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: px * 6, y: py * -6 });                       // graus, sutil
+  };
+  const handleLpMouseLeave = () => setTilt({ x: 0, y: 0 });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,6 +81,20 @@ function Login({ onLogin }) {
           50%      { transform: translate(20px,20px) scale(1.05); }
         }
 
+        /* piso com perspectiva 3D, tipo terminal de trading */
+        @keyframes floorScroll {
+          from { background-position: 0 0, 0 0; }
+          to   { background-position: 0 56px, 56px 0; }
+        }
+
+        /* partículas subindo, como um ticker de dados */
+        @keyframes particleRise {
+          0%   { transform: translateY(0) translateX(0);     opacity:0; }
+          10%  { opacity:.8; }
+          90%  { opacity:.4; }
+          100% { transform: translateY(-380px) translateX(var(--drift,12px)); opacity:0; }
+        }
+
         /* autofill fix */
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
@@ -86,6 +111,7 @@ function Login({ onLogin }) {
           height: 100vh;
           width: 100vw;
           overflow: hidden;
+          position: relative;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           background: #0a0f1e;
         }
@@ -101,6 +127,7 @@ function Login({ onLogin }) {
           padding: 3rem;
           background: linear-gradient(135deg,#0d1b2a 0%,#0a1628 40%,#061020 100%);
           overflow: hidden;
+          perspective: 1200px;
         }
         .lp-grid {
           position: absolute; inset: 0;
@@ -110,23 +137,53 @@ function Login({ onLogin }) {
           background-size: 40px 40px;
           pointer-events: none;
         }
+        /* piso 3D animado ao fundo, evocando um terminal de investimentos */
+        .lp-floor {
+          position:absolute; left:-60%; right:-60%; bottom:-15%; height:65%;
+          background-image:
+            linear-gradient(rgba(16,185,129,.16) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(16,185,129,.16) 1px, transparent 1px);
+          background-size: 56px 56px;
+          transform: rotateX(62deg);
+          transform-origin: bottom;
+          animation: floorScroll 5s linear infinite;
+          -webkit-mask-image: linear-gradient(to top, black 15%, transparent 85%);
+          mask-image: linear-gradient(to top, black 15%, transparent 85%);
+          pointer-events:none;
+        }
         .lp-orb1 {
           position:absolute; width:380px; height:380px; border-radius:50%;
           background:radial-gradient(circle,rgba(16,185,129,.18) 0%,transparent 70%);
           top:-80px; left:-80px; pointer-events:none;
+          animation: blobMove1 9s ease-in-out infinite;
         }
         .lp-orb2 {
           position:absolute; width:300px; height:300px; border-radius:50%;
           background:radial-gradient(circle,rgba(6,182,212,.12) 0%,transparent 70%);
           bottom:-60px; right:-60px; pointer-events:none;
+          animation: blobMove2 11s ease-in-out infinite;
         }
         .lp-orb3 {
           position:absolute; width:200px; height:200px; border-radius:50%;
           background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 70%);
           top:50%; right:10%; transform:translateY(-50%); pointer-events:none;
+          animation: blobMove3 13s ease-in-out infinite;
+        }
+        /* partículas subindo suavemente, como dados de mercado (desktop + mobile) */
+        .rise-particles { position:absolute; top:0; bottom:0; left:0; width:55%; overflow:hidden; pointer-events:none; z-index:0; }
+        .rise-particle {
+          position:absolute; bottom:6%; width:4px; height:4px; border-radius:50%;
+          background:#10b981; box-shadow:0 0 6px 1px rgba(16,185,129,.6);
+          animation-name: particleRise;
+          animation-timing-function: ease-in;
+          animation-iteration-count: infinite;
         }
         .lp-content {
           position:relative; z-index:1; text-align:center;
+        }
+        .lp-tilt {
+          transition: transform .15s ease-out;
+          transform-style: preserve-3d;
         }
         .lp-logo {
           width:80px; height:80px; border-radius:50%;
@@ -225,6 +282,9 @@ function Login({ onLogin }) {
         }
         .form-footer { margin-top:2rem; text-align:center; font-size:.78rem; color:#334155; }
 
+        /* piso 3D no mobile, escondido por padrão (só aparece <=768px) */
+        .mobile-floor { display:none; }
+
         /* ── MOBILE: glassmorphism iOS ── */
         @media (max-width: 768px) {
           .lp, .vdivider { display:none !important; }
@@ -234,6 +294,22 @@ function Login({ onLogin }) {
             position: relative;
             justify-content: center;
             align-items: center;
+          }
+
+          .rise-particles { width:100%; }
+
+          .mobile-floor {
+            display:block; position:absolute; left:-60%; right:-60%; bottom:-10%; height:55%;
+            background-image:
+              linear-gradient(rgba(16,185,129,.18) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(16,185,129,.18) 1px, transparent 1px);
+            background-size: 44px 44px;
+            transform: rotateX(64deg);
+            transform-origin: bottom;
+            animation: floorScroll 5s linear infinite;
+            -webkit-mask-image: linear-gradient(to top, black 10%, transparent 80%);
+            mask-image: linear-gradient(to top, black 10%, transparent 80%);
+            pointer-events:none;
           }
 
           /* blobs aurora coloridos */
@@ -355,9 +431,41 @@ function Login({ onLogin }) {
 
       <div className="login-wrapper">
 
+        {/* partículas subindo (visíveis em desktop e mobile) */}
+        <div className="rise-particles">
+          {[
+            { left: '8%',  duration: 7,  delay: 0,   drift: '10px'  },
+            { left: '22%', duration: 9,  delay: 1.5, drift: '-14px' },
+            { left: '38%', duration: 6.5,delay: 3,   drift: '8px'   },
+            { left: '55%', duration: 8,  delay: 0.8, drift: '-10px' },
+            { left: '70%', duration: 10, delay: 2.2, drift: '12px'  },
+            { left: '85%', duration: 7.5,delay: 4,   drift: '-8px'  },
+          ].map((p, i) => (
+            <span
+              key={i}
+              className="rise-particle"
+              style={{
+                left: p.left,
+                '--drift': p.drift,
+                animationDuration: `${p.duration}s`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* piso 3D exclusivo do mobile (some no desktop) */}
+        <div className="mobile-floor" />
+
         {/* ── Painel esquerdo (desktop only) ── */}
-        <div className="lp">
+        <div
+          className="lp"
+          ref={lpRef}
+          onMouseMove={handleLpMouseMove}
+          onMouseLeave={handleLpMouseLeave}
+        >
           <div className="lp-grid" />
+          <div className="lp-floor" />
           <div className="lp-orb1" />
           <div className="lp-orb2" />
           <div className="lp-orb3" />
@@ -370,38 +478,43 @@ function Login({ onLogin }) {
               transition: 'opacity .7s ease, transform .7s ease',
             }}
           >
-            <div className="lp-logo"><FiTrendingUp size={36} color="#fff" /></div>
-            <h1 className="lp-title">FII<span>Track</span></h1>
-            <p className="lp-sub">
-              Gerencie seus fundos imobiliários com<br />inteligência e precisão.
-            </p>
+            <div
+              className="lp-tilt"
+              style={{ transform: `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)` }}
+            >
+              <div className="lp-logo"><FiTrendingUp size={36} color="#fff" /></div>
+              <h1 className="lp-title">FII<span>Track</span></h1>
+              <p className="lp-sub">
+                Gerencie seus fundos imobiliários com<br />inteligência e precisão.
+              </p>
 
-            <div className="stats-row">
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background:'rgba(16,185,129,.15)' }}>
-                  <FiTrendingUp size={18} color="#10b981" />
+              <div className="stats-row">
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ background:'rgba(16,185,129,.15)' }}>
+                    <FiTrendingUp size={18} color="#10b981" />
+                  </div>
+                  <div>
+                    <div className="stat-lbl">Rendimento</div>
+                    <div className="stat-val" style={{ color:'#10b981' }}>+12,4%</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="stat-lbl">Rendimento</div>
-                  <div className="stat-val" style={{ color:'#10b981' }}>+12,4%</div>
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ background:'rgba(6,182,212,.15)' }}>
+                    <FiBarChart2 size={18} color="#06b6d4" />
+                  </div>
+                  <div>
+                    <div className="stat-lbl">Operações</div>
+                    <div className="stat-val" style={{ color:'#06b6d4' }}>248</div>
+                  </div>
                 </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background:'rgba(6,182,212,.15)' }}>
-                  <FiBarChart2 size={18} color="#06b6d4" />
-                </div>
-                <div>
-                  <div className="stat-lbl">Operações</div>
-                  <div className="stat-val" style={{ color:'#06b6d4' }}>248</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background:'rgba(139,92,246,.15)' }}>
-                  <FiPieChart size={18} color="#8b5cf6" />
-                </div>
-                <div>
-                  <div className="stat-lbl">Fundos</div>
-                  <div className="stat-val" style={{ color:'#8b5cf6' }}>32</div>
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ background:'rgba(139,92,246,.15)' }}>
+                    <FiPieChart size={18} color="#8b5cf6" />
+                  </div>
+                  <div>
+                    <div className="stat-lbl">Fundos</div>
+                    <div className="stat-val" style={{ color:'#8b5cf6' }}>32</div>
+                  </div>
                 </div>
               </div>
             </div>

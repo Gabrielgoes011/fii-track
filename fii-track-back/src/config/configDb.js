@@ -2,17 +2,39 @@ import pkg from 'pg';
 const { Pool } = pkg;
 
 
+function normalizeDatabaseUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+
+    try {
+        const parsed = new URL(rawUrl);
+        const sslmode = parsed.searchParams.get('sslmode');
+        const useLibpqCompat = parsed.searchParams.get('uselibpqcompat') === 'true';
+
+        // Evita o warning do pg atual mantendo o comportamento seguro já adotado.
+        if (!useLibpqCompat && ['prefer', 'require', 'verify-ca'].includes(sslmode)) {
+            parsed.searchParams.set('sslmode', 'verify-full');
+        }
+
+        return parsed.toString();
+    } catch {
+        return rawUrl;
+    }
+}
+
+
+const connectionString = normalizeDatabaseUrl(process.env.DATABASE_URL);
+
+
 // Cria um pool de conexões usando a DATABASE_URL do .env
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: true }
-        : { rejectUnauthorized: false },
+    connectionString,
     max: 20, // Máximo de conexões simultâneas
-    min: 2, // Mínimo de conexões mantidas
+    min: 0, // Evita manter conexões ociosas abertas no pooler
     idleTimeoutMillis: 60000, // Fecha conexões ociosas após 60s
     connectionTimeoutMillis: 10000, // Timeout de conexão de 10s
     statement_timeout: 30000, // Timeout de query de 30s
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
 });
 
 pool.on('error', (error, client) => {
