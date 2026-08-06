@@ -222,6 +222,19 @@ CREATE TABLE public.usuarios (
 	CONSTRAINT usuarios_pkey PRIMARY KEY (id)
 );
 
+
+-- Tabela de controle de ativos do usuário, para definir o objetivo e percentual ideal de cada ativo
+CREATE TABLE public."controleAtivos" (
+    id serial4 NOT NULL,
+    "idUser" int4 NOT NULL,
+    "idAtivo" int4 NOT NULL,
+    objetivo varchar(50) NOT NULL,
+    "percentualIdeal" numeric(5, 2) NOT NULL,
+    "dtCadastro" date DEFAULT CURRENT_DATE NULL,
+    CONSTRAINT controle_ativos_pkey PRIMARY KEY (id),
+    CONSTRAINT controle_ativos_unico UNIQUE ("idUser", "idAtivo")
+)
+
 -- Permissions
 
 ALTER TABLE public.usuarios OWNER TO neondb_owner;

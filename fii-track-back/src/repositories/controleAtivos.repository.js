@@ -27,7 +27,7 @@ async function getAtivosDropListRepo(idUser, idSegmento) {
 
   // Abre a conexão com o banco de dados
   const db = await openDb();
-  
+
   // Executa a query para buscar os ativos do usuário por segmento
   const result = await db.query(`
     SELECT
@@ -45,7 +45,28 @@ async function getAtivosDropListRepo(idUser, idSegmento) {
 
 //#endregion
 
+//#region Query para adicionar um ativo
+async function addAtivoRepo(idUser, dados) {
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Executa a query para adicionar o ativo
+  const result = await db.query(`
+    INSERT INTO "controleAtivos" 
+    ("idUser", "idSeguimento","idAtivo", "percIdeal", "objetivo")
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id, ticker
+  `, [idUser, dados.idSegmento, dados.idAtivo, dados.percIdeal, dados.objetivo]);
+
+  // Retorna os resultados da query
+  return result.rows[0];
+}
+
+//#endregion
+
+
 export {
   getSegmentosDropListRepo,
   getAtivosDropListRepo,
+  addAtivoRepo
 };
