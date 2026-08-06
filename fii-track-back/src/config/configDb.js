@@ -5,14 +5,23 @@ const { Pool } = pkg;
 // Cria um pool de conexões usando a DATABASE_URL do .env
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' 
-        ? { rejectUnauthorized: true } 
+    ssl: process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: true }
         : { rejectUnauthorized: false },
     max: 20, // Máximo de conexões simultâneas
     min: 2, // Mínimo de conexões mantidas
     idleTimeoutMillis: 60000, // Fecha conexões ociosas após 60s
     connectionTimeoutMillis: 10000, // Timeout de conexão de 10s
     statement_timeout: 30000, // Timeout de query de 30s
+});
+
+pool.on('error', (error, client) => {
+    console.error('❌ Erro no pool de conexões PostgreSQL:', error.message);
+    if (client) {
+        console.error(`   Database: ${client.database}`);
+        console.error(`   User: ${client.user}`);
+        console.error(`   Host: ${client.host}`);
+    }
 });
 
 // Testa a conexão com um pequeno atraso para as mensagens do servidor aparecerem primeiro
