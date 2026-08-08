@@ -1,6 +1,9 @@
 import pkg from 'pg';
+import { AsyncLocalStorage } from 'async_hooks';
+
 const { Pool } = pkg;
 
+export const dbContext = new AsyncLocalStorage();
 
 function normalizeDatabaseUrl(rawUrl) {
     if (!rawUrl) return rawUrl;
@@ -21,20 +24,19 @@ function normalizeDatabaseUrl(rawUrl) {
     }
 }
 
-
 const connectionString = normalizeDatabaseUrl(process.env.DATABASE_URL);
-
 
 // Cria um pool de conexões usando a DATABASE_URL do .env
 const pool = new Pool({
     connectionString,
-    max: 20, // Máximo de conexões simultâneas
-    min: 0, // Evita manter conexões ociosas abertas no pooler
-    idleTimeoutMillis: 60000, // Fecha conexões ociosas após 60s
-    connectionTimeoutMillis: 10000, // Timeout de conexão de 10s
-    statement_timeout: 30000, // Timeout de query de 30s
+    max: 20,
+    min: 0,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 20000,
+    statement_timeout: 60000,
     keepAlive: true,
     keepAliveInitialDelayMillis: 10000,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('error', (error, client) => {
@@ -46,41 +48,40 @@ pool.on('error', (error, client) => {
     }
 });
 
-// Testa a conexão com um pequeno atraso para as mensagens do servidor aparecerem primeiro
 setTimeout(() => {
     (async () => {
-        // Obtém o ambiente atual
         const ambiente = process.env.NODE_ENV || 'development';
         const ambienteFormatado = ambiente.toUpperCase();
 
-        // Exibe o ambiente em que está conectando
         console.log(`\n📍 AMBIENTE: ${ambienteFormatado}`);
         console.log(`📋 Carregado de: .env.${ambiente}\n`);
 
-        // Verifica as variáveis de ambiente aqui para o erro sair no lugar certo
         if (!process.env.DATABASE_URL) {
             console.error('❌ ERRO: Variável de ambiente DATABASE_URL ausente!');
-            return; // Para a execução e não tenta conectar
+            return;
         }
 
         try {
             const client = await pool.connect();
             console.log(`✅ Banco de dados PostgreSQL conectado com sucesso!`);
             console.log(`✅ Conexão estabelecida no ambiente: ${ambienteFormatado}\n`);
-            client.release(); // Libera a conexão de volta para o pool
+            client.release();
         } catch (error) {
-            console.error('❌ Falha ao conectar ao banco de dados PostgreSQL!');
-            console.error(`   Ambiente: ${ambienteFormatado}`);
-            console.error(`   Motivo: ${error.message}`);
-            console.error('   Detalhes:', error);
+            console.warn('⚠️ Conexão inicial com o PostgreSQL indisponível no momento.');
+            console.warn(`   Ambiente: ${ambienteFormatado}`);
+            console.warn(`   Motivo: ${error.message}`);
         }
     })();
-}, 500); // 500ms de atraso garante que o log do Express passe antes
+}, 500);
 
-// Função wrapper para manter compatibilidade com o código que usa openDb()
 export async function openDb() {
+    const store = dbContext.getStore();
+
+    if (store?.client) {
+        return store.client;
+    }
+
     return pool;
 }
 
-// Exportamos o pool para ser usado nos controllers
 export { pool };

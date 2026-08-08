@@ -6,18 +6,14 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // Middleware para verificar o token JWT
 const verificaToken = (req, res, next) => {
   try {
-    // Lê o header: "Authorization: Bearer eyJhbGci..."
     const authHeader = req.headers['authorization'];
+    const cookieToken = req.cookies?.token;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : cookieToken;
 
-    if (!authHeader) {
+    if (!token) {
       return apiResponse.unauthorized(res, 'Token não fornecido.');
-    }
-
-    // Valida e separa o formato "Bearer <token>"
-    const [tipo, token] = authHeader.trim().split(/\s+/);
-
-    if (tipo?.toLowerCase() !== 'bearer' || !token) {
-      return apiResponse.unauthorized(res, 'Formato de token inválido. Use: Bearer <token>.');
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);

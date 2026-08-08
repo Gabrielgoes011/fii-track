@@ -5,21 +5,7 @@ import { usePrivacy } from '../../context/PrivacyContext';
 import { toastInfo } from '../../utils/responseUtils';
 
 function useUsuarioLogado() {
-  return useMemo(() => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return { nome: 'Usuário', email: '', iniciais: 'U' };
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const nome = payload.nome || payload.email || 'Usuário';
-      const email = payload.email || '';
-      const iniciais = nome
-        .split(' ').filter(Boolean).slice(0, 2)
-        .map(p => p[0].toUpperCase()).join('');
-      return { nome, email, iniciais };
-    } catch {
-      return { nome: 'Usuário', email: '', iniciais: 'U' };
-    }
-  }, []);
+  return useMemo(() => ({ nome: 'Usuário', email: '', iniciais: 'U' }), []);
 }
 
 function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar }) {

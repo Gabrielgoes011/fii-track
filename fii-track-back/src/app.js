@@ -1,5 +1,6 @@
 import express from 'express'; //importa a biblioteca express
 import cors from 'cors'; // importa a biblioteca cors
+import cookieParser from 'cookie-parser';
 import usuariosRoutes from './routes/usuarios.routes.js'; // importa as rotas de usuários
 import seguimentosRoutes from './routes/seguimentos.routes.js'; // importa as rotas de segmentos
 import meusFundosRoutes from './routes/meusFundos.routes.js'; // importa as rotas de meus fundos
@@ -10,8 +11,12 @@ import homeRoutes from './routes/home.routes.js'; // importa as rotas do home/da
 import controleAtivosRoutes from './routes/controleAtivos.routes.js'; // importa as rotas de controle de ativos
 
 const app = express(); //cria uma aplicação express
-app.use(cors()); //habilita o cors para todas as rotas
+app.use(cors({
+    origin: true,
+    credentials: true,
+})); //habilita o cors para todas as rotas
 app.use(express.json()); //habilita json no corpo da requisição para retornar dados em json
+app.use(cookieParser());
 
 
 //Get na rota raiz ("/") Hello World

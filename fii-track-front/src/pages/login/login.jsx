@@ -9,13 +9,13 @@ import {
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
-  const [email, setEmail]           = useState('');
-  const [password, setPassword]     = useState('');
-  const [loading, setLoading]       = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [mounted, setMounted]       = useState(false);
-  const [tilt, setTilt]             = useState({ x: 0, y: 0 });
+  const [mounted, setMounted] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const lpRef = useRef(null);
 
   useEffect(() => {
@@ -36,9 +36,7 @@ function Login({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { token, usuario } = await authService.login({ email, password });
-
-      localStorage.setItem('token', token);
+      const { usuario } = await authService.login({ email, password });
 
       if (usuario.defaultPassword) {
         toastWarn('Você está usando a senha padrão. Considere alterá-la.');
@@ -434,12 +432,12 @@ function Login({ onLogin }) {
         {/* partículas subindo (visíveis em desktop e mobile) */}
         <div className="rise-particles">
           {[
-            { left: '8%',  duration: 7,  delay: 0,   drift: '10px'  },
-            { left: '22%', duration: 9,  delay: 1.5, drift: '-14px' },
-            { left: '38%', duration: 6.5,delay: 3,   drift: '8px'   },
-            { left: '55%', duration: 8,  delay: 0.8, drift: '-10px' },
-            { left: '70%', duration: 10, delay: 2.2, drift: '12px'  },
-            { left: '85%', duration: 7.5,delay: 4,   drift: '-8px'  },
+            { left: '8%', duration: 7, delay: 0, drift: '10px' },
+            { left: '22%', duration: 9, delay: 1.5, drift: '-14px' },
+            { left: '38%', duration: 6.5, delay: 3, drift: '8px' },
+            { left: '55%', duration: 8, delay: 0.8, drift: '-10px' },
+            { left: '70%', duration: 10, delay: 2.2, drift: '12px' },
+            { left: '85%', duration: 7.5, delay: 4, drift: '-8px' },
           ].map((p, i) => (
             <span
               key={i}
@@ -490,30 +488,30 @@ function Login({ onLogin }) {
 
               <div className="stats-row">
                 <div className="stat-card">
-                  <div className="stat-icon" style={{ background:'rgba(16,185,129,.15)' }}>
+                  <div className="stat-icon" style={{ background: 'rgba(16,185,129,.15)' }}>
                     <FiTrendingUp size={18} color="#10b981" />
                   </div>
                   <div>
                     <div className="stat-lbl">Rendimento</div>
-                    <div className="stat-val" style={{ color:'#10b981' }}>+12,4%</div>
+                    <div className="stat-val" style={{ color: '#10b981' }}>+12,4%</div>
                   </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon" style={{ background:'rgba(6,182,212,.15)' }}>
+                  <div className="stat-icon" style={{ background: 'rgba(6,182,212,.15)' }}>
                     <FiBarChart2 size={18} color="#06b6d4" />
                   </div>
                   <div>
                     <div className="stat-lbl">Operações</div>
-                    <div className="stat-val" style={{ color:'#06b6d4' }}>248</div>
+                    <div className="stat-val" style={{ color: '#06b6d4' }}>248</div>
                   </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon" style={{ background:'rgba(139,92,246,.15)' }}>
+                  <div className="stat-icon" style={{ background: 'rgba(139,92,246,.15)' }}>
                     <FiPieChart size={18} color="#8b5cf6" />
                   </div>
                   <div>
                     <div className="stat-lbl">Fundos</div>
-                    <div className="stat-val" style={{ color:'#8b5cf6' }}>32</div>
+                    <div className="stat-val" style={{ color: '#8b5cf6' }}>32</div>
                   </div>
                 </div>
               </div>
@@ -553,8 +551,8 @@ function Login({ onLogin }) {
               <div className="field-group">
                 <label htmlFor="email" className="field-label">E-MAIL</label>
                 <div className={`field-box${focusedField === 'email' ? ' focused' : ''}`}
-                  style={{ border:`1px solid ${focusedField==='email' ? '#10b981' : '#334155'}` }}>
-                  <span className="field-ico" style={{ color: focusedField==='email' ? '#10b981' : '#475569' }}>
+                  style={{ border: `1px solid ${focusedField === 'email' ? '#10b981' : '#334155'}` }}>
+                  <span className="field-ico" style={{ color: focusedField === 'email' ? '#10b981' : '#475569' }}>
                     <FiMail size={16} />
                   </span>
                   <input
@@ -575,8 +573,8 @@ function Login({ onLogin }) {
               <div className="field-group">
                 <label htmlFor="password" className="field-label">SENHA</label>
                 <div className={`field-box${focusedField === 'password' ? ' focused' : ''}`}
-                  style={{ border:`1px solid ${focusedField==='password' ? '#10b981' : '#334155'}` }}>
-                  <span className="field-ico" style={{ color: focusedField==='password' ? '#10b981' : '#475569' }}>
+                  style={{ border: `1px solid ${focusedField === 'password' ? '#10b981' : '#334155'}` }}>
+                  <span className="field-ico" style={{ color: focusedField === 'password' ? '#10b981' : '#475569' }}>
                     <FiLock size={16} />
                   </span>
                   <input
@@ -589,7 +587,7 @@ function Login({ onLogin }) {
                     onBlur={() => setFocusedField(null)}
                     placeholder="••••••••"
                     required
-                    style={{ paddingRight:'2.75rem' }}
+                    style={{ paddingRight: '2.75rem' }}
                   />
                   <button
                     type="button"

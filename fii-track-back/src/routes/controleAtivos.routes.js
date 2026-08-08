@@ -1,5 +1,6 @@
 import express from 'express';
 import verificaToken from '../middleware/auth/verificaToken.js';
+import { rlsMiddleware } from '../middleware/rlsMiddleware.js';
 import {
   getSegmentosDropList,
   getAtivosDropList,
@@ -9,13 +10,13 @@ import {
 const router = express.Router();
 
 // Rota para listar segmentos para o dropdown
-router.get('/controle-ativos/segmentos', verificaToken, getSegmentosDropList);
+router.get('/controle-ativos/segmentos', verificaToken, rlsMiddleware, getSegmentosDropList);
 
 // Rota para listar ativos por segmento para o dropdown
-router.get('/controle-ativos/segmentos/:idSegmento/ativos', verificaToken, getAtivosDropList);
+router.get('/controle-ativos/segmentos/:idSegmento/ativos', verificaToken, rlsMiddleware, getAtivosDropList);
 
 // Rota para adicionar ativo
-router.post('/controle-ativos/adicionar', verificaToken, addAtivoController);
+router.post('/controle-ativos/adicionar', verificaToken, rlsMiddleware, addAtivoController);
 // exemplo de body para adicionar ativo
 // {
 //   "idSegmento": 1,
