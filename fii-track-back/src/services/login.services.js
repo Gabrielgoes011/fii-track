@@ -1,5 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import speakeasy from 'speakeasy';
+import { decryptText } from '../utils/crypto.js';
 import {
     findUserByEmail,
     findUserCredentials
@@ -30,23 +32,93 @@ async function autenticarUsuario(email, password) {
         throw new Error('Senha não encontrada.');
     }
 
-    //descriptografa a senha e compara com a senha do banco de dados
     const senhaValida = await bcrypt.compare(password, credenciais.password);
-
-    // Se senha inválida, lança erro
     if (!senhaValida) {
         throw new Error('E-mail ou senha inválidos.');
     }
 
     let defaultPassword = [];
-
-    //se a senha for a senha padrão, solicita alteração
     if (password === 'Track@123') {
-        //se a senha for padrão passa uma flag para o front solicitar alteração de senha
         defaultPassword = true;
     }
 
-    // 4. Gerar token JWT com dados do usuário
+    const usuarioRetorno = {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        adm: credenciais.adm || false,
+        defaultPassword: defaultPassword || false,
+        auth2faTotp: !!credenciais.auth2faTotp,
+    };
+
+    if (credenciais.auth2faTotp) {
+        return {
+            requires2fa: true,
+            usuario: usuarioRetorno,
+        };
+    }
+
+    const token = jwt.sign(
+        {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            adm: credenciais.adm || false,
+            defaultPassword: defaultPassword || false
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+
+    return {
+        token,
+        usuario: usuarioRetorno
+    };
+}
+
+async function autenticarUsuarioCom2fa(email, password, codigo) {
+    if (!email || !password || !codigo) {
+        throw new Error('E-mail, senha e código 2FA são obrigatórios.');
+    }
+
+    const usuario = await findUserByEmail(email);
+    if (!usuario) throw new Error('Email Não Cadastrado ou Incorreto.');
+
+    if (usuario.ativo === false) {
+        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+    }
+
+    const credenciais = await findUserCredentials(usuario.id);
+    if (!credenciais) {
+        throw new Error('Senha não encontrada.');
+    }
+
+    const senhaValida = await bcrypt.compare(password, credenciais.password);
+    if (!senhaValida) {
+        throw new Error('E-mail ou senha inválidos.');
+    }
+
+    if (!credenciais.auth2faTotp || !credenciais.secretAuth2fa) {
+        throw new Error('2FA não está ativado para este usuário.');
+    }
+
+    const secret = decryptText(credenciais.secretAuth2fa);
+    const valid = speakeasy.totp.verify({
+        secret,
+        encoding: 'base32',
+        token: codigo,
+        window: 1,
+    });
+
+    if (!valid) {
+        throw new Error('Código 2FA inválido.');
+    }
+
+    let defaultPassword = [];
+    if (password === 'Track@123') {
+        defaultPassword = true;
+    }
+
     const token = jwt.sign(
         {
             id: usuario.id,
@@ -66,7 +138,8 @@ async function autenticarUsuario(email, password) {
             nome: usuario.nome,
             email: usuario.email,
             adm: credenciais.adm || false,
-            defaultPassword: defaultPassword || false
+            defaultPassword: defaultPassword || false,
+            auth2faTotp: !!credenciais.auth2faTotp,
         }
     };
 }
@@ -74,5 +147,6 @@ async function autenticarUsuario(email, password) {
 //#endregion
 
 export {
-    autenticarUsuario
+    autenticarUsuario,
+    autenticarUsuarioCom2fa
 };

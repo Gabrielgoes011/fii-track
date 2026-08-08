@@ -14,6 +14,8 @@ function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [codigo2fa, setCodigo2fa] = useState('');
   const [mounted, setMounted] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const lpRef = useRef(null);
@@ -36,8 +38,21 @@ function Login({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { usuario } = await authService.login({ email, password });
+      let response;
 
+      if (requires2fa) {
+        response = await authService.login2fa({ email, password, codigo: codigo2fa });
+      } else {
+        response = await authService.login({ email, password });
+      }
+
+      if (response.requires2fa) {
+        setRequires2fa(true);
+        toastWarn('2FA detectado. Informe o código do autenticador para continuar.');
+        return;
+      }
+
+      const { usuario } = response;
       if (usuario.defaultPassword) {
         toastWarn('Você está usando a senha padrão. Considere alterá-la.');
       } else {
@@ -601,10 +616,37 @@ function Login({ onLogin }) {
                 </div>
               </div>
 
+              {requires2fa && (
+                <div className="field-group">
+                  <label htmlFor="codigo2fa" className="field-label">CÓDIGO 2FA</label>
+                  <div className={`field-box${focusedField === 'codigo2fa' ? ' focused' : ''}`}
+                    style={{ border: `1px solid ${focusedField === 'codigo2fa' ? '#10b981' : '#334155'}` }}>
+                    <span className="field-ico" style={{ color: focusedField === 'codigo2fa' ? '#10b981' : '#475569' }}>
+                      <FiLock size={16} />
+                    </span>
+                    <input
+                      id="codigo2fa"
+                      type="text"
+                      className="field-input"
+                      value={codigo2fa}
+                      onChange={(e) => setCodigo2fa(e.target.value)}
+                      onFocus={() => setFocusedField('codigo2fa')}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="123456"
+                      required
+                      maxLength={6}
+                    />
+                  </div>
+                  <div style={{ marginTop: '0.5rem', color: '#94a3b8', fontSize: '0.82rem' }}>
+                    Digite o código temporário do seu app de autenticação.
+                  </div>
+                </div>
+              )}
+
               <button type="submit" disabled={loading} className="submit-btn">
                 {loading
                   ? <><span className="spinner" /> Entrando...</>
-                  : 'Entrar na plataforma'
+                  : requires2fa ? 'Validar código 2FA' : 'Entrar na plataforma'
                 }
               </button>
             </form>

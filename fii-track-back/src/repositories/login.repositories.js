@@ -29,7 +29,9 @@ async function findUserCredentials(userId) {
     const result = await db.query(`
         SELECT 
             password,
-            adm
+            adm,
+            "auth2faTotp",
+            "secretAuth2fa"
         FROM "credenciaisUsuario"
         WHERE "idUser" = $1`,
         [userId]

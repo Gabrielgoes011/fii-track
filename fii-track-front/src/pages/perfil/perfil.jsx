@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
-import { FaUserCircle, FaShieldAlt, FaToggleOn, FaToggleOff, FaArrowLeft, FaCamera, FaSave } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaUserCircle, FaShieldAlt, FaLock, FaArrowLeft, FaCamera, FaSave } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { authService } from '../../services/auth/authService';
+import { toastSuccess, toastWarn, handleError } from '../../utils/responseUtils';
 
 function PaginaPerfil({ usuario }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [twoFaAtivo, setTwoFaAtivo] = useState(false);
+  const [twoFaAtivo, setTwoFaAtivo] = useState(usuario?.auth2faTotp || false);
+  const [twoFaMode, setTwoFaMode] = useState('view');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [manualSecret, setManualSecret] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [twoFaLoading, setTwoFaLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [nome, setNome] = useState(usuario?.nome || '');
   const [email, setEmail] = useState(usuario?.email || '');
@@ -20,8 +27,57 @@ function PaginaPerfil({ usuario }) {
     foto !== null
   );
 
-  const handleToggleTwoFa = () => {
-    setTwoFaAtivo(prev => !prev);
+  const handleStartTwoFa = async () => {
+    setTwoFaLoading(true);
+    try {
+      const resultado = await authService.iniciar2fa();
+      setQrCodeDataUrl(resultado.qrCodeDataUrl);
+      setManualSecret(resultado.secretBase32);
+      setTwoFaMode('confirm');
+      toastSuccess('Leia o QR code com o app e confirme o código.');
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleConfirmTwoFa = async () => {
+    if (!verificationCode) {
+      toastWarn('Informe o código 2FA antes de confirmar.');
+      return;
+    }
+    setTwoFaLoading(true);
+    try {
+      await authService.confirmar2fa(verificationCode);
+      setTwoFaAtivo(true);
+      setTwoFaMode('view');
+      setVerificationCode('');
+      setQrCodeDataUrl('');
+      setManualSecret('');
+      toastSuccess('2FA ativado com sucesso.');
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleDisableTwoFa = async () => {
+    setTwoFaLoading(true);
+    try {
+      await authService.desativar2fa();
+      setTwoFaAtivo(false);
+      setTwoFaMode('view');
+      setVerificationCode('');
+      setQrCodeDataUrl('');
+      setManualSecret('');
+      toastSuccess('2FA desativado.');
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setTwoFaLoading(false);
+    }
   };
 
   const handleFileChange = event => {
@@ -186,27 +242,88 @@ function PaginaPerfil({ usuario }) {
                       </div>
                       <div>
                         <div style={{ color: '#f8fafc', fontWeight: 600 }}>2FA</div>
-                        <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Proteja sua conta com um código extra.</div>
+                        <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{twoFaAtivo ? 'Ativado' : 'Desativado'}</div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleToggleTwoFa}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '8px',
-                        background: twoFaAtivo ? '#065f46' : 'transparent',
-                        color: twoFaAtivo ? '#d1fae5' : '#94a3b8',
-                        border: `1px solid ${twoFaAtivo ? '#064e3b' : '#334155'}`,
-                        borderRadius: '999px',
-                        padding: '10px 14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {twoFaAtivo ? <FaToggleOn size={18} /> : <FaToggleOff size={18} />}
-                      {twoFaAtivo ? 'Ativado' : 'Desativado'}
-                    </button>
+                    <div style={{ display: 'inline-flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {!twoFaAtivo && twoFaMode === 'view' && (
+                        <button
+                          type="button"
+                          onClick={handleStartTwoFa}
+                          disabled={twoFaLoading}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: '#10b981',
+                            color: '#0f172a',
+                            border: '1px solid transparent',
+                            borderRadius: '999px',
+                            padding: '10px 14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <FaLock size={16} />
+                          Ativar 2FA
+                        </button>
+                      )}
+                      {twoFaAtivo && (
+                        <button
+                          type="button"
+                          onClick={handleDisableTwoFa}
+                          disabled={twoFaLoading}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: '#111827',
+                            color: '#f97316',
+                            border: '1px solid #f97316',
+                            borderRadius: '999px',
+                            padding: '10px 14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <FaLock size={16} />
+                          Desativar 2FA
+                        </button>
+                      )}
+                    </div>
                   </div>
+                  {twoFaMode === 'confirm' && (
+                    <div style={{ display: 'grid', gap: '16px', padding: '18px', borderRadius: '18px', background: '#111827', border: '1px solid #334155' }}>
+                      <div style={{ display: 'grid', gap: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>1. Escaneie o QR code com o app do autenticador.</span>
+                        {qrCodeDataUrl && (
+                          <img src={qrCodeDataUrl} alt="QR code 2FA" style={{ width: '160px', height: '160px', borderRadius: '18px', background: '#0f172a', padding: '16px', border: '1px solid #334155' }} />
+                        )}
+                        <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Ou use este segredo manualmente:</span>
+                        <div style={{ padding: '12px 14px', background: '#0f172a', borderRadius: '16px', border: '1px solid #334155', color: '#f8fafc', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {manualSecret || 'Gerando...'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gap: '10px' }}>
+                        <label htmlFor="confirmacao2fa" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>2. Digite o código do app</label>
+                        <input
+                          id="confirmacao2fa"
+                          type="text"
+                          value={verificationCode}
+                          onChange={e => setVerificationCode(e.target.value)}
+                          placeholder="123456"
+                          style={{ width: '100%', borderRadius: '16px', border: '1px solid #334155', background: '#111827', color: '#f8fafc', padding: '14px 16px' }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleConfirmTwoFa}
+                        disabled={twoFaLoading || !verificationCode}
+                        style={{
+                          width: '100%', padding: '12px 16px', borderRadius: '14px', border: 'none',
+                          background: '#10b981', color: '#0f172a', fontWeight: 700, cursor: 'pointer'
+                        }}
+                      >
+                        {twoFaLoading ? 'Confirmando...' : 'Confirmar 2FA'}
+                      </button>
+                    </div>
+                  )}
                   <div style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
                     Ativar 2FA aumenta a segurança da sua conta. Você poderá usar o app do Google Authenticator para gerar códigos de acesso.
                   </div>

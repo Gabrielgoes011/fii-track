@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS public."credenciaisUsuario"
     password character varying(255) COLLATE pg_catalog."default" NOT NULL, -- Senha com hash (bcrypt)
     "idUser" integer NOT NULL, -- Chave estrangeira para a tabela 'usuarios'
     adm boolean NOT NULL DEFAULT false, -- Flag de administrador
+    "auth2faTotp" boolean NOT NULL DEFAULT false, -- Indica se TOTP está ativo
+    "auth2faHabilitado" boolean NOT NULL DEFAULT false, -- Flag geral de 2FA habilitado
+    "secretAuth2fa" character varying(1000) COLLATE pg_catalog."default", -- Segredo TOTP criptografado
     CONSTRAINT "credenciaisUsuario_pkey" PRIMARY KEY (id)
 ) TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public."credenciaisUsuario"
