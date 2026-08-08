@@ -7,15 +7,21 @@ import {
 } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
 
-function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout }) {
+function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
+  const [administracaoOpen, setAdministracaoOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const isAdmin = Boolean(user?.adm);
 
   useEffect(() => {
     if (['/cadastros/meusfiis', '/cadastros/seguimentos', '/cadastros/usuarios'].includes(currentPath)) {
       setCadastrosOpen(true);
+    }
+
+    if (currentPath === '/cadastros/usuarios') {
+      setAdministracaoOpen(true);
     }
   }, [currentPath]);
 
@@ -26,19 +32,17 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout }) {
   };
 
   const menuItems = [
-    { id: 'dashboard',       path: '/',                label: 'Início',             icon: FaHome },
+    { id: 'dashboard', path: '/', label: 'Início', icon: FaHome },
     { id: 'controle-ativos', path: '/controle-ativos', label: 'Controle de Ativos', icon: FaWallet },
-    { id: 'operacoes',       path: '/operacoes',       label: 'Operações',          icon: FaExchangeAlt },
-    { id: 'precificacao',    path: '/precificacao',    label: 'Precificação',       icon: FaTags },
-    { id: 'rendimentos',     path: '/rendimentos',     label: 'Rendimentos',        icon: FaChartLine },
-    { id: 'relatorios',      path: '/relatorios',      label: 'Relatórios',         icon: FaFileAlt },
-    { id: 'configuracoes',   path: '/configuracoes',   label: 'Configurações',      icon: FaCog },
+    { id: 'operacoes', path: '/operacoes', label: 'Operações', icon: FaExchangeAlt },
+    { id: 'precificacao', path: '/precificacao', label: 'Precificação', icon: FaTags },
+    { id: 'rendimentos', path: '/rendimentos', label: 'Rendimentos', icon: FaChartLine },
+    { id: 'relatorios', path: '/relatorios', label: 'Relatórios', icon: FaFileAlt },
   ];
 
   const subItems = [
-    { path: '/cadastros/meusfiis',    label: 'Meus Fundos' },
+    { path: '/cadastros/meusfiis', label: 'Meus Fundos' },
     { path: '/cadastros/seguimentos', label: 'Segmentos' },
-    { path: '/cadastros/usuarios',    label: 'Usuários' },
   ];
 
   return (
@@ -230,6 +234,62 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout }) {
             );
           })}
         </nav>
+
+        {isAdmin && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '0 12px 8px' }}>
+            <button
+              type="button"
+              onClick={() => setAdministracaoOpen(!administracaoOpen)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 12px',
+                background: administracaoOpen
+                  ? 'linear-gradient(90deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))'
+                  : 'transparent',
+                color: administracaoOpen ? '#10b981' : '#64748b',
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: administracaoOpen ? 600 : 400,
+                transition: 'all 0.2s ease',
+                borderLeft: administracaoOpen ? '3px solid #10b981' : '3px solid transparent',
+                justifyContent: 'space-between',
+                whiteSpace: 'nowrap', width: '100%',
+              }}
+              onMouseEnter={e => { if (!administracaoOpen) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; } }}
+              onMouseLeave={e => { if (!administracaoOpen) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; } }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FaCog size={17} />
+                <span>Administração</span>
+              </span>
+              {administracaoOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+            </button>
+
+            {administracaoOpen && (
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: '2px',
+                marginLeft: '12px', paddingLeft: '16px',
+                borderLeft: '1px solid #1e293b', marginBottom: '4px',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/cadastros/usuarios')}
+                  style={{
+                    background: currentPath === '/cadastros/usuarios' ? 'rgba(16,185,129,0.1)' : 'transparent',
+                    color: currentPath === '/cadastros/usuarios' ? '#10b981' : '#64748b',
+                    border: 'none', borderRadius: '6px',
+                    padding: '10px 10px', textAlign: 'left', cursor: 'pointer',
+                    fontSize: '13px', fontWeight: currentPath === '/cadastros/usuarios' ? 600 : 400,
+                    transition: 'all 0.2s', width: '100%',
+                  }}
+                  onMouseEnter={e => { if (currentPath !== '/cadastros/usuarios') { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; } }}
+                  onMouseLeave={e => { if (currentPath !== '/cadastros/usuarios') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; } }}
+                >
+                  Gerenciamento de usuários
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Rodapé ── */}
         <div style={{

@@ -52,6 +52,7 @@ async function autenticarUsuario(email, password) {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
+            adm: credenciais.adm || false,
             defaultPassword: defaultPassword || false
         },
         process.env.JWT_SECRET,
@@ -64,6 +65,7 @@ async function autenticarUsuario(email, password) {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
+            adm: credenciais.adm || false,
             defaultPassword: defaultPassword || false
         }
     };

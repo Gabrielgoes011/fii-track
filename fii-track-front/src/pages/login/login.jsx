@@ -44,7 +44,7 @@ function Login({ onLogin }) {
         toastSuccess('Login bem-sucedido!');
       }
 
-      onLogin(true);
+      onLogin(true, usuario);
       setTimeout(() => navigate('/'), 800);
     } catch (error) {
       handleError(error);

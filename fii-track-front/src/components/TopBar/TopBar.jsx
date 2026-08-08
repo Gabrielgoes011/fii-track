@@ -4,12 +4,19 @@ import { FiTrendingUp } from 'react-icons/fi';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { toastInfo } from '../../utils/responseUtils';
 
-function useUsuarioLogado() {
-  return useMemo(() => ({ nome: 'Usuário', email: '', iniciais: 'U' }), []);
+function getInitials(nome = '') {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0].toUpperCase())
+    .join('') || 'U';
 }
 
-function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar }) {
-  const { nome, email, iniciais } = useUsuarioLogado();
+function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar }) {
+  const nome = user?.nome || 'Usuário';
+  const email = user?.email || '';
+  const iniciais = useMemo(() => getInitials(user?.nome), [user?.nome]);
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef(null);
   const { valoresOcultos, togglePrivacidade } = usePrivacy();
@@ -28,8 +35,9 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, onLogout
   const handleTrocarSenha = () => { setMenuAberto(false); if (onTrocarSenha) onTrocarSenha(); };
   const handleMeuPerfil = () => {
     setMenuAberto(false);
-    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
-    // if (onMeuPerfil) onMeuPerfil(); // Chamada desativada temporariamente
+    if (onMeuPerfil) {
+      onMeuPerfil();
+    }
   };
 
   return (

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { MOBILE_BP } from '../../hooks/useIsMobile';
 
-function Layout({ children, onLogout }) {
+function Layout({ children, onLogout, user }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= MOBILE_BP);
   const { valoresOcultos } = usePrivacy();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -22,7 +24,7 @@ function Layout({ children, onLogout }) {
   }, []);
 
   const toggleSidebar = () => setSidebarOpen(v => !v);
-  const closeSidebar  = () => setSidebarOpen(false);
+  const closeSidebar = () => setSidebarOpen(false);
 
   return (
     <div className={valoresOcultos ? 'privacidade-ativa' : ''} style={{ display: 'flex', minHeight: '100vh', background: '#0a0f1e' }}>
@@ -45,13 +47,16 @@ function Layout({ children, onLogout }) {
         onToggle={toggleSidebar}
         onClose={closeSidebar}
         onLogout={onLogout}
+        user={user}
       />
 
       <TopBar
         sidebarOpen={sidebarOpen}
         isMobile={isMobile}
+        user={user}
         onToggleSidebar={toggleSidebar}
         onLogout={onLogout}
+        onMeuPerfil={() => navigate('/perfil')}
       />
 
       {/* Conteúdo principal */}

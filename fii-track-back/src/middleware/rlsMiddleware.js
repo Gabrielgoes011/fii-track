@@ -43,7 +43,15 @@ export async function rlsMiddleware(req, res, next) {
 
     // Inicia uma transação para garantir que o contexto de RLS seja aplicado apenas durante a execução do request.
     await client.query('BEGIN');
-    await client.query('SET LOCAL app.current_user_id = $1', [String(userId)]);
+
+    // O PostgreSQL não aceita parâmetros bind em SET LOCAL, então o valor precisa ser convertido para um número válido.
+    const numericUserId = Number(userId);
+
+    if (!Number.isInteger(numericUserId)) {
+      throw new Error('ID do usuário inválido para o contexto de RLS');
+    }
+
+    await client.query(`SET LOCAL app.current_user_id = ${numericUserId}`);
 
     // Usa o dbContext para disponibilizar o client e o userId para qualquer função que precise acessar o banco de dados durante o request.
     dbContext.run({ client, userId }, () => {
