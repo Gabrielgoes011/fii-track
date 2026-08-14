@@ -39,5 +39,11 @@ export const usuariosService = {
       const res = await api.delete(`/users/delete/${id}`);
       return res.data;
     } catch (error) { throw error; }
+  },
+  resetarSenha: async (id) => {
+    try {
+      const res = await api.put(`/users/reset-password/${id}`);
+      return res.data;
+    } catch (error) { throw error; }
   }
 };

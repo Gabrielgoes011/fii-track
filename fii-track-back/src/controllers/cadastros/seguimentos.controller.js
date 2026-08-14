@@ -123,19 +123,20 @@ export async function deleteSeguimento(req, res) {
 
 // #region função para atualizar seguimento
 export async function updateSeguimento(req, res) {
-  //const idSeguimento = req.params.id;
   //passa id e nome pelo corpo da requisição
   const dados = req.body;
   const db = await openDb();
+  const idUser = req.user.id;
 
   if (!dados.nome) {
     return res.status(400).json({ error: 'O campo nao pode ser vazio' });
   }
 
+  //busca o seguimento já filtrando pelo dono, pra ninguém editar seguimento de outro usuário
   const existeSeguimento = await db.query(`
-      SELECT id 
+      SELECT id
       FROM seguimentos
-      WHERE id = $1 `, [dados.idSeguimento]
+      WHERE id = $1 AND "idUser" = $2 `, [dados.idSeguimento, idUser]
   );
   if (existeSeguimento.rows.length === 0) {
     return res.status(400).json({ error: 'Seguimento nao encontrado!' });
@@ -144,7 +145,7 @@ export async function updateSeguimento(req, res) {
       await db.query(`
       UPDATE seguimentos
       SET "nomeSeguimento" = $1
-      WHERE id = $2`, [dados.nome, dados.idSeguimento]
+      WHERE id = $2 AND "idUser" = $3`, [dados.nome, dados.idSeguimento, idUser]
       );
 
       //implementar log de atualização de seguimento depois de implementar tabela de logs

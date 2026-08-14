@@ -51,7 +51,7 @@ src/
 │   └── s3.js                # Configuração AWS S3 (⚠️ dependência não instalada, não usado hoje)
 ├── controllers/
 │   ├── home.controller.js
-│   ├── login.controller.js
+│   ├── login.controller.js               # login + 2FA (ativação/validação TOTP)
 │   ├── operacoes.controller.js
 │   ├── rendimentos.controller.js
 │   └── cadastros/
@@ -63,7 +63,7 @@ src/
 │       └── verificaToken.js   # Middleware de autenticação
 ├── repositories/
 │   ├── home.repositories.js
-│   ├── login.repositories.js
+│   ├── login.repositories.js             # login + 2FA
 │   ├── operacoes.repositories.js
 │   ├── rendimentos.repositories.js
 │   └── cadastros/
@@ -77,22 +77,25 @@ src/
 │   ├── seguimentos.routes.js
 │   ├── usuarios.routes.js
 │   └── auth/
-│       └── auth.routes.js
+│       └── auth.routes.js                # /auth/login, /auth/login/2fa, /2fa/*
 ├── services/
 │   ├── home.services.js
-│   ├── login.services.js
+│   ├── login.services.js                 # login + 2FA
 │   ├── operacoes.services.js
 │   ├── rendimentos.services.js
 │   └── cadastros/
 │       ├── usuarios.services.js
 │       └── meusFundos.services.js
 └── utils/
-    ├── dateUtils.js         # Formatação de datas
-    ├── httpResponse.js      # Padronização de respostas
-    └── validaUser.js        # Validação de usuários
+    ├── crypto.js             # encrypt/decrypt do segredo TOTP do 2FA
+    ├── dateUtils.js          # Formatação de datas
+    ├── httpResponse.js       # Padronização de respostas
+    └── validaUser.js         # Validação de usuários
 ```
 
 > `seguimentos` é o único módulo que ainda não segue esse padrão — o controller acessa `openDb()` diretamente, sem `service` nem `repository`.
+
+> O 2FA (TOTP) não tem controller/service/repository próprios — por fazer parte do fluxo de autenticação, suas funções vivem em `login.controller.js`, `login.services.js` e `login.repositories.js`, cada uma em sua própria região (`//#region => Lógica para 2FA`). Padrão de nomes: `*.controller.js` (singular), `*.services.js` e `*.repositories.js` (plural) — sempre.
 
 ---
 

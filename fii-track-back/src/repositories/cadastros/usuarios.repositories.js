@@ -7,12 +7,12 @@ async function listarUsuariosRepository(blvalor) {
   const db = await openDb();
 
   //Executa a consulta SQL para listar os usuários
-  const resultado = await db.query(`        
+  const resultado = await db.query(`
         SELECT
-          id, nome, cpf, email, ativo,
+          id, nome, cpf, email, ativo, "dataNascimento",
           EXTRACT(YEAR FROM AGE("dataNascimento")) idade
-        FROM usuarios   
-        WHERE ativo = $1 
+        FROM usuarios
+        WHERE ativo = $1
         ORDER BY id DESC `, [blvalor]
   );
 
@@ -22,18 +22,19 @@ async function listarUsuariosRepository(blvalor) {
 //#endregion
 
 //#region => Sequencia de querys para logica de cadastro de usuário
-//1º passo: verificar se o email já existe
-async function checkEmailRepository(email) {
+//1º passo: verificar se o email já existe (excludeId serve para ignorar o próprio usuário na edição)
+async function checkEmailRepository(email, excludeId = null) {
 
   //executa a consulta para verificar se ja existe
   const db = await openDb();
 
   const resultadoEmail = await
     db.query(`
-      SELECT email  
-      FROM usuarios 
+      SELECT email
+      FROM usuarios
       WHERE email = $1
-  `, [email]);
+        AND ($2::int IS NULL OR id != $2)
+  `, [email, excludeId]);
 
 
   return resultadoEmail.rows.length > 0;
@@ -160,7 +161,7 @@ async function onOffUserRepository(newValue, id) {
 
   //abre a conexão com o banco de dados
   const db = await openDb();
-console.log(id, newValue);
+
   //executa a query para inativar ou reativar o usuário
   const result = await db.query(`
       UPDATE usuarios
@@ -182,6 +183,108 @@ console.log(id, newValue);
 
 //#endregion
 
+//#region => Queries para atualizar/deletar/resetar senha do usuário
+// Busca o usuário completo pelo id (usado para validar existência antes de editar/deletar)
+async function buscarUsuarioPorIdRepository(id) {
+
+  //abre a conexão com o banco de dados
+  const db = await openDb();
+
+  const result = await db.query(`
+      SELECT id, nome, cpf, email, ativo, "dataNascimento"
+      FROM usuarios
+      WHERE id = $1 `, [id]
+  );
+
+  return result.rows[0] || null;
+}
+
+// Atualiza os dados cadastrais do usuário
+async function atualizarUserRepository(id, dados) {
+
+  //abre a conexão com o banco de dados
+  const db = await openDb();
+
+  //monta a query dinamicamente, atualizando "ativo" só quando ele foi informado
+  const fields = ['nome = $1', '"dataNascimento" = $2', 'email = $3'];
+  const values = [dados.nome, dados.dataNascimento, dados.email];
+
+  // Adiciona o campo "ativo" à query apenas se ele estiver presente nos dados
+  if (dados.ativo !== undefined) {
+    fields.push(`ativo = $${values.length + 1}`);
+    values.push(dados.ativo);
+  }
+
+  values.push(id);
+
+  const result = await db.query(`
+      UPDATE usuarios
+      SET ${fields.join(', ')}
+      WHERE id = $${values.length}
+      RETURNING id, nome, cpf, email, ativo, "dataNascimento"
+    `, values);
+
+  return result.rows[0];
+}
+
+// Deleta o usuário e suas credenciais numa única transação
+async function deletarUserRepository(id) {
+
+  //abre a conexão com o banco de dados
+  const db = await openDb();
+
+  //Inicia a transação para garantir a atomicidade das operações
+  await db.query('BEGIN');
+  try {
+
+    await db.query(`
+        DELETE
+        FROM "credenciaisUsuario"
+        WHERE "idUser" = $1 `, [id]
+    );
+
+    await db.query(`
+        DELETE
+        FROM usuarios
+        WHERE id = $1 `, [id]
+    );
+
+    //Confirma a transação
+    await db.query('COMMIT');
+  } catch (error) {
+    //Em caso de erro, desfaz a transação
+    await db.query('ROLLBACK');
+
+    // Log do erro para depuração
+    console.error(`Erro ao deletar o usuário com ID ${id}:`, error);
+
+    throw error;
+  }
+}
+
+// Reseta a senha do usuário para o hash informado (senha padrão já criptografada)
+async function resetarSenhaRepository(id, hash) {
+
+  //abre a conexão com o banco de dados
+  const db = await openDb();
+
+  const result = await db.query(`
+      UPDATE "credenciaisUsuario"
+      SET password = $1
+      WHERE "idUser" = $2
+    `, [hash, id]);
+
+  if (result.rowCount === 0) {
+
+    // Log do erro para depuração para rastrear
+    console.error(`Falha ao resetar a senha para o usuário com ID ${id}.`);
+
+    // Lança um erro para que o serviço possa lidar com ele
+    throw new Error('Não foi possível resetar a senha.');
+  }
+}
+//#endregion
+
 export {
   listarUsuariosRepository,
   checkEmailRepository,
@@ -189,5 +292,9 @@ export {
   cadastrarUserRepository,
   countUserRepository,
   isAtivoRepository,
-  onOffUserRepository
+  onOffUserRepository,
+  buscarUsuarioPorIdRepository,
+  atualizarUserRepository,
+  deletarUserRepository,
+  resetarSenhaRepository
 }

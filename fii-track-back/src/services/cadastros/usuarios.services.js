@@ -6,9 +6,17 @@ import {
   cadastrarUserRepository,
   countUserRepository,
   isAtivoRepository,
-  onOffUserRepository
+  onOffUserRepository,
+  buscarUsuarioPorIdRepository,
+  atualizarUserRepository,
+  deletarUserRepository,
+  resetarSenhaRepository
 } from "../../repositories/cadastros/usuarios.repositories.js";
 import { converterDataParaPostgres } from "../../utils/dateUtils.js";
+
+// Senha padrão usada tanto no cadastro quanto no reset — o login já reconhece
+// esse valor e sinaliza "defaultPassword" para o usuário trocar no próximo acesso.
+const SENHA_PADRAO = 'Track@123';
 
 //  #region => Service para listar os usuários cadastrados
 async function listarUsuariosService(blvalor) {
@@ -78,11 +86,8 @@ async function cadastrarUserService(dados) {
     }
   }
 
-  //passa senha padrão para novo usuario
-  const senhaPadrao = 'Track@123';
-
-  //passa criptografia para a senha
-  const hash = await bcrypt.hash(senhaPadrao, 10);
+  //passa criptografia para a senha padrão do novo usuário
+  const hash = await bcrypt.hash(SENHA_PADRAO, 10);
 
   // Converte a data do formato DD/MM/YYYY para YYYY-MM-DD para o PostgreSQL
   let dataNascimentoFormatada = dados.dataNascimento;
@@ -148,6 +153,94 @@ async function onOffUserService(id) {
 }
 //#endregion
 
+//#region => Service para atualizar usuário
+async function atualizarUserService(id, dados) {
+
+  //verifica os campos obrigatórios
+  if (!dados.nome || !dados.email || !dados.dataNascimento) {
+    throw new Error('Os campos nome, email e data de nascimento são obrigatórios.');
+  }
+
+  //verifica se foi passado nome e sobrenome
+  if (!dados.nome.trim().includes(' ')) {
+    throw new Error('O campo nome deve conter nome e sobrenome.');
+  }
+
+  //verifica se o email é válido
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(dados.email)) {
+    throw new Error('O campo email deve conter um endereço de email válido.');
+  }
+
+  //verifica se o formato da data de nascimento é válido (DD/MM/AAAA)
+  const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (!dataRegex.test(dados.dataNascimento)) {
+    throw new Error('Data de nascimento deve estar no formato DD/MM/AAAA.');
+  }
+
+  //verifica se o usuário existe
+  const usuarioExistente = await buscarUsuarioPorIdRepository(id);
+  if (!usuarioExistente) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  //verifica se o email já está em uso por outro usuário
+  const checkEmail = await checkEmailRepository(dados.email, id);
+  if (checkEmail) {
+    throw new Error('O email já está cadastrado para outro usuário.');
+  }
+
+  //converte o status "on"/"off" para booleano (undefined mantém o status atual)
+  const ativo = dados.status === 'on' ? true : (dados.status === 'off' ? false : undefined);
+
+  //prepara os dados para atualização
+  const dadosAtualizacao = {
+    nome: dados.nome,
+    dataNascimento: converterDataParaPostgres(dados.dataNascimento),
+    email: dados.email,
+    ativo
+  };
+
+  //chama a função do repositório para atualizar o usuário
+  const usuarioAtualizado = await atualizarUserRepository(id, dadosAtualizacao);
+
+  return usuarioAtualizado;
+}
+//#endregion
+
+//#region => Service para deletar usuário
+async function deletarUserService(id) {
+
+  //verifica se o usuário existe
+  const usuarioExistente = await buscarUsuarioPorIdRepository(id);
+  if (!usuarioExistente) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  //chama a função do repositório para deletar o usuário (e suas credenciais)
+  await deletarUserRepository(id);
+
+  return { id, nome: usuarioExistente.nome };
+}
+//#endregion
+
+//#region => Service para resetar a senha do usuário para o padrão
+async function resetarSenhaService(id) {
+
+  //verifica se o usuário existe
+  const usuarioExistente = await buscarUsuarioPorIdRepository(id);
+  if (!usuarioExistente) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  //gera o hash da senha padrão e grava nas credenciais
+  const hash = await bcrypt.hash(SENHA_PADRAO, 10);
+  await resetarSenhaRepository(id, hash);
+
+  return { id, nome: usuarioExistente.nome };
+}
+//#endregion
+
 
 
 
@@ -157,5 +250,8 @@ export {
   listarUsuariosService,
   cadastrarUserService,
   countUserService,
-  onOffUserService
+  onOffUserService,
+  atualizarUserService,
+  deletarUserService,
+  resetarSenhaService
 }

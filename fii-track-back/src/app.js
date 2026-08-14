@@ -10,12 +10,17 @@ import authRoutes from './routes/auth/auth.routes.js'; // importa as rotas de au
 import homeRoutes from './routes/home.routes.js'; // importa as rotas do home/dashboard
 import controleAtivosRoutes from './routes/controleAtivos.routes.js'; // importa as rotas de controle de ativos
 
-const app = express(); //cria uma aplicação express
+//cria uma aplicação express
+
+const app = express(); 
+//habilita o cors para todas as rotas
 app.use(cors({
     origin: true,
     credentials: true,
-})); //habilita o cors para todas as rotas
-app.use(express.json()); //habilita json no corpo da requisição para retornar dados em json
+}));
+ 
+//habilita json no corpo da requisição para retornar dados em json
+app.use(express.json()); 
 app.use(cookieParser());
 
 

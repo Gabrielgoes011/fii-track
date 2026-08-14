@@ -1,12 +1,12 @@
-import { openDb } from "../../config/configDb.js";
-import { validaEmailExistente } from '../../utils/validaUser.js';
-import { converterDataParaPostgres } from '../../utils/dateUtils.js';
 import apiResponse from '../../utils/httpResponse.js';
 import {
   listarUsuariosService,
   cadastrarUserService,
   countUserService,
-  onOffUserService
+  onOffUserService,
+  atualizarUserService,
+  deletarUserService,
+  resetarSenhaService
 } from "../../services/cadastros/usuarios.services.js";
 
 
@@ -77,68 +77,24 @@ async function cadastrarUser(req, res) {
 }
 //#endregion
 
-//NÂO MIGRADO ABAIXO - AINDA FALTA MIGRAR PARA SERVICE E REPOSITORY
-
 //#region PUT - atualizar usuario
-export async function atualizarUser(req, res) {
-  const { nome, dataNascimento, email, status } = req.body;
-  const id = req.params.id;
-  const db = await openDb();
-
-  if (nome === undefined || dataNascimento === undefined || email === undefined) {
-    return res.status(400).json({ status: 400, message: 'Insira todos os campos obrigatórios !' });
-  }
-  if (!nome.trim().includes(' ')) {
-    return res.status(400).json({ status: 400, message: 'Insira o nome e sobrenome!' });
-  }
-  if (!email.includes('@') || !email.includes('.')) {
-    return res.status(400).json({ status: 400, message: 'Email inválido !' });
-  }
-
-  // Validação da data de nascimento
-  const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-  if (!dataRegex.test(dataNascimento)) {
-    return res.status(400).json({ status: 400, message: 'Data de nascimento deve estar no formato DD/MM/AAAA !' });
-  }
-
-  if (email) {
-    const existeEmail = await validaEmailExistente(email, db);
-    if (existeEmail && existeEmail.id != id) {
-      return res.status(400).json({ status: 400, message: 'Email já cadastrado !' });
-    }
-  }
-
+async function atualizarUser(req, res) {
   try {
-    const ativo = status === 'on' ? true : (status === 'off' ? false : undefined);
-    const dataNascimentoPostgres = converterDataParaPostgres(dataNascimento);
 
-    let sql, params;
-    if (ativo !== undefined) {
-      sql = `
-        UPDATE dbo."tabUser"
-        SET nome = $1,
-            dataNascimento = $2,
-            email = $3,
-            ativo = $4
-        WHERE id = $5
-      `;
-      params = [nome, dataNascimentoPostgres, email, ativo, id];
-    } else {
-      sql = `
-        UPDATE dbo."tabUser"
-        SET nome = $1,
-            dataNascimento = $2,
-            email = $3
-        WHERE id = $4
-      `;
-      params = [nome, dataNascimentoPostgres, email, id];
-    }
+    //pega o id da rota e os dados do corpo da requisição
+    const id = req.params.id;
+    const dados = req.body;
 
-    await db.query(sql, params);
-    return res.status(200).json({ status: 200, message: 'Usuário atualizado com sucesso!' });
+    //chama a função do serviço para atualizar o usuário
+    const usuarioAtualizado = await atualizarUserService(id, dados);
+
+    // Retorna os resultados da consulta em formato JSON
+    apiResponse.success(res, 'Usuário atualizado com sucesso!', usuarioAtualizado, 200);
   } catch (error) {
-    console.error('Erro ao atualizar o usuário:', error);
-    return res.status(500).json({ status: 500, message: 'Erro ao atualizar o usuário.' });
+    // Log do erro para depuração
+    console.error('Erro ao atualizar usuário:', error);
+    // Retorna a mensagem detalhada do erro
+    apiResponse.error(res, error.message || 'Erro ao atualizar o usuário.', 400);
   }
 }
 //#endregion
@@ -172,54 +128,58 @@ async function onOffUserController(req, res) {
 //#endregion
 
 //#region DELETE - deletar usuario
-export async function deleteUser(req, res) {
-  const idUser = req.params.id;
-  const db = await openDb();
-
+async function deleteUser(req, res) {
   try {
-    const existeUser = await buscaUserId(idUser, db);
 
-    if (!existeUser) {
-      return res.status(404).json({ error: 'Usuário não encontrado !' });
-    }
+    //pega o id da rota
+    const idUser = req.params.id;
 
-    await db.query('BEGIN');
+    //chama a função do serviço para deletar o usuário (e suas credenciais)
+    const usuarioDeletado = await deletarUserService(idUser);
 
-    await db.query(`
-      DELETE 
-      FROM "credenciaisUsuario"
-      WHERE "idUser" = $1 `, [idUser]
+    // Retorna os resultados da consulta em formato JSON
+    apiResponse.success(res,
+      `O usuário ${usuarioDeletado.nome} foi deletado com sucesso!`, usuarioDeletado, 200
     );
-
-    await db.query(`
-      DELETE 
-      FROM usuarios
-      WHERE id = $1 `, [idUser]
-    );
-
-    await db.query('COMMIT');
-
-    return res.json({
-      statusCode: 'Sucesso (200)',
-      usuario: `${existeUser.nome}`,
-      message: 'O usuario foi deletado com sucesso !'
-    });
   } catch (error) {
-    await db.query('ROLLBACK');
+    // Log do erro para depuração
     console.error('Erro ao deletar o usuário:', error);
-    return res.status(400).json({ error: 'Erro ao deletar o usuário.' });
+    // Retorna a mensagem detalhada do erro
+    apiResponse.error(res, error.message || 'Erro ao deletar o usuário.', 400);
   }
 }
 //#endregion
 
+//#region PUT - resetar senha do usuário para o padrão
+async function resetarSenhaController(req, res) {
+  try {
+
+    //pega o id da rota
+    const idUser = req.params.id;
+
+    //chama a função do serviço para resetar a senha do usuário
+    const usuario = await resetarSenhaService(idUser);
+
+    // Retorna os resultados da consulta em formato JSON
+    apiResponse.success(res,
+      `Senha do usuário ${usuario.nome} resetada para o padrão!`, usuario, 200
+    );
+  } catch (error) {
+    // Log do erro para depuração
+    console.error('Erro ao resetar a senha do usuário:', error);
+    // Retorna a mensagem detalhada do erro
+    apiResponse.error(res, error.message || 'Erro ao resetar a senha do usuário.', 400);
+  }
+}
+//#endregion
 
 export {
   listarUsuarios,
   cadastrarUser,
   contarUsuarios,
-  onOffUserController
-  //atualizarUser,
-  //deleteUser
+  onOffUserController,
+  atualizarUser,
+  deleteUser,
+  resetarSenhaController
 }
-
 

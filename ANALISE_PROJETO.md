@@ -1,6 +1,6 @@
 # FIITrack — Análise do Projeto, Backlog e Débitos Técnicos
 
-> Última atualização: **30/07/2026**
+> Última atualização: **13/08/2026**
 >
 > Documentação de desenvolvimento: [`fii-track-front/PADROES.md`](fii-track-front/PADROES.md) | [`fii-track-back/GUIA_DESENVOLVIMENTO.md`](fii-track-back/GUIA_DESENVOLVIMENTO.md)
 
@@ -24,7 +24,7 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 
 | Módulo | O que falta |
 |---|---|
-| **Admin** | Criar coluna `perfil` na tabela `usuarios` + middleware `verificaAdmin` para proteger rotas de gestão |
+| ~~**Admin**~~ | ✅ Feito — `verificaAdmin.js` protege as rotas de `/users*` usando o campo `adm` que já existia em `credenciaisUsuario` (não foi preciso criar a coluna `perfil`: o `adm` boolean já cumpre esse papel). **Atenção:** confirme que sua conta tem `adm = true` antes de depender dessas rotas, senão a tela de Usuários fica bloqueada para todo mundo. Falta só ocultar o menu "Usuários" no front para não-admins (ver seção 4). |
 
 ---
 
@@ -37,8 +37,8 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 | Meus FIIs | ✅ | ✅ | ✅ | ✅ Completo (inclui `contarFundosAtivos`) |
 | Rendimentos | ✅ | ✅ | ✅ | ✅ Completo (CRUD + KPIs `/cardsRendimentos`) |
 | Operações (CRUD + Gráfico) | ✅ | ✅ | ✅ | ✅ Completo — falta apenas o endpoint de cards (seção 6) |
-| Usuários | ✅ parcial | ✅ parcial | ✅ | ⚠️ Parcial — `atualizarUser` e `deleteUser` ainda direto no controller |
-| **Seguimentos** | ❌ direto no DB | ❌ não existe | ❌ não existe | ❌ Não migrado |
+| Usuários | ✅ | ✅ | ✅ | ✅ Completo — `atualizarUser`/`deleteUser` migrados, `resetarSenha` novo, bug de tabela corrigido |
+| **Seguimentos** | ❌ direto no DB | ❌ não existe | ❌ não existe | ❌ Não migrado (`updateSeguimento` ganhou o filtro por `idUser` que faltava, mas continua sem service/repository) |
 
 ### Seguimentos — o que migrar
 
@@ -53,12 +53,15 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 | `deleteSeguimento` | `excluirSeguimento()` | `deleteSeguimento()` |
 | `updateSeguimento` | `atualizarSeguimento()` | `updateSeguimento()` |
 
-### Usuários — o que falta migrar
+### Usuários — migração concluída ✅
 
 | Função | Situação |
 |---|---|
-| `atualizarUser` | Acessa banco direto, fora do padrão. **Bug:** ainda referencia a tabela antiga `dbo."tabUser"` em vez de `usuarios` — o endpoint `PUT /users/update/:id` está quebrado em produção |
-| `deleteUser` | Acessa banco direto com transação manual, fora do padrão |
+| `atualizarUser` | Migrado para `atualizarUserService`/`atualizarUserRepository`. Corrigido o bug da tabela `dbo."tabUser"` (não existe mais) — agora atualiza `usuarios` corretamente |
+| `deleteUser` | Migrado para `deletarUserService`/`deletarUserRepository`, mantendo a transação (deleta credenciais e depois o usuário) |
+| `resetarSenhaController` (novo) | `PUT /users/reset-password/:id` — reseta a senha do usuário para o padrão (`Track@123`), mesmo valor usado no cadastro e já reconhecido pelo login como `defaultPassword` |
+
+> Também corrigido: `checkEmailRepository` agora aceita um `excludeId` opcional (pra não acusar conflito de email com o próprio usuário durante a edição), e o `console.log(id, newValue)` de debug foi removido de `onOffUserRepository`.
 
 ---
 
@@ -66,9 +69,9 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 
 | Módulo | Funcionalidade | Observação |
 |---|---|---|
-| Seguimentos | Editar seguimento | Lógica comentada no hook (`handleUpdateSeguimento`), retorna só toast |
-| Usuários | Editar usuário | Retorna só toast informativo (`handleUpdateUser`) |
-| Usuários | Resetar senha | Retorna só toast "será implementado em breve" |
+| ~~Seguimentos~~ | ~~Editar seguimento~~ | ✅ Feito — `handleUpdateSeguimento`/`handleEdit` chamam a API real |
+| ~~Usuários~~ | ~~Editar usuário~~ | ✅ Feito — `handleUpdateUser`/`handleEdit` chamam a API real, pré-preenchendo o formulário (inclusive `dataNascimento`, agora retornada pelo `GET /users`) |
+| ~~Usuários~~ | ~~Resetar senha~~ | ✅ Feito — `handleResetPassword` chama `PUT /users/reset-password/:id` |
 | Controle de Ativos | Integração com backend | Tela 100% construída (KPIs, tabela de 16 colunas, inputs editáveis, badges) mas rodando inteiramente sobre `MOCK_DATA` em `useControleAtivos.js` — não existe backend ainda (ver seção 7) |
 
 ---
@@ -78,18 +81,18 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 ### Alta Prioridade
 
 - [ ] **Cards de Operações** — `totalAportado`, `totalVendido` e `capitalLiquido` na tela de Operações (spec na seção 6)
-- [ ] **Corrigir `atualizarUser`** — query usa `dbo."tabUser"` (tabela que não existe mais), precisa apontar para `usuarios`
+- [x] ~~**Corrigir `atualizarUser`**~~ — migrado para `usuarios.services.js`/`usuarios.repositories.js`, apontando para `usuarios`
 - [ ] **Backend de Controle de Ativos** — o frontend já está pronto e aguardando os endpoints reais (spec completa em [`SPEC_CONTROLE_ATIVOS.md`](fii-track-front/src/pages/controleAtivos/SPEC_CONTROLE_ATIVOS.md))
-- [ ] **Coluna `perfil` na tabela `usuarios`** + middleware `verificaAdmin`
+- [x] ~~**Middleware `verificaAdmin`**~~ — criado usando o `adm` boolean que já existe em `credenciaisUsuario` (dispensou a coluna `perfil`)
 - [ ] **Ocultar menu "Usuários" para não-admins** no frontend + guard de rota
 
 ### Média Prioridade
 
-- [ ] **Migrar Seguimentos para 3 camadas** (service + repository)
-- [ ] **Implementar edição de seguimento** (front + back — back já tem a query no controller)
-- [ ] **Implementar edição de usuário** (front — back já tem `atualizarUser`, mas está com bug de tabela — corrigir antes de expor no front)
-- [ ] **Implementar reset de senha** (front + back)
-- [ ] **Migrar `atualizarUser` e `deleteUser`** para service/repository e expor nas rotas
+- [ ] **Migrar Seguimentos para 3 camadas** (service + repository) — `updateSeguimento` já ganhou o filtro por `idUser` que faltava
+- [x] ~~**Implementar edição de seguimento**~~ (front + back — back já tinha a query no controller)
+- [x] ~~**Implementar edição de usuário**~~ (front + back — bug de tabela corrigido)
+- [x] ~~**Implementar reset de senha**~~ (front + back)
+- [x] ~~**Migrar `atualizarUser` e `deleteUser`**~~ para service/repository
 - [ ] **Resolver dependência quebrada do S3** — `src/config/s3.js` importa `@aws-sdk/client-s3`, mas o pacote não está mais no `package.json`/`node_modules`. Ninguém importa `s3.js` hoje, então não quebra em runtime, mas vai quebrar assim que alguém tentar usar upload. Decidir: reinstalar a dependência ou remover o arquivo morto
 
 ### Baixa Prioridade / Melhorias
@@ -108,14 +111,10 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 
 ## 5. Banco de Dados — Alterações Pendentes
 
+> A coluna `perfil` cogitada aqui **não foi criada** — o `verificaAdmin` passou a usar o boolean `adm` que já existe em `credenciaisUsuario` (mesmo campo já lido no login), então nenhuma migração foi necessária para proteger as rotas de gestão de usuários.
+
 ```sql
--- 1. Perfil do usuário (admin/user) — ainda não existe
-ALTER TABLE usuarios
-ADD COLUMN perfil VARCHAR(20) NOT NULL DEFAULT 'user';
-
-UPDATE usuarios SET perfil = 'admin' WHERE id = <id_do_admin>;
-
--- 2. Tabela de metas por ativo — necessária para o backend de Controle de Ativos
+-- 1. Tabela de metas por ativo — necessária para o backend de Controle de Ativos
 CREATE TABLE IF NOT EXISTS metas_carteira (
   id              SERIAL PRIMARY KEY,
   "idUser"        INTEGER NOT NULL REFERENCES usuarios(id),
@@ -223,8 +222,8 @@ BACK-END
 ├── ✅ Meus FIIs (multi-usuário + 3 camadas)
 ├── ✅ Rendimentos (multi-usuário + 3 camadas + KPIs + CRUD completo)
 ├── ✅ Operações (multi-usuário + 3 camadas — CRUD + Gráfico) — falta cards
-├── ⚠️  Usuários (3 camadas parcial — falta atualizarUser/deleteUser + verificaAdmin; atualizarUser com bug de tabela)
-├── ❌  Seguimentos (acesso direto ao DB — sem service/repository)
+├── ✅  Usuários (3 camadas completo + verificaAdmin + resetarSenha; bug de tabela corrigido)
+├── ❌  Seguimentos (acesso direto ao DB — sem service/repository; updateSeguimento já filtra por idUser)
 └── ❌  Controle de Ativos (não existe — frontend aguardando)
 
 FRONT-END
@@ -233,8 +232,8 @@ FRONT-END
 ├── ✅ Meus FIIs
 ├── ✅ Operações
 ├── ✅ Rendimentos (KPIs + Efeito Bola de Neve)
-├── ⚠️  Usuários (editar/resetar não implementados)
-├── ⚠️  Seguimentos (editar não implementado)
+├── ✅ Usuários (editar/resetar implementados)
+├── ✅ Seguimentos (editar implementado)
 ├── 🧪 Controle de Ativos (UI completa, dados mockados — aguardando backend)
 └── 🚧 Precificação / Relatórios / Configurações (placeholders)
 ```

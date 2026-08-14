@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { toastSuccess, toastInfo, handleError } from '../../utils/responseUtils';
+import { toastSuccess, handleError } from '../../utils/responseUtils';
 import { seguimentosService } from '../../services/cadastros/seguimentosService';
 
 export const useSeguimentos = () => {
@@ -50,17 +50,15 @@ export const useSeguimentos = () => {
   };
 
   const handleUpdateSeguimento = async (data) => {
-    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
-    return;
-    // try {
-    //   await seguimentosService.atualizar(onEdit.id, data);
-    //   toastSuccess('Seguimento atualizado com sucesso!');
-    //   closeFormModal();
-    //   getSeguimentos();
-    //   getDashboard();
-    // } catch (error) {
-    //   handleError(error);
-    // }
+    try {
+      await seguimentosService.atualizar(onEdit.id, data);
+      toastSuccess('Seguimento atualizado com sucesso!');
+      closeFormModal();
+      getSeguimentos();
+      getDashboard();
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   const executeConfirmedAction = async () => {
@@ -89,11 +87,9 @@ export const useSeguimentos = () => {
   };
 
   const handleEdit = (item) => {
-    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
-    return;
-    // setOnEdit(item);
-    // setFormData({ nome: item.nome });
-    // setShowFormModal(true);
+    setOnEdit(item);
+    setFormData({ nome: item.nome });
+    setShowFormModal(true);
   };
 
   const handleOpenModal = (item, action) => {

@@ -11,7 +11,7 @@ function ModalConfirmacao({ isOpen = true, onClose, onConfirm, action, userName 
         return <>Você tem certeza que quer <strong style={{ color: '#e74c3c' }}>excluir</strong> o usuário <strong style={{ color: '#dce8f5' }}>{userName}</strong>? Esta ação não pode ser desfeita.</>;
       case 'reset':
         return <>Deseja resetar a senha do usuário <strong style={{ color: '#dce8f5' }}>{userName}</strong> para o padrão?<br /><br />
-          <span style={{ display: 'inline-block', background: 'rgba(9,114,211,0.12)', border: '1px solid rgba(9,114,211,0.25)', padding: '5px 14px', borderRadius: '8px', color: '#5dade2', fontFamily: 'monospace', fontSize: '13px', letterSpacing: '1px' }}>Senha@123</span>
+          <span style={{ display: 'inline-block', background: 'rgba(9,114,211,0.12)', border: '1px solid rgba(9,114,211,0.25)', padding: '5px 14px', borderRadius: '8px', color: '#5dade2', fontFamily: 'monospace', fontSize: '13px', letterSpacing: '1px' }}>Track@123</span>
         </>;
       case 'inactivate':
         return <>Deseja <strong style={{ color: '#f59e0b' }}>inativar</strong> o usuário <strong style={{ color: '#dce8f5' }}>{userName}</strong>?</>;

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { toastSuccess, toastInfo, handleError } from '../../utils/responseUtils';
+import { toastSuccess, handleError } from '../../utils/responseUtils';
+import { formatarDataBR } from '../../utils/dateUtils';
 import { usuariosService } from '../../services/cadastros/usuariosService';
 
 export const useUsuarios = () => {
@@ -72,8 +73,25 @@ export const useUsuarios = () => {
   };
 
   const handleUpdateUser = async (usuarioAtualizado) => {
-    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
-    return;
+    try {
+      await usuariosService.atualizar(onEdit.id, usuarioAtualizado);
+      toastSuccess('Usuário atualizado com sucesso!');
+      getUsers();
+      resetForm();
+      setShowFormModal(false);
+      setOnEdit(null);
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  const handleResetPassword = async (user) => {
+    try {
+      await usuariosService.resetarSenha(user.id);
+      toastSuccess('Senha resetada para o padrão com sucesso!');
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   const handleDeleteUser = async (userId) => {
@@ -115,8 +133,15 @@ export const useUsuarios = () => {
   };
 
   const handleEdit = (user) => {
-    toastInfo('⚙️ Funcionalidade em desenvolvimento...');
-    return;
+    setOnEdit(user);
+    setFormData({
+      nome: user.nome || '',
+      dataNascimento: formatarDataBR(user.dataNascimento),
+      email: user.email || '',
+      cpf: user.cpf || '',
+      foto: null
+    });
+    setShowFormModal(true);
   };
 
   const handleOpenModal = (user, action) => {
@@ -139,7 +164,7 @@ export const useUsuarios = () => {
         await handleReactivateUser(userSelected);
         break;
       case 'reset':
-        toastInfo('Rota de resetar senha será implementada em breve.');
+        await handleResetPassword(userSelected);
         break;
       default:
         break;
@@ -164,7 +189,7 @@ export const useUsuarios = () => {
     users, onEdit, activeTab, loading, formData, showModal, userSelected,
     modalAction, showFormModal, setFormData, setActiveTab, setShowModal,
     setShowFormModal, dashboard, getUsers, getDashboard, handleAddUser,
-    handleUpdateUser, handleDeleteUser, handleInactivateUser, handleReactivateUser,
+    handleUpdateUser, handleDeleteUser, handleInactivateUser, handleReactivateUser, handleResetPassword,
     handleOpenCreate, handleEdit, handleOpenModal, executeConfirmedAction,
     closeFormModal, resetForm
   };
