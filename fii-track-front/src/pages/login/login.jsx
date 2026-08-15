@@ -59,6 +59,7 @@ function Login({ onLogin }) {
         toastSuccess('Login bem-sucedido!');
       }
 
+      localStorage.setItem('token', response.token);
       onLogin(true, usuario);
       setTimeout(() => navigate('/'), 800);
     } catch (error) {

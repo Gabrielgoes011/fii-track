@@ -34,11 +34,12 @@ function App() {
     setUsuarioLogado(usuario);
   };
 
-  // Sempre começa deslogado ao abrir o app:
-  // remove o token para garantir que o usuário faça login novamente.
-  // Isso evita entrar no dashboard enquanto o servidor (Render) ainda está iniciando.
+  // Restaura a autenticação se houver um token válido em localStorage
   React.useEffect(() => {
-    localStorage.removeItem('token');
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+    }
   }, []);
 
   // Escuta o evento disparado pelo interceptor quando recebe 401
