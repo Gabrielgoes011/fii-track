@@ -42,7 +42,7 @@ async function autenticarUsuario(email, password) {
         throw new Error('E-mail ou senha inválidos.');
     }
 
-    let defaultPassword = [];
+    let defaultPassword = false;
     if (password === 'Track@123') {
         defaultPassword = true;
     }
@@ -126,7 +126,7 @@ async function autenticarUsuarioCom2fa(email, password, codigo) {
         throw new Error('Código 2FA inválido.');
     }
 
-    let defaultPassword = [];
+    let defaultPassword = false;
     if (password === 'Track@123') {
         defaultPassword = true;
     }

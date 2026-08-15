@@ -2,14 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
+import ModalTrocarSenha from '../ModalTrocarSenha/ModalTrocarSenha';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { MOBILE_BP } from '../../hooks/useIsMobile';
+import { useTrocarSenha } from '../../hooks/auth/useTrocarSenha';
 
 function Layout({ children, onLogout, user }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BP);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= MOBILE_BP);
   const { valoresOcultos } = usePrivacy();
   const navigate = useNavigate();
+
+  const {
+    showTrocarSenhaModal, formData, loading,
+    setFormData, abrirTrocarSenha, fecharTrocarSenha, handleTrocarSenha,
+  } = useTrocarSenha(user?.id);
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,6 +64,16 @@ function Layout({ children, onLogout, user }) {
         onToggleSidebar={toggleSidebar}
         onLogout={onLogout}
         onMeuPerfil={() => navigate('/perfil')}
+        onTrocarSenha={abrirTrocarSenha}
+      />
+
+      <ModalTrocarSenha
+        isOpen={showTrocarSenhaModal}
+        onClose={fecharTrocarSenha}
+        onSubmit={handleTrocarSenha}
+        formData={formData}
+        setFormData={setFormData}
+        loading={loading}
       />
 
       {/* Conteúdo principal */}

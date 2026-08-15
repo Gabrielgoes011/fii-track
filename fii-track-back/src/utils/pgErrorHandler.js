@@ -51,7 +51,7 @@ const pgErrorMessages = {
  * @param {String} defaultMessage Mensagem genérica caso o erro não seja de banco.
  * @returns {String} A mensagem tratada e segura.
  */
-function handleDbError(error, defaultMessage = 'Ocorreu um erro inesperado. Tente novamente mais tarde.') {
+function handleDbError(error, defaultMessage = 'Ocorreu um erro inesperado. Tente novamente mais tarde.' + error.message) {
 
     // Se não for um erro de banco, retorna a mensagem padrão
     if (!error || !error.code) return defaultMessage;
