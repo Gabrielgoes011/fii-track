@@ -7,11 +7,11 @@ import {
   atualizarUserService,
   deletarUserService,
   resetarSenhaService
-} from "../../services/cadastros/usuarios.services.js";
+} from "../../services/adminstracao/usuarios.service.js";
 
 
 //#region função listarUsuarios - lista usuarios (ativos/inativos)
- async function listarUsuarios(req, res) {
+async function listarUsuarios(req, res) {
   try {
 
     //verifica se o valor do parâmetro "status" é válido
@@ -33,7 +33,7 @@ import {
 //#endregion
 
 //#region função de contagem - contar usuarios - dashboard
- async function contarUsuarios(req, res) {
+async function contarUsuarios(req, res) {
 
   try {
 
@@ -46,7 +46,7 @@ import {
     );
   }
   catch (error) {
-    
+
     // Log do erro para depuração
     console.error('Erro ao contar usuários:', error);
 
@@ -110,10 +110,10 @@ async function onOffUserController(req, res) {
     const onOffUser = await onOffUserService(id);
 
     // Retorna os resultados da consulta em formato JSON
-    apiResponse.success(res, 
+    apiResponse.success(res,
       onOffUser.ativo
-      ? 'Usuário Reativado Com Sucesso!'
-      : 'Usuário Inativado Com Sucesso!', onOffUser, 200, true
+        ? 'Usuário Reativado Com Sucesso!'
+        : 'Usuário Inativado Com Sucesso!', onOffUser, 200, true
     );
   }
   catch (error) {

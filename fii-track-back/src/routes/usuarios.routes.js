@@ -13,7 +13,7 @@ import {
   onOffUserController,
   deleteUser,
   resetarSenhaController
-} from '../controllers/cadastros/usuario.controller.js';
+} from '../controllers/adminstração/usuario.controller.js';
 
 // Gestão de usuários é restrita a administradores (verificaToken decodifica o
 // token e injeta req.user; verificaAdmin confere req.user.adm em seguida)

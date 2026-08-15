@@ -7,7 +7,7 @@ import {
     criarRendimento,
     excluirRendimento,
     calculoCardsRendimento
-} from '../services/rendimentos.services.js';
+} from '../services/rendimentos.service.js';
 
 //#region Listar rendimentos
 async function listarRendimentosController(req, res) {

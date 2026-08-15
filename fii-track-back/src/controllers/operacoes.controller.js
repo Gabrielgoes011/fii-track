@@ -5,7 +5,7 @@ import {
     lancarOperacaoService,
     carregaDadosGraficoOperacoesService,
     excluirOperacaoService
-} from '../services/operacoes.services.js';
+} from '../services/operacoes.service.js';
 
 //#region função listar fundos
 export async function carregaAtivosDropList(req, res) {

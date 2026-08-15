@@ -7,7 +7,7 @@ import {
   confirmar2faService,
   desativar2faService,
   validarCodigo2faService,
-} from '../services/login.services.js';
+} from '../services/login.service.js';
 
 //#region => Lógica para login
 async function loginController(req, res) {

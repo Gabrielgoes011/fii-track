@@ -1,4 +1,4 @@
-import { getCardsHome } from '../services/home.services.js';
+import { getCardsHome } from '../services/home.service.js';
 import apiResponse from '../utils/httpResponse.js';
 
 //#função para carregar os dados do card

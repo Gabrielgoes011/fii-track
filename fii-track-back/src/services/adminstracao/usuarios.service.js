@@ -11,7 +11,7 @@ import {
   atualizarUserRepository,
   deletarUserRepository,
   resetarSenhaRepository
-} from "../../repositories/cadastros/usuarios.repositories.js";
+} from "../../repositories/administacao/usuarios.repositories.js";
 import { converterDataParaPostgres } from "../../utils/dateUtils.js";
 
 // Senha padrão usada tanto no cadastro quanto no reset — o login já reconhece

@@ -4,7 +4,7 @@ import {
     getSegmentosDropListService,
     getAtivosDropListService,
     addAtivoService
-} from '../services/controleAtivos.services.js';
+} from '../services/controleAtivos.service.js';
 
 //#region função listar segmentos para o dropdown
 async function getSegmentosDropList(req, res) {

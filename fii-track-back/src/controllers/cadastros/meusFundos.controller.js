@@ -5,7 +5,7 @@ import {
   contarFundosService,
   deletarFundoService,
   editarNomeFundoService
-} from "../../services/cadastros/meusFundos.services.js";
+} from "../../services/cadastros/meusFundos.service.js";
 
 
 //#region => cadastrar meus fundos
