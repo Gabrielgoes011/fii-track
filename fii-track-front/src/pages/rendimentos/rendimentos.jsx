@@ -1,12 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BarChart, AreaChart } from '../../components/Charts';
 import NovoRendimentoModal from './components/modalNovoRendimento';
 import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
-import { toastSuccess, toastInfo } from '../../utils/responseUtils';
+import { toastSuccess, toastInfo, toastError } from '../../utils/responseUtils';
 import { DataCard } from '../../components/DataCard';
 import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmacao';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign, FiDownload, FiFileText, FiCheckCircle } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MESES = [
@@ -1066,6 +1067,8 @@ export default function PaginaRendimentos() {
     getCardsRendimentos,
     criarRendimento,
     marcarComoReinvestido,
+    importarB3,
+    loadingImport,
   } = useRendimentos();
 
   const isMobile = useIsMobile();
@@ -1084,6 +1087,12 @@ export default function PaginaRendimentos() {
   const [modalReinvestir, setModalReinvestir] = useState(false);
   const [rendimentoParaReinvestir, setRendimentoParaReinvestir] = useState(null);
   const [mobileAccordion, setMobileAccordion] = useState(null);
+
+  // ─── Estados de importação B3 ───────────────────────────────────────────────
+  const [etapaImport, setEtapaImport] = useState(null); // null | 'preview' | 'resultado'
+  const [linhasImportPreview, setLinhasImportPreview] = useState([]);
+  const [resultadoImport, setResultadoImport] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     // idAtivo: 'Todos' → null (sem filtro); caso contrário busca o id pelo ticker
@@ -1215,6 +1224,96 @@ export default function PaginaRendimentos() {
     setAnosComp(prev =>
       prev.includes(ano) ? prev.filter(a => a !== ano) : [...prev, ano]
     );
+
+  // ─── Handler de importação B3 ───────────────────────────────────────────────
+  const handleArquivoB3 = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Limpa o input para permitir selecionar o mesmo arquivo novamente
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        // Filtra apenas linhas: Entrada/Saída = "Credito" ou "Crédito" e Movimentação = "Rendimento"
+        const linhasFiltradas = json.filter(row => {
+          const entradaSaida = String(row['Entrada/Saída'] || '').trim();
+          const movimentacao = String(row['Movimentação'] || row['Movimentacao'] || '').trim();
+          return (
+            (entradaSaida.toLowerCase() === 'credito' || entradaSaida.toLowerCase() === 'crédito') &&
+            movimentacao.toLowerCase() === 'rendimento'
+          );
+        });
+
+        if (linhasFiltradas.length === 0) {
+          toastInfo('Nenhuma linha de rendimento (Crédito + Rendimento) encontrada no arquivo.');
+          return;
+        }
+
+        // Mapeia para o formato esperado pelo backend
+        const linhasMapeadas = linhasFiltradas.map(row => {
+          // Extrai ticker do campo Produto (ex: "ALZR11 - ALIANZA TRUST..." → "ALZR11")
+          const produto = String(row['Produto'] || '');
+          const ticker = produto.split(' - ')[0].trim().split(' ')[0].trim();
+
+          // Converte data DD/MM/AAAA → YYYY-MM-DD
+          const dataRaw = String(row['Data'] || '');
+          let dtRendimento = dataRaw;
+          if (dataRaw.includes('/')) {
+            const partes = dataRaw.split('/');
+            if (partes.length === 3) {
+              dtRendimento = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+            }
+          }
+
+          // Valor da Operação — pode vir como número ou string com R$
+          let valorRaw = row['Valor da Operação'] ?? row['Valor da Operacao'] ?? 0;
+          if (typeof valorRaw === 'string') {
+            valorRaw = valorRaw.replace(/R\$\s*/g, '').replace(/\./g, '').replace(',', '.').trim();
+          }
+          const valorRecebido = parseFloat(valorRaw) || 0;
+
+          return { ticker, dtRendimento, valorRecebido };
+        }).filter(l => l.ticker && l.valorRecebido > 0);
+
+        if (linhasMapeadas.length === 0) {
+          toastInfo('Nenhuma linha válida encontrada após o processamento.');
+          return;
+        }
+
+        setLinhasImportPreview(linhasMapeadas);
+        setEtapaImport('preview');
+      } catch (err) {
+        console.error('Erro ao ler arquivo Excel:', err);
+        toastError('Erro ao ler o arquivo. Verifique se é um Excel válido (.xlsx).');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const confirmarImportacaoB3 = async () => {
+    const resultado = await importarB3(linhasImportPreview);
+    if (resultado) {
+      setResultadoImport(resultado);
+      setEtapaImport('resultado');
+      // Recarrega os dados
+      getRendimentos({ mes: filtroMes, ano: filtroAno });
+      getGrafico({ ano: anoGrafico });
+      getCardsRendimentos({ mes: filtroMes, ano: filtroAno });
+    }
+  };
+
+  const fecharImportacao = () => {
+    setModalImportAberto(false);
+    setEtapaImport(null);
+    setLinhasImportPreview([]);
+    setResultadoImport(null);
+  };
 
   // ─── Estilos dinâmicos (dependem de isMobile) ───────────────────────────────
   const cardBase = {
@@ -1793,6 +1892,294 @@ export default function PaginaRendimentos() {
             userName={rendimentoParaReinvestir.ticker}
           />
         )}
+
+        {/* ── Input oculto para selecionar arquivo Excel ── */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={handleArquivoB3}
+        />
+
+        {/* ── Modal de escolha: tipo de importação ── */}
+        {modalImportAberto && !etapaImport && (
+          <div
+            onClick={fecharImportacao}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1100,
+              backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#1e293b', border: '1px solid #334155',
+                borderRadius: '16px', padding: '2rem',
+                width: '100%', maxWidth: '480px',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    Importar Rendimentos
+                  </h2>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                    Escolha o formato do arquivo
+                  </p>
+                </div>
+                <button
+                  onClick={fecharImportacao}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Opções */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                {/* Opção 1 — Padrão FIITrack */}
+                <button
+                  onClick={() => { fecharImportacao(); toastInfo('Em breve: importação pelo modelo FIITrack.'); }}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '14px',
+                    padding: '1rem 1.25rem', borderRadius: '12px', cursor: 'pointer',
+                    background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)',
+                    textAlign: 'left', transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.14)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.07)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)'; }}
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <FiDownload size={18} color="#10b981" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                      Modelo FIITrack
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                      Baixe e preencha nossa planilha padrão. Importação simples e sem erros.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Opção 2 — Excel B3 (Rendimentos) */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '14px',
+                    padding: '1rem 1.25rem', borderRadius: '12px', cursor: 'pointer',
+                    background: 'rgba(96,165,250,0.07)', border: '1px solid rgba(96,165,250,0.2)',
+                    textAlign: 'left', transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.14)'; e.currentTarget.style.borderColor = 'rgba(96,165,250,0.4)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.07)'; e.currentTarget.style.borderColor = 'rgba(96,165,250,0.2)'; }}
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(96,165,250,0.15)', border: '1px solid rgba(96,165,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <FiFileText size={18} color="#60a5fa" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                      Excel B3 (Rendimentos)
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                      Importe o arquivo de proventos exportado pela B3. Detectamos os rendimentos automaticamente.
+                    </p>
+                  </div>
+                </button>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal de Preview — confirmar dados antes de importar ── */}
+        {etapaImport === 'preview' && (
+          <div
+            onClick={fecharImportacao}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1100,
+              backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#1e293b', border: '1px solid #334155',
+                borderRadius: '16px', padding: '2rem',
+                width: '100%', maxWidth: '600px', maxHeight: '80vh',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    Confirmar Importação
+                  </h2>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                    {linhasImportPreview.length} rendimento{linhasImportPreview.length !== 1 ? 's' : ''} encontrado{linhasImportPreview.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={fecharImportacao}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Tabela de preview */}
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #334155' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', color: '#94a3b8', fontWeight: 600 }}>Ticker</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', color: '#94a3b8', fontWeight: 600 }}>Data</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right', color: '#94a3b8', fontWeight: 600 }}>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linhasImportPreview.map((linha, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(51,65,85,0.5)' }}>
+                        <td style={{ padding: '8px 12px', color: '#f8fafc', fontWeight: 700 }}>{linha.ticker}</td>
+                        <td style={{ padding: '8px 12px', color: '#cbd5e1' }}>
+                          {linha.dtRendimento.split('-').reverse().join('/')}
+                        </td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>
+                          {fmt(linha.valorRecebido)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(16,185,129,0.08)', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>Total</span>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#34d399' }}>
+                  {fmt(linhasImportPreview.reduce((acc, l) => acc + l.valorRecebido, 0))}
+                </span>
+              </div>
+
+              {/* Ações */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={fecharImportacao}
+                  style={{
+                    flex: 1, padding: '10px', background: 'transparent',
+                    color: '#94a3b8', border: '1px solid #334155',
+                    borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarImportacaoB3}
+                  disabled={loadingImport}
+                  style={{
+                    flex: 1, padding: '10px',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: '#fff', border: 'none', borderRadius: '8px',
+                    cursor: loadingImport ? 'not-allowed' : 'pointer',
+                    fontWeight: 600, fontSize: '14px',
+                    boxShadow: '0 4px 16px rgba(16,185,129,0.3)',
+                    opacity: loadingImport ? 0.7 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  }}
+                >
+                  {loadingImport ? 'Importando...' : <><FiUpload size={14} /> Importar</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal de Resultado — resumo da importação ── */}
+        {etapaImport === 'resultado' && resultadoImport && (
+          <div
+            onClick={fecharImportacao}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1100,
+              backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#1e293b', border: '1px solid #334155',
+                borderRadius: '16px', padding: '2rem',
+                width: '100%', maxWidth: '440px',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ marginBottom: '1.5rem' }}>
+                <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  Importação Concluída
+                </h2>
+              </div>
+
+              {/* Resumo em cards */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '1.25rem' }}>
+                <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                  <p style={{ fontSize: '22px', fontWeight: 800, color: '#34d399', margin: 0 }}>{resultadoImport.totalImportados}</p>
+                  <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Importados</p>
+                </div>
+                {resultadoImport.totalDuplicados > 0 && (
+                  <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                    <p style={{ fontSize: '22px', fontWeight: 800, color: '#f59e0b', margin: 0 }}>{resultadoImport.totalDuplicados}</p>
+                    <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Duplicados</p>
+                  </div>
+                )}
+                {resultadoImport.totalIgnorados > 0 && (
+                  <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                    <p style={{ fontSize: '22px', fontWeight: 800, color: '#f87171', margin: 0 }}>{resultadoImport.totalIgnorados}</p>
+                    <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Ignorados</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Detalhes dos ignorados */}
+              {resultadoImport.ignorados?.length > 0 && (
+                <div style={{ textAlign: 'left', marginBottom: '1rem', padding: '12px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#f87171', margin: '0 0 6px' }}>Ativos não encontrados:</p>
+                  {resultadoImport.ignorados.map((item, i) => (
+                    <p key={i} style={{ fontSize: '12px', color: '#94a3b8', margin: '2px 0' }}>
+                      <strong style={{ color: '#cbd5e1' }}>{item.ticker}</strong> — {item.motivo}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={fecharImportacao}
+                style={{
+                  width: '100%', padding: '10px',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#fff', border: 'none', borderRadius: '8px',
+                  cursor: 'pointer', fontWeight: 600, fontSize: '14px',
+                  boxShadow: '0 4px 16px rgba(16,185,129,0.3)',
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );

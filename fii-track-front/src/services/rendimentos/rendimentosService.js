@@ -71,4 +71,12 @@ export const rendimentosService = {
       return res.data;
     } catch (error) { throw error; }
   },
+
+  // Importar rendimentos a partir do Excel B3
+  importarB3: async (linhas) => {
+    try {
+      const res = await api.post('/rendimentos/importar-b3', { linhas });
+      return res.data;
+    } catch (error) { throw error; }
+  },
 };

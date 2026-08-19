@@ -10,7 +10,8 @@ import {
   carregarDadosModalNovoRendimentoController,
   criarRendimentoController,
   deleteRendimentoController,
-  getCardsRendimentos
+  getCardsRendimentos,
+  importarRendimentosB3Controller
 } from '../controllers/rendimentos.controller.js';
 
 
@@ -34,6 +35,9 @@ router.delete('/rendimentos/:id', verificaToken, rlsMiddleware, deleteRendimento
 
 router.post('/cardsRendimentos', verificaToken, rlsMiddleware, getCardsRendimentos);
 //body: { mes, ano, idAtivo (todos parametros opcional) }
+
+router.post('/rendimentos/importar-b3', verificaToken, rlsMiddleware, importarRendimentosB3Controller);
+//body: { linhas: [{ ticker, dtRendimento, valorRecebido }] }
 
 export default router;
 

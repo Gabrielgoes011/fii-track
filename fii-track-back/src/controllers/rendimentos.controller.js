@@ -6,7 +6,8 @@ import {
     carregarAtivosParaModal,
     criarRendimento,
     excluirRendimento,
-    calculoCardsRendimento
+    calculoCardsRendimento,
+    importarRendimentosB3
 } from '../services/rendimentos.service.js';
 
 //#region Listar rendimentos
@@ -142,6 +143,22 @@ async function getCardsRendimentos(req, res) {
 }
 //#endregion
 
+//#region Importar rendimentos a partir do Excel B3
+async function importarRendimentosB3Controller(req, res) {
+    try {
+        const idUser = req.user.id;
+        const { linhas } = req.body;
+
+        const resultado = await importarRendimentosB3(linhas, idUser);
+
+        return apiResponse.success(res, 'Importação concluída.', resultado);
+
+    } catch (error) {
+        return apiResponse.error(res, error.message);
+    }
+}
+//#endregion
+
 export {
     listarRendimentosController,
     carregarGraficoDashboardController,
@@ -149,5 +166,6 @@ export {
     carregarDadosModalNovoRendimentoController,
     criarRendimentoController,
     deleteRendimentoController,
-    getCardsRendimentos
+    getCardsRendimentos,
+    importarRendimentosB3Controller
 };

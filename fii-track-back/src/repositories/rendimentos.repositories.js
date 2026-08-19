@@ -277,6 +277,33 @@ async function getTotalReinvestido(idUser) {
 }
 //#endregion 
 
+//#region Buscar ativo pelo ticker e idUser (para importação B3)
+async function findAtivoByTicker(ticker, idUser) {
+    const db = await openDb();
+    const result = await db.query(`
+        SELECT id FROM ativos
+        WHERE UPPER(ticker) = UPPER($1) AND "idUser" = $2
+        LIMIT 1
+    `, [ticker, idUser]);
+    return result.rows[0] || null;
+}
+//#endregion
+
+//#region Verificar se rendimento já existe (trava de duplicata)
+async function findRendimentoDuplicado(idAtivo, dtRendimento, idUser, valorRecebido) {
+    const db = await openDb();
+    const result = await db.query(`
+        SELECT id FROM rendimentos
+        WHERE "idAtivo" = $1
+          AND "dtRendimento" = $2
+          AND "idUser" = $3
+          AND "valorRecebido" = $4
+        LIMIT 1
+    `, [idAtivo, dtRendimento, idUser, valorRecebido]);
+    return result.rows[0] || null;
+}
+//#endregion
+
 
 export {
     findRendimentos,
@@ -289,5 +316,7 @@ export {
     getTotalAcumulado,
     getAcumulado12Meses,
     getTotalCompras,
-    getTotalReinvestido
+    getTotalReinvestido,
+    findAtivoByTicker,
+    findRendimentoDuplicado
 };

@@ -9,7 +9,9 @@ import {
     getTotalAcumulado,
     getAcumulado12Meses,
     getTotalCompras,
-    getTotalReinvestido
+    getTotalReinvestido,
+    findAtivoByTicker,
+    findRendimentoDuplicado
 } from '../repositories/rendimentos.repositories.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -228,6 +230,83 @@ async function calculoCardsRendimento(mes, ano, idAtivo, idUser) {
 //#endregion
 
 
+//#region Importar rendimentos a partir do Excel B3
+async function importarRendimentosB3(linhas, idUser) {
+    try {
+        // Valida se o array de linhas foi informado e não está vazio
+        if (!Array.isArray(linhas) || linhas.length === 0) {
+            throw new Error('Nenhuma linha de rendimento informada para importação.');
+        }
+
+        const importados = [];
+        const ignorados = [];
+        const duplicados = [];
+
+        // Cache de tickers já resolvidos para evitar queries repetidas
+        const cacheTickers = {};
+
+        for (const linha of linhas) {
+            const { ticker, dtRendimento, valorRecebido } = linha;
+
+            // Valida campos obrigatórios da linha
+            if (!ticker || !dtRendimento || !valorRecebido) {
+                ignorados.push({ ticker: ticker || '?', motivo: 'Dados incompletos' });
+                continue;
+            }
+
+            // Resolve o ticker para idAtivo (com cache)
+            let idAtivo = cacheTickers[ticker.toUpperCase()];
+            if (idAtivo === undefined) {
+                const ativo = await findAtivoByTicker(ticker, idUser);
+                if (ativo) {
+                    cacheTickers[ticker.toUpperCase()] = ativo.id;
+                    idAtivo = ativo.id;
+                } else {
+                    cacheTickers[ticker.toUpperCase()] = null;
+                    idAtivo = null;
+                }
+            }
+
+            // Ativo não cadastrado → ignora
+            if (!idAtivo) {
+                ignorados.push({ ticker, motivo: 'Ativo não cadastrado' });
+                continue;
+            }
+
+            // Verifica duplicata
+            const duplicado = await findRendimentoDuplicado(idAtivo, dtRendimento, idUser, Number(valorRecebido));
+            if (duplicado) {
+                duplicados.push({ ticker, dtRendimento, valorRecebido });
+                continue;
+            }
+
+            // Insere o rendimento
+            const resultado = await insertRendimento({
+                idAtivo,
+                dtRendimento,
+                valorRecebido: Number(valorRecebido),
+                reinvestido: false,
+                idUser
+            });
+
+            importados.push(resultado);
+        }
+
+        return {
+            totalImportados: importados.length,
+            totalIgnorados: ignorados.length,
+            totalDuplicados: duplicados.length,
+            ignorados,
+            duplicados
+        };
+
+    } catch (error) {
+        throw new Error(`Erro ao importar rendimentos B3: ${error.message}`);
+    }
+}
+//#endregion
+
+
 export {
     listarRendimentos,
     carregarGraficoDashboard,
@@ -235,5 +314,6 @@ export {
     carregarAtivosParaModal,
     criarRendimento,
     excluirRendimento,
-    calculoCardsRendimento
+    calculoCardsRendimento,
+    importarRendimentosB3
 };

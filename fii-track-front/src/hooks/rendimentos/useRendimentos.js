@@ -13,6 +13,7 @@ export const useRendimentos = () => {
   const [loadingComp,      setLoadingComp]      = useState(false);
   const [loadingDelete,    setLoadingDelete]    = useState(false);
   const [loadingCards,     setLoadingCards]     = useState(false);
+  const [loadingImport,    setLoadingImport]    = useState(false);
 
   // Busca a lista de rendimentos (tabela histórico)
   const getRendimentos = useCallback(async ({ mes, ano, idAtivo }) => {
@@ -108,6 +109,20 @@ export const useRendimentos = () => {
     ));
   }, []);
 
+  // Importa rendimentos a partir do Excel B3
+  const importarB3 = useCallback(async (linhas) => {
+    setLoadingImport(true);
+    try {
+      const resultado = await rendimentosService.importarB3(linhas);
+      return resultado;
+    } catch (error) {
+      handleError(error);
+      return null;
+    } finally {
+      setLoadingImport(false);
+    }
+  }, []);
+
   return {
     rendimentos,
     detalheMensal,
@@ -119,6 +134,7 @@ export const useRendimentos = () => {
     loadingComp,
     loadingDelete,
     loadingCards,
+    loadingImport,
     getRendimentos,
     getGrafico,
     getComparacaoAnual,
@@ -126,5 +142,6 @@ export const useRendimentos = () => {
     criarRendimento,
     deleteRendimento,
     marcarComoReinvestido,
+    importarB3,
   };
 };
