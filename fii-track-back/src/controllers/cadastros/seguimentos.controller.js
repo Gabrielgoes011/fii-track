@@ -1,163 +1,140 @@
-import { openDb } from "../../config/configDb.js";
+import apiResponse from '../../utils/httpResponse.js';
+import {
+  listarSeguimentosService,
+  contarSeguimentosService,
+  cadastrarSeguimentoService,
+  atualizarSeguimentoService,
+  excluirSeguimentoService,
+} from '../../services/cadastros/seguimentos.service.js';
 
-
-//função auxiliar para buscar seguimento por id
-
-//#region função listar seguimentos 
+//#region => Listar seguimentos
 export async function listarSeguimentos(req, res) {
-  const db = await openDb();
-  const idUser = req.user.id;
   try {
-    const resultado = await db.query(`        
-        SELECT id, "nomeSeguimento" AS nome 
-        FROM seguimentos
-        WHERE "idUser" = $1
-        ORDER BY "nomeSeguimento" ASC `, [idUser]
-    );
-    // Verifica se a consulta retornou resultados
-    if (resultado.rows.length === 0) {
-      return res.status(200).json([]);
-    }
-    // Retorna os resultados  
-    res.status(200).json(resultado.rows);
+    const idUser = req.user.id;
+
+    //chama service que lista os seguimentos do usuário
+    const seguimentos = await listarSeguimentosService(idUser);
+
+    //retorna os resultados
+    return apiResponse.success(res, 'Seguimentos carregados com sucesso.', seguimentos);
 
   } catch (error) {
-    // Log do erro para depuração
-    console.error('Erro ao listar seguimentos:', error);
-    res.status(500).json({ error: 'Erro ao listar seguimentos.' });
+    console.error('Erro ao listar seguimentos na etapa do controller:', error);
+    return apiResponse.error(res, 'Erro ao listar seguimentos.');
   }
 }
 //#endregion
 
-//#region função Contar Seguimentos 
+//#region => Contar seguimentos
 export async function contarSeguimentos(req, res) {
-  const db = await openDb();
-  const idUser = req.user.id;
   try {
-    const resultadoAtivo = await db.query(`
-        SELECT COUNT(id) AS totalSeguimentos
-        FROM seguimentos
-        WHERE "idUser" = $1
-    `, [idUser]);
+    const idUser = req.user.id;
 
-    // Retorna a contagem de usuários ativos, inativos e total
-    res.status(200).json({
-      ativos: resultadoAtivo.rows[0].totalseguimentos,
-    });
+    //chama service que conta os seguimentos do usuário
+    const resultado = await contarSeguimentosService(idUser);
+
+    //retorna o total
+    return apiResponse.success(res, 'Contagem realizada com sucesso.', resultado);
+
   } catch (error) {
-    console.error('Erro ao contar usuários:', error);
-    res.status(500).json({ error: 'Erro ao contar usuários.' });
+    console.error('Erro ao contar seguimentos na etapa do controller:', error);
+    return apiResponse.error(res, 'Erro ao contar seguimentos.');
   }
 }
 //#endregion
 
-//#region Função para cadastrar seguimentos
+//#region => Cadastrar seguimento
 export async function cadastrarSeguimento(req, res) {
-  const dados = req.body;
-  const db = await openDb();
-  const idUser = req.user.id;
-
-  if (!dados.nome) {
-    return res.status(400).json({ error: 'O campo nao pode ser vazio' });
-  }
-
-  const existeSeguimento = await db.query(`
-      SELECT id 
-      FROM seguimentos
-      WHERE "nomeSeguimento" = $1 AND "idUser" = $2`, [dados.nome, idUser]
-  );
-  if (existeSeguimento.rows.length > 0) {
-    return res.status(400).json({ error: 'Seguimento ja cadastrado!' });
-  }
-
   try {
-    const insertSeguimento = await db.query(`
-        INSERT INTO seguimentos
-          ("nomeSeguimento", "idUser")
-        VALUES 
-          ($1, $2)
-        RETURNING id`,
-      [dados.nome, idUser]
-    );
+    const idUser = req.user.id;
+    const { nome } = req.body;
 
-    //
-    return res.status(201).json({ message: 'Seguimento cadastrado com sucesso! ' });
-
-  } catch (error) {
-    return res.status(500).json({ error: 'Erro ao inserir o seguimento.', errorDetails: error.message });
-  }
-}
-//#endregion
-
-//#region deleteSeguimento - Função para deletar seguimentos
-export async function deleteSeguimento(req, res) {
-  const idSeguimento = req.params.id;
-  const db = await openDb();
-
-  try {
-    const existeSeguimento = await db.query(`
-        SELECT id, "nomeSeguimento" 
-        FROM seguimentos
-        WHERE id = $1 `, [idSeguimento]
-    );
-    if (existeSeguimento.rows.length === 0) {
-      return res.status(400).json({ error: 'Seguimento não encontrado!' });
+    //validação básica no controller
+    if (!nome) {
+      return apiResponse.validationError(res, 'O campo nome não pode ser vazio.');
     }
 
-    await db.query(` 
-      DELETE 
-      FROM seguimentos
-      WHERE id = $1 `, [idSeguimento]
-    );
+    //chama service que cadastra o seguimento
+    const novo = await cadastrarSeguimentoService(nome, idUser);
 
-    return res.json({
-      statusCode: 'Sucesso (200)',
-      seguimento: `${existeSeguimento.rows[0].nomeSeguimento}`,
-      message: 'O seguimento foi deletado com sucesso !'
-    });
+    //retorna sucesso com status 201
+    return apiResponse.success(res, 'Seguimento cadastrado com sucesso!', novo, 201);
+
   } catch (error) {
-    return res.status(400).json({ error: 'Erro ao deletar o seguimento.' });
+    console.error('Erro ao cadastrar seguimento na etapa do controller:', error);
+
+    //erros de negócio (duplicata, validação) voltam como 400
+    if (error.message.includes('já cadastrado') || error.message.includes('vazio')) {
+      return apiResponse.validationError(res, error.message);
+    }
+
+    return apiResponse.error(res, 'Erro ao cadastrar seguimento.');
   }
 }
 //#endregion
 
-// #region função para atualizar seguimento
+//#region => Atualizar seguimento
 export async function updateSeguimento(req, res) {
-  //passa id e nome pelo corpo da requisição
-  const dados = req.body;
-  const db = await openDb();
-  const idUser = req.user.id;
+  try {
+    const idUser = req.user.id;
+    const { idSeguimento, nome } = req.body;
 
-  if (!dados.nome) {
-    return res.status(400).json({ error: 'O campo nao pode ser vazio' });
-  }
-
-  //busca o seguimento já filtrando pelo dono, pra ninguém editar seguimento de outro usuário
-  const existeSeguimento = await db.query(`
-      SELECT id
-      FROM seguimentos
-      WHERE id = $1 AND "idUser" = $2 `, [dados.idSeguimento, idUser]
-  );
-  if (existeSeguimento.rows.length === 0) {
-    return res.status(400).json({ error: 'Seguimento nao encontrado!' });
-  } else {
-    try {
-      await db.query(`
-      UPDATE seguimentos
-      SET "nomeSeguimento" = $1
-      WHERE id = $2 AND "idUser" = $3`, [dados.nome, dados.idSeguimento, idUser]
-      );
-
-      //implementar log de atualização de seguimento depois de implementar tabela de logs
-
-      return res.json({
-        statusCode: 'Sucesso (200)',
-        seguimento: `${dados.nome}`,
-        message: 'O seguimento foi atualizado com sucesso !'
-      });
-    } catch (error) {
-      return res.status(400).json({ error: 'Erro ao atualizar o seguimento.' });
+    //validação básica no controller
+    if (!idSeguimento) {
+      return apiResponse.validationError(res, 'O ID do seguimento é obrigatório.');
     }
+    if (!nome) {
+      return apiResponse.validationError(res, 'O campo nome não pode ser vazio.');
+    }
+
+    //chama service que atualiza o seguimento
+    const atualizado = await atualizarSeguimentoService(idSeguimento, nome, idUser);
+
+    //retorna sucesso
+    return apiResponse.success(res, 'Seguimento atualizado com sucesso!', atualizado);
+
+  } catch (error) {
+    console.error('Erro ao atualizar seguimento na etapa do controller:', error);
+
+    //erro de negócio (não encontrado)
+    if (error.message.includes('não encontrado') || error.message.includes('vazio')) {
+      return apiResponse.validationError(res, error.message);
+    }
+
+    return apiResponse.error(res, 'Erro ao atualizar seguimento.');
   }
 }
-// #endregion
+//#endregion
+
+//#region => Excluir seguimento
+export async function deleteSeguimento(req, res) {
+  try {
+    const idUser    = req.user.id;
+    const idSeguimento = req.params.id;
+
+    //validação básica no controller
+    if (!idSeguimento) {
+      return apiResponse.validationError(res, 'O ID do seguimento é obrigatório.');
+    }
+
+    //chama service que valida e exclui o seguimento
+    const excluido = await excluirSeguimentoService(idSeguimento, idUser);
+
+    //retorna sucesso
+    return apiResponse.success(res, `Seguimento "${excluido.nome}" excluído com sucesso!`);
+
+  } catch (error) {
+    console.error('Erro ao excluir seguimento na etapa do controller:', error);
+
+    //erro de negócio (não encontrado, ou tem ativos vinculados)
+    if (
+      error.message.includes('não encontrado') ||
+      error.message.includes('ativo(s) vinculado')
+    ) {
+      return apiResponse.validationError(res, error.message);
+    }
+
+    return apiResponse.error(res, 'Erro ao excluir seguimento.');
+  }
+}
+//#endregion

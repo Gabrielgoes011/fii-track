@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AiOutlineBarChart, AiOutlineAreaChart } from 'react-icons/ai';
-import { FiAlertTriangle, FiPlus, FiTrash2, FiRepeat } from 'react-icons/fi';
+import { FiAlertTriangle, FiPlus, FiTrash2, FiRepeat, FiUpload, FiFileText, FiDownload } from 'react-icons/fi';
 import NovaOperacaoModal from './components/modalNovaOperacao';
 import { BarChart, AreaChart } from '../../components/Charts';
 import { useOperacoes } from '../../hooks/operacoes/useOperacoes';
 import { DataCard } from '../../components/DataCard';
 import SlideModal from '../../components/SlideModal/SlideModal';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { toastInfo } from '../../utils/responseUtils';
 
 const CHART_KEYS   = ['Compra', 'Venda', 'Liquido'];
 const CHART_COLORS = {
@@ -31,6 +32,7 @@ export default function PaginaOperacoes() {
   const [modalExclusaoAberto,  setModalExclusaoAberto]  = useState(false);
   const [operacaoParaExcluir,  setOperacaoParaExcluir]  = useState(null);
   const [graficoAberto,        setGraficoAberto]        = useState(false);
+  const [modalImportAberto,    setModalImportAberto]    = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -207,6 +209,18 @@ export default function PaginaOperacoes() {
             {/* Header mobile */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
               <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>Operações</h2>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setModalImportAberto(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '8px 12px', borderRadius: '8px',
+                  background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)',
+                  color: '#60a5fa', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                }}
+              >
+                <FiUpload size={14} />
+              </button>
               <button
                 onClick={() => setModalAberto(true)}
                 style={{
@@ -220,6 +234,7 @@ export default function PaginaOperacoes() {
               >
                 <FiPlus size={15} /> Nova
               </button>
+            </div>
             </div>
 
             {/* Filtros de mês e ano */}
@@ -322,6 +337,22 @@ export default function PaginaOperacoes() {
             titulo="Registro de Operações"
             botaoLabel="Nova Operação"
             onBotaoClick={() => setModalAberto(true)}
+            botaoExtra={
+              <button
+                onClick={() => setModalImportAberto(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '0.5rem 1rem', borderRadius: '8px',
+                  background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)',
+                  color: '#60a5fa', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.2)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.1)'; }}
+              >
+                <FiUpload size={14} /> Importar Excel
+              </button>
+            }
             labelpesquisa="Buscar operações..."
             filtros={
               <select
@@ -347,6 +378,102 @@ export default function PaginaOperacoes() {
         onClose={() => setModalAberto(false)}
         onSuccess={(payload) => handleLancarOperacao(payload, { ano: anoSelecionado, mes: mesSelecionado })}
       />
+
+      {/* ── Modal de escolha: tipo de importação ── */}
+      {modalImportAberto && (
+        <div
+          onClick={() => setModalImportAberto(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1100,
+            backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#1e293b', border: '1px solid #334155',
+              borderRadius: '16px', padding: '2rem',
+              width: '100%', maxWidth: '480px',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  Importar Operações
+                </h2>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                  Escolha o formato do arquivo
+                </p>
+              </div>
+              <button
+                onClick={() => setModalImportAberto(false)}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Opções */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* Opção 1 — Padrão FIITrack */}
+              <button
+                onClick={() => { setModalImportAberto(false); toastInfo('Em breve: importação pelo modelo FIITrack.'); }}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '14px',
+                  padding: '1rem 1.25rem', borderRadius: '12px', cursor: 'pointer',
+                  background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)',
+                  textAlign: 'left', transition: 'all 0.2s',
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.14)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.07)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)'; }}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <FiDownload size={18} color="#10b981" />
+                </div>
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    Modelo FIITrack
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    Baixe e preencha nossa planilha padrão. Importação simples e sem erros.
+                  </p>
+                </div>
+              </button>
+
+              {/* Opção 2 — Nota de corretagem B3 */}
+              <button
+                onClick={() => { setModalImportAberto(false); toastInfo('Em breve: importação via nota de corretagem B3.'); }}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '14px',
+                  padding: '1rem 1.25rem', borderRadius: '12px', cursor: 'pointer',
+                  background: 'rgba(96,165,250,0.07)', border: '1px solid rgba(96,165,250,0.2)',
+                  textAlign: 'left', transition: 'all 0.2s',
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.14)'; e.currentTarget.style.borderColor = 'rgba(96,165,250,0.4)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.07)'; e.currentTarget.style.borderColor = 'rgba(96,165,250,0.2)'; }}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(96,165,250,0.15)', border: '1px solid rgba(96,165,250,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <FiFileText size={18} color="#60a5fa" />
+                </div>
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    Nota de Corretagem B3
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    Importe diretamente o arquivo exportado pela B3. Detectamos as operações automaticamente.
+                  </p>
+                </div>
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Confirmação de Exclusão */}
       <SlideModal

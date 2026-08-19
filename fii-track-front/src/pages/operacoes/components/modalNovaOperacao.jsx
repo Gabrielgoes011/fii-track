@@ -62,9 +62,8 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
 
     try {
       setCarregando(true);
-      await api.post('/lancarOperacao', payload);
+      if (onSuccess) await onSuccess(payload);
       onClose();
-      if (onSuccess) onSuccess(payload);
     } catch (err) {
       console.error(err);
     } finally {

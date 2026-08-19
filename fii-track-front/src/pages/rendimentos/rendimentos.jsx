@@ -1076,6 +1076,7 @@ export default function PaginaRendimentos() {
   const [tipoGrafico, setTipoGrafico] = useState('barras');
   const [anosComp, setAnosComp] = useState(['2024', '2025', '2026']);
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalImportAberto, setModalImportAberto] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState(isMobile ? 'historico' : 'graficos');
 
   const [modalExclusao, setModalExclusao] = useState(false);
@@ -1435,7 +1436,7 @@ export default function PaginaRendimentos() {
               <div>
                 <div style={{ ...S.mobileHeader, justifyContent: 'flex-end', gap: '8px' }}>
                   <button
-                    onClick={() => toastInfo('Importação via Excel em desenvolvimento.')}
+                    onClick={() => setModalImportAberto(true)}
                     style={{ ...S.btnNovoMobile, background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
                     onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.45)'; }}
                     onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)'; }}
@@ -1546,7 +1547,7 @@ export default function PaginaRendimentos() {
                 onBotaoClick={() => setModalAberto(true)}
                 botaoExtra={
                   <button
-                    onClick={() => toastInfo('Importação via Excel em desenvolvimento.')}
+                    onClick={() => setModalImportAberto(true)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       padding: '0.5rem 1rem',
