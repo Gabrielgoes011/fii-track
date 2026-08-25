@@ -96,8 +96,8 @@ export async function updateSeguimento(req, res) {
   } catch (error) {
     console.error('Erro ao atualizar seguimento na etapa do controller:', error);
 
-    //erro de negócio (não encontrado)
-    if (error.message.includes('não encontrado') || error.message.includes('vazio')) {
+    //erro de negócio (não encontrado, ou é padrão do sistema)
+    if (error.message.includes('não encontrado') || error.message.includes('vazio') || error.message.includes('padrão do sistema')) {
       return apiResponse.validationError(res, error.message);
     }
 
@@ -109,7 +109,7 @@ export async function updateSeguimento(req, res) {
 //#region => Excluir seguimento
 export async function deleteSeguimento(req, res) {
   try {
-    const idUser    = req.user.id;
+    const idUser = req.user.id;
     const idSeguimento = req.params.id;
 
     //validação básica no controller
@@ -126,10 +126,11 @@ export async function deleteSeguimento(req, res) {
   } catch (error) {
     console.error('Erro ao excluir seguimento na etapa do controller:', error);
 
-    //erro de negócio (não encontrado, ou tem ativos vinculados)
+    //erro de negócio (não encontrado, ou tem ativos vinculados, ou é padrão do sistema)
     if (
       error.message.includes('não encontrado') ||
-      error.message.includes('ativo(s) vinculado')
+      error.message.includes('ativo(s) vinculado') ||
+      error.message.includes('padrão do sistema')
     ) {
       return apiResponse.validationError(res, error.message);
     }

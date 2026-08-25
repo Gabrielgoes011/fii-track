@@ -45,12 +45,15 @@ ALTER TABLE IF EXISTS public."credenciaisUsuario"
 -- =================================================================
 -- Tabela: seguimentos
 -- Categorias dos fundos imobiliários (ex: Logística, Lajes, Papel).
+-- Seguimentos com defaultSistem = true e idUser = 0 são visíveis
+-- para todos os usuários e não podem ser editados/excluídos.
 -- =================================================================
 CREATE TABLE IF NOT EXISTS public.seguimentos
 (
     id serial NOT NULL, -- ID único do seguimento
     "nomeSeguimento" character varying(100) COLLATE pg_catalog."default" NOT NULL, -- Nome do seguimento
-    "idUser" integer, -- Vinculado ao usuário que o cadastrou
+    "idUser" integer, -- Vinculado ao usuário que o cadastrou (0 = sistema)
+    "defaultSistem" boolean NOT NULL DEFAULT false, -- Flag para seguimentos padrão do sistema (visíveis para todos)
     CONSTRAINT segmentos_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.seguimentos

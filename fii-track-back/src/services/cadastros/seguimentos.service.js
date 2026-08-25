@@ -86,6 +86,11 @@ async function atualizarSeguimentoService(idSeguimento, nome, idUser) {
       throw new Error('Seguimento não encontrado.');
     }
 
+    //bloqueia edição de seguimentos padrão do sistema
+    if (existente.defaultSistem) {
+      throw new Error('Seguimentos padrão do sistema não podem ser editados.');
+    }
+
     //executa a atualização
     await updateSeguimentoRepo(idSeguimento, nome.trim(), idUser);
 
@@ -107,6 +112,11 @@ async function excluirSeguimentoService(idSeguimento, idUser) {
     const existente = await findSeguimentoByIdRepo(idSeguimento, idUser);
     if (!existente) {
       throw new Error('Seguimento não encontrado.');
+    }
+
+    //bloqueia exclusão de seguimentos padrão do sistema
+    if (existente.defaultSistem) {
+      throw new Error('Seguimentos padrão do sistema não podem ser excluídos.');
     }
 
     //verifica se há ativos vinculados a este seguimento — se houver, não pode excluir
