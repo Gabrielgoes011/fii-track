@@ -6,14 +6,15 @@ async function getSegmentosDropListRepo(idUser) {
   // Abre a conexão com o banco de dados
   const db = await openDb();
 
-  // Executa a query para buscar os segmentos do usuário
+  // Executa a query para buscar os segmentos do usuário + os padrão do sistema
   const result = await db.query(`
     SELECT
       id "idSeguimento",
-      "nomeSeguimento"
+      "nomeSeguimento",
+      "defaultSistem"
     FROM seguimentos
-    WHERE "idUser" = $1
-    ORDER BY "nomeSeguimento" ASC
+    WHERE "idUser" = $1 OR ("defaultSistem" = true AND "idUser" = 0)
+    ORDER BY "defaultSistem" DESC, "nomeSeguimento" ASC
   `, [idUser]);
 
   // Retorna os resultados da query
