@@ -2,6 +2,7 @@
 -- =================================================================
 -- FII-TRACK DATABASE SCHEMA (PostgreSQL)
 -- Arquivo de criação do banco de dados, organizado por tabelas.
+-- Informações sobre roles, RLS e permissões: ver db/dataBase.md
 -- =================================================================
 
 -- =================================================================
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.ativos
     "idUser" integer, -- Vinculado ao usuário que o cadastrou
     "dtCadastro" date DEFAULT CURRENT_DATE, -- Data do cadastro
     CONSTRAINT ativos_pkey PRIMARY KEY (id), -- Chave primária
-    CONSTRAINT ativos_ticker_key UNIQUE (ticker) -- Garante que o ticker seja único
+    CONSTRAINT ativos_ticker_user_unique UNIQUE (ticker, "idUser") -- Garante que o ticker seja único por usuário
 ) TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.ativos
     OWNER to neondb_owner;

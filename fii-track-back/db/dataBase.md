@@ -8,6 +8,42 @@ Como estamos gerenciando as permissões de forma explícita para o usuário da a
 
 ---
 
+## Informações das Roles do Banco
+
+| Role | Função | Observação |
+|------|--------|------------|
+| `neondb_owner` | Owner/Admin das tabelas | Usado para administração e ALTER ROLE |
+| `app_fiitrack` | Role da aplicação (API) | Usada na DATABASE_URL para conexões |
+
+### Configuração OBRIGATÓRIA da role app_fiitrack
+
+A role `app_fiitrack` **DEVE** ter `NOBYPASSRLS`. Caso contrário, o PostgreSQL **ignora todas as policies RLS**, mesmo que estejam habilitadas.
+
+```sql
+-- Conecte com neondb_owner para executar:
+SET ROLE neondb_owner;
+ALTER ROLE app_fiitrack NOBYPASSRLS;
+```
+
+Para verificar se está correto:
+```sql
+SELECT rolname, rolsuper, rolbypassrls 
+FROM pg_roles 
+WHERE rolname = 'app_fiitrack';
+-- rolbypassrls DEVE ser false
+```
+
+---
+
+## Constraints Importantes
+
+| Tabela | Constraint | Tipo | Observação |
+|--------|-----------|------|------------|
+| `ativos` | `ativos_ticker_user_unique` | UNIQUE (ticker, "idUser") | Ticker é único **por usuário**, não global |
+| `seguimentos` | - | coluna `defaultSistem` | Seguimentos com `defaultSistem = true` e `idUser = 0` são visíveis para todos e não podem ser editados/excluídos |
+
+---
+
 ### Checklist de Comandos para Novas Tabelas
 
 Para cada nova tabela que você criar (ex: `public.sua_tabela_nova`), você **deve** executar os 3 passos a seguir.
