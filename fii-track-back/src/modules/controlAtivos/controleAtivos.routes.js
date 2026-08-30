@@ -5,10 +5,14 @@ import { rlsMiddleware } from '../../middleware/rlsMiddleware.js';
 import {
   getSegmentosDropList,
   getAtivosDropList,
-  addAtivoController
+  addAtivoController,
+  getControleAtivosController,
 } from './controleAtivos.controller.js';
 
 const router = express.Router();
+
+// Rota para listar o controle de ativos (POST — dados do usuário ficam no token, não na URL)
+router.post('/controle-ativos/listar', verificaToken, rlsMiddleware, getControleAtivosController);
 
 // Rota para listar segmentos para o dropdown
 router.get('/controle-ativos/segmentos', verificaToken, rlsMiddleware, getSegmentosDropList);

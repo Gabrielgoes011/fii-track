@@ -507,14 +507,36 @@ export default function PaginaControleAtivos() {
     setShowFormInline(true);
   };
 
-  const handleSalvarFormulario = (dados) => {
-    // TODO: Chamar API para salvar ativo na carteira
-    // await controleAtivosService.salvarAtivo(dados);
-    if (dados.percIdeal != null && ativoEmEdicao) {
-      handleSalvarPercIdeal(ativoEmEdicao.idAtivo, (dados.percIdeal * 100).toFixed(2));
+  const handleSalvarFormulario = async (dados) => {
+    if (ativoEmEdicao) {
+      // Edição: só atualiza % ideal
+      if (dados.percIdeal != null) {
+        await handleSalvarPercIdeal(ativoEmEdicao.idAtivo, (dados.percIdeal * 100).toFixed(2));
+      }
+    } else {
+      // Adição: resolve o idAtivo pelo ticker e chama a API
+      const ativoSelecionado = ativosSegmentoDropdown.find((a) => a.ticker === dados.ticker);
+      if (!ativoSelecionado) {
+        toastWarn('Ativo não encontrado. Selecione novamente.');
+        return;
+      }
+      try {
+        await controleAtivosService.adicionar({
+          idSegmento: Number(dados.segmentoId),
+          idAtivo: ativoSelecionado.idAtivo,
+          percIdeal: dados.percIdeal,
+          objetivo: dados.objetivo,
+        });
+        getCarteira();
+      } catch (error) {
+        handleError(error);
+        return;
+      }
     }
     setShowFormInline(false);
     setAtivoEmEdicao(null);
+    setSegmentoSelecionadoId('');
+    setAtivosSegmentoDropdown([]);
   };
 
   const handleExcluirAtivo = (idAtivo) => {

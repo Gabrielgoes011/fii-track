@@ -2,7 +2,8 @@ import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
   getSegmentosDropListRepo,
   getAtivosDropListRepo,
-  addAtivoRepo
+  addAtivoRepo,
+  getControleAtivosRepo,
 } from './controleAtivos.repository.js';
 
 //#region função listar segmentos para o dropdown
@@ -79,8 +80,33 @@ async function addAtivoService(idUser, dados) {
 
 
 
+//#region função listar controle de ativos
+async function getControleAtivosService(idUser) {
+  try {
+
+    // Chamada ao repositório para buscar o controle de ativos do usuário
+    const result = await getControleAtivosRepo(idUser);
+
+    // Retorna os resultados da query
+    return result;
+
+  } catch (error) {
+
+    // Loga o erro no console para depuração
+    console.error('Erro ao carregar controle de ativos na etapa do service:', error);
+
+    // Gera uma mensagem de erro segura para o usuário
+    const secureMessage = pgErrorHandler(error, 'Erro ao carregar controle de ativos.');
+
+    // Lança o erro para ser tratado no controller
+    throw new Error(secureMessage);
+  }
+}
+//#endregion
+
 export {
   getSegmentosDropListService,
   getAtivosDropListService,
-  addAtivoService
+  addAtivoService,
+  getControleAtivosService,
 };

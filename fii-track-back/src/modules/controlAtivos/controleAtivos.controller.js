@@ -3,7 +3,8 @@ import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
     getSegmentosDropListService,
     getAtivosDropListService,
-    addAtivoService
+    addAtivoService,
+    getControleAtivosService,
 } from './controleAtivos.service.js';
 
 //#region função listar segmentos para o dropdown
@@ -75,16 +76,16 @@ async function addAtivoController(req, res) {
         // Pega o id do usuário logado a partir do token
         const idUser = req.user.id;
 
-        // Pega o id do segmento a partir dos parâmetros da requisição
+        // Monta os dados a partir do body da requisição
         const dados = {
             idAtivo: req.body.idAtivo,
-            idSegmento: Number(req.params.idSegmento),
+            idSegmento: Number(req.body.idSegmento),
             percIdeal: req.body.percIdeal,
             objetivo: req.body.objetivo
         };
 
-        // Valida se o id do segmento foi fornecido
-        if (!dados.idSegmento) {
+        // Valida se os campos obrigatórios foram fornecidos
+        if (!dados.idSegmento || !dados.idAtivo) {
             return apiResponse.validationError(res, 'Tem campos faltando para adicionar o ativo.');
         }
 
@@ -109,8 +110,36 @@ async function addAtivoController(req, res) {
 
 // #endregion
 
+//#region função listar controle de ativos
+async function getControleAtivosController(req, res) {
+    try {
+
+        // Pega o id do usuário logado a partir do token
+        const idUser = req.user.id;
+
+        // Chama o service para buscar o controle de ativos
+        const result = await getControleAtivosService(idUser);
+
+        // Retorna os ativos encontrados
+        return apiResponse.success(res, 'Controle de ativos carregado com sucesso.', result);
+
+    } catch (error) {
+
+        // Loga o erro no console para depuração
+        console.error('Erro ao carregar controle de ativos na etapa do controller:', error);
+
+        // Gera uma mensagem de erro segura para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar controle de ativos.');
+
+        // Retorna a resposta de erro para o cliente
+        return apiResponse.error(res, secureMessage);
+    }
+}
+//#endregion
+
 export {
     getSegmentosDropList,
     getAtivosDropList,
-    addAtivoController
+    addAtivoController,
+    getControleAtivosController,
 }
