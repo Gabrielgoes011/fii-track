@@ -1,15 +1,15 @@
 import express from 'express'; //importa a biblioteca express
 import cors from 'cors'; // importa a biblioteca cors
 import cookieParser from 'cookie-parser';
-import usuariosRoutes from './routes/usuarios.routes.js'; // importa as rotas de usuários
-import seguimentosRoutes from './routes/seguimentos.routes.js'; // importa as rotas de segmentos
-import meusFundosRoutes from './routes/meusFundos.routes.js'; // importa as rotas de meus fundos
-import operacoesRoutes from './routes/operacoes.routes.js'; // importa as rotas de operações
-import rendimentosRoutes from './routes/rendimentos.routes.js'; // importa as rotas de rendimentos
-import authRoutes from './routes/auth/auth.routes.js'; // importa as rotas de autenticação
-import homeRoutes from './routes/home.routes.js'; // importa as rotas do home/dashboard
-import controleAtivosRoutes from './routes/controleAtivos.routes.js'; // importa as rotas de controle de ativos
-import changePassRoutes from './routes/changePass.routes.js'; // importa as rotas de troca de senha
+import usuariosRoutes from './modules/adm/usuarios.routes.js'; // importa as rotas de usuários
+import seguimentosRoutes from './modules/cadastros/segmentos/seguimentos.routes.js'; // importa as rotas de segmentos
+import meusFundosRoutes from './modules/cadastros/fundos/meusFundos.routes.js'; // importa as rotas de meus fundos
+import operacoesRoutes from './modules/operacao/operacoes.routes.js'; // importa as rotas de operações
+import rendimentosRoutes from './modules/rendimentos/rendimentos.routes.js'; // importa as rotas de rendimentos
+import authRoutes from './modules/login/login.routes.js'; // importa as rotas de autenticação
+import homeRoutes from './modules/home/home.routes.js'; // importa as rotas do home/dashboard
+import controleAtivosRoutes from './modules/controlAtivos/controleAtivos.routes.js'; // importa as rotas de controle de ativos
+import changePassRoutes from './modules/userProfile/changePassword/changePass.routes.js'; // importa as rotas de troca de senha
 
 //cria uma aplicação express
 
