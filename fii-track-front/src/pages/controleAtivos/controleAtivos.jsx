@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiTrash2, FiCheck, FiX, FiBriefcase } from 'react-icons/fi';
+import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiTrash2, FiCheck, FiX, FiBriefcase, FiSearch } from 'react-icons/fi';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -230,8 +230,89 @@ function BarraProgresso({ atual, ideal }) {
   );
 }
 
+// ─── Editor de Preço Teto (dentro do painel expandido) ───────────────────────
+function PrecoTetoEditor({ row, onSalvar }) {
+  const pvpDisponivel = /papel/i.test(row.segmento || '');
+  const [editando, setEditando] = useState(false);
+  const [valor, setValor] = useState(row.precoTeto != null ? String(row.precoTeto) : '');
+  const [usaPvp, setUsaPvp] = useState(row.modoPrecoTeto === 'pvp');
+
+  const abrir = (e) => {
+    e.stopPropagation();
+    setValor(row.precoTeto != null ? String(row.precoTeto) : '');
+    setUsaPvp(row.modoPrecoTeto === 'pvp');
+    setEditando(true);
+  };
+
+  const salvar = async (e) => {
+    e.stopPropagation();
+    await onSalvar(row.idAtivo, valor === '' ? null : parseFloat(valor), usaPvp ? 'pvp' : 'manual');
+    setEditando(false);
+  };
+
+  const limpar = async (e) => {
+    e.stopPropagation();
+    await onSalvar(row.idAtivo, null, 'manual');
+    setEditando(false);
+  };
+
+  const stop = (e) => e.stopPropagation();
+
+  if (editando) {
+    return (
+      <div onClick={stop} style={{ background: '#0b1120', border: '1px solid rgba(251,146,60,0.35)', borderRadius: '10px', padding: '10px 12px' }}>
+        <p style={{ margin: 0, fontSize: '10px', color: '#fb923c', textTransform: 'uppercase', fontWeight: 700 }}>
+          {usaPvp ? 'VP da cota (R$)' : 'Preço Teto (R$)'}
+        </p>
+        <input
+          type="number" min="0" step="0.01" value={valor} autoFocus
+          onChange={(e) => setValor(e.target.value)} onClick={stop}
+          style={{
+            width: '100%', marginTop: '6px', padding: '6px 8px', background: '#0f172a',
+            border: '1px solid #334155', borderRadius: '7px', color: '#f1f5f9', fontSize: '13px',
+            outline: 'none', boxSizing: 'border-box',
+          }}
+          placeholder="0,00"
+        />
+        {pvpDisponivel && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>
+            <input type="checkbox" checked={usaPvp} onChange={(e) => setUsaPvp(e.target.checked)} onClick={stop} />
+            Usa P/VP (valor patrimonial da cota)
+          </label>
+        )}
+        <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+          <button onClick={salvar} style={{ flex: 1, padding: '6px', background: 'linear-gradient(135deg,#f97316,#ea580c)', border: 'none', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
+          <button onClick={limpar} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>Limpar</button>
+          <button onClick={(e) => { stop(e); setEditando(false); }} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>X</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px', position: 'relative' }}>
+      <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
+      <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+        {row.precoTeto ? fmt(row.precoTeto) : '—'}
+        {row.modoPrecoTeto === 'pvp' && <span style={{ fontSize: '10px', color: '#fb923c', marginLeft: '5px' }}>P/VP</span>}
+      </p>
+      <p style={{ margin: '2px 0 0', fontSize: '11px', color: corRent(row.desconto) }}>
+        {row.desconto != null ? `Desc: ${fmtPerc(row.desconto)}` : '—'}
+      </p>
+      <button onClick={abrir} title="Definir preço teto" style={{
+        position: 'absolute', top: '8px', right: '8px', width: '22px', height: '22px', padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
+        borderRadius: '6px', color: '#fb923c', cursor: 'pointer',
+      }}>
+        <FiEdit2 size={11} />
+      </button>
+    </div>
+  );
+}
+
 // ─── Linha do Ativo (Card expansível) ─────────────────────────────────────────
-function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
+function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isMobile }) {
   const cfg = BADGE[row.acaoEquilibrio] ?? BADGE.equilibrio;
   const isNeg = (row.rentabilidadePerc ?? 0) < 0;
 
@@ -259,7 +340,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>{row.ticker}</span>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>{row.segmento}</span>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{
@@ -317,7 +398,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
               </div>
               <div>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{row.ticker}</span>
-                <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>{row.segmento}</span>
+                <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
               </div>
             </div>
 
@@ -382,7 +463,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
             <span style={{ fontSize: '11px', color: '#475569', fontWeight: 600 }}>Detalhes Financeiros</span>
           </div>
           <div style={{
-            display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+            display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(160px, 1fr))',
             gap: '10px',
           }}>
             {/* Preço Médio vs Atual */}
@@ -391,13 +472,13 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
               <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.precoMedio)}</p>
               <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
             </div>
-            {/* Preço Teto & Desconto */}
+            {/* Preço Teto & Desconto (editável) */}
+            <PrecoTetoEditor row={row} onSalvar={onSalvarPrecoTeto} />
+            {/* Proventos Recebidos */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{row.precoTeto ? fmt(row.precoTeto) : '—'}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '11px', color: corRent(row.desconto) }}>
-                {row.desconto != null ? `Desc: ${fmtPerc(row.desconto)}` : '—'}
-              </p>
+              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Proventos Recebidos</p>
+              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#a78bfa' }}>{fmt(row.totalProventos)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Total acumulado</p>
             </div>
             {/* Rent. + Proventos */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
@@ -420,16 +501,88 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, isMobile }) {
   );
 }
 
+// ─── Barra de Busca + Filtros ────────────────────────────────────────────────
+function BarraFiltros({
+  busca, setBusca, segmento, setSegmento, objetivo, setObjetivo, status, setStatus,
+  segmentos, objetivos, total, exibidos,
+}) {
+  const temFiltro = busca || segmento || objetivo || status;
+  const selStyle = {
+    padding: '0.5rem 0.75rem', background: '#1e293b', border: '1px solid #334155',
+    borderRadius: '8px', color: '#f8fafc', fontSize: '13px', outline: 'none', cursor: 'pointer',
+  };
+
+  return (
+    <div style={{
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px',
+      padding: '0.75rem', marginBottom: '10px',
+      display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center',
+    }}>
+      {/* Busca */}
+      <div style={{ position: 'relative', flex: '1 1 220px' }}>
+        <FiSearch size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+        <input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por ticker, setor ou objetivo..."
+          style={{
+            width: '100%', padding: '0.5rem 0.75rem 0.5rem 30px', background: '#1e293b',
+            border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc',
+            fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+          }}
+          onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+          onBlur={(e) => (e.target.style.borderColor = '#334155')}
+        />
+      </div>
+
+      {/* Filtros */}
+      <select value={segmento} onChange={(e) => setSegmento(e.target.value)} style={selStyle}>
+        <option value="">Todos os setores</option>
+        {segmentos.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      <select value={objetivo} onChange={(e) => setObjetivo(e.target.value)} style={selStyle}>
+        <option value="">Todos os objetivos</option>
+        {objetivos.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <select value={status} onChange={(e) => setStatus(e.target.value)} style={selStyle}>
+        <option value="">Todos os status</option>
+        <option value="aportar">Aportar</option>
+        <option value="equilibrio">Equilíbrio</option>
+        <option value="acima">Acima Ideal</option>
+      </select>
+
+      {temFiltro && (
+        <button
+          onClick={() => { setBusca(''); setSegmento(''); setObjetivo(''); setStatus(''); }}
+          style={{
+            padding: '0.5rem 0.75rem', background: 'transparent', border: '1px solid #334155',
+            borderRadius: '8px', color: '#94a3b8', fontSize: '12px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '5px',
+          }}
+        >
+          <FiX size={12} /> Limpar
+        </button>
+      )}
+
+      <span style={{ fontSize: '11px', color: '#475569', marginLeft: 'auto' }}>{exibidos} de {total}</span>
+    </div>
+  );
+}
+
 // ─── Componente Principal ─────────────────────────────────────────────────────
 export default function PaginaControleAtivos() {
   const isMobile = useIsMobile();
   const {
     resumo, ativos, loading, loadingCotacoes,
     getCarteira, atualizarCotacoes,
-    handleSalvarPrecoTeto, handleSalvarPercIdeal,
+    handleSalvarPrecoTeto, handleSalvarPercIdeal, handleExcluirAtivo,
   } = useControleAtivos();
 
   const [expandido, setExpandido] = useState(null);
+  const [busca, setBusca] = useState('');
+  const [filtroSegmento, setFiltroSegmento] = useState('');
+  const [filtroObjetivo, setFiltroObjetivo] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
   const [showFormInline, setShowFormInline] = useState(false);
   const [ativoEmEdicao, setAtivoEmEdicao] = useState(null);
   const [segmentos, setSegmentos] = useState([]);
@@ -479,6 +632,21 @@ export default function PaginaControleAtivos() {
       setLoadingAtivosSegmento(false);
     }
   };
+
+  // Opções e lista filtrada da carteira (busca + filtros do topo)
+  const opcoesSegmento = [...new Set(ativos.map(a => a.segmento).filter(Boolean))].sort();
+  const opcoesObjetivo = [...new Set(ativos.map(a => a.objetivo).filter(Boolean))].sort();
+  const ativosFiltrados = ativos.filter((a) => {
+    if (filtroSegmento && a.segmento !== filtroSegmento) return false;
+    if (filtroObjetivo && a.objetivo !== filtroObjetivo) return false;
+    if (filtroStatus && a.acaoEquilibrio !== filtroStatus) return false;
+    if (busca.trim()) {
+      const termo = busca.trim().toLowerCase();
+      const alvo = `${a.ticker} ${a.segmento} ${a.objetivo}`.toLowerCase();
+      if (!alvo.includes(termo)) return false;
+    }
+    return true;
+  });
 
   // Dados derivados para o formulário de edição/adicionar
   const carteiraSegmentos = [...new Set(ativos.map(a => a.segmento))];
@@ -539,11 +707,16 @@ export default function PaginaControleAtivos() {
     setAtivosSegmentoDropdown([]);
   };
 
-  const handleExcluirAtivo = (idAtivo) => {
-    // TODO: Chamar API para excluir ativo da carteira
-    // await controleAtivosService.excluir(idAtivo);
-    setShowFormInline(false);
-    setAtivoEmEdicao(null);
+  const handleExcluir = async (idAtivo) => {
+    const ok = window.confirm('Remover este ativo da carteira? As operações e proventos não são apagados.');
+    if (!ok) return;
+    const removido = await handleExcluirAtivo(idAtivo);
+    if (removido) {
+      setShowFormInline(false);
+      setAtivoEmEdicao(null);
+      setSegmentoSelecionadoId('');
+      setAtivosSegmentoDropdown([]);
+    }
   };
 
   const corRentResumo = resumo ? corRent(resumo.rentabilidadeReais) : '#94a3b8';
@@ -576,7 +749,7 @@ export default function PaginaControleAtivos() {
         {/* ── KPI Cards ── */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '10px', marginBottom: '1.25rem',
         }}>
           <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} />
@@ -587,15 +760,27 @@ export default function PaginaControleAtivos() {
             sub={{ txt: fmtPerc(resumo?.rentabilidadePerc), cor: corRentResumo }}
             cor={corRentResumo} loading={loading}
           />
+          <KpiCard
+            icon={FiCheck} label="Proventos Recebidos"
+            valor={fmt(resumo?.totalProventos)}
+            cor="#a78bfa" loading={loading}
+          />
+          <KpiCard
+            icon={FiRefreshCw} label="Rent. + Proventos"
+            valor={fmtSinal(resumo?.rentabilidadeComProventosReais)}
+            sub={{ txt: fmtPerc(resumo?.rentabilidadeComProventosPerc), cor: corRent(resumo?.rentabilidadeComProventosReais) }}
+            cor={corRent(resumo?.rentabilidadeComProventosReais)} loading={loading}
+          />
         </div>
 
         {/* ── Aviso cotações ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <AiOutlineInfoCircle size={12} color="#475569" />
-            <span style={{ fontSize: '11px', color: '#475569' }}>
-              Hover e clique para detalhes/edição
-              {resumo?.dataAtualizacaoCotacoes && ` · Atualização: ${resumo.dataAtualizacaoCotacoes}`}
+            <AiOutlineInfoCircle size={12} color={resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569'} />
+            <span style={{ fontSize: '11px', color: resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569' }}>
+              {resumo?.dataAtualizacaoCotacoes
+                ? `Cotações de ${resumo.dataAtualizacaoCotacoes}${resumo.cotacoesDesatualizadas ? ' · desatualizadas, clique em Atualizar' : ''}`
+                : 'Cotações ainda não carregadas · clique em Atualizar'}
             </span>
           </div>
           <button onClick={atualizarCotacoes} disabled={loadingCotacoes || loading} style={{
@@ -610,8 +795,20 @@ export default function PaginaControleAtivos() {
           </button>
         </div>
 
+        {/* ── Busca + Filtros ── */}
+        {!loading && ativos.length > 0 && (
+          <BarraFiltros
+            busca={busca} setBusca={setBusca}
+            segmento={filtroSegmento} setSegmento={setFiltroSegmento}
+            objetivo={filtroObjetivo} setObjetivo={setFiltroObjetivo}
+            status={filtroStatus} setStatus={setFiltroStatus}
+            segmentos={opcoesSegmento} objetivos={opcoesObjetivo}
+            total={ativos.length} exibidos={ativosFiltrados.length}
+          />
+        )}
+
         {/* ── Cabeçalho da tabela (desktop only) ── */}
-        {!isMobile && ativos.length > 0 && (
+        {!isMobile && ativosFiltrados.length > 0 && (
           <div style={{
             display: 'flex', padding: '10px 16px', marginBottom: '6px',
             fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px',
@@ -644,18 +841,23 @@ export default function PaginaControleAtivos() {
                 onSegmentoChange={setSegmentoSelecionadoId}
                 onCancelar={() => { setShowFormInline(false); setAtivoEmEdicao(null); setSegmentoSelecionadoId(''); setAtivosSegmentoDropdown([]); }}
                 onSalvar={handleSalvarFormulario}
-                onExcluir={handleExcluirAtivo}
+                onExcluir={handleExcluir}
               />
             )}
 
-            {/* Lista de ativos */}
-            {ativos.map(row => (
+            {/* Lista de ativos (filtrada) */}
+            {ativosFiltrados.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                Nenhum ativo encontrado com os filtros atuais.
+              </div>
+            ) : ativosFiltrados.map(row => (
               <LinhaAtivo
                 key={row.idAtivo}
                 row={row}
                 expandido={expandido === row.idAtivo}
                 onToggle={() => handleToggleExpand(row.idAtivo)}
                 onEditar={handleEditarAtivo}
+                onSalvarPrecoTeto={handleSalvarPrecoTeto}
                 isMobile={isMobile}
               />
             ))}
@@ -665,7 +867,16 @@ export default function PaginaControleAtivos() {
         {/* Rodapé com soma % ideal */}
         {ativos.length > 0 && (
           <div style={{ marginTop: '12px', padding: '10px 16px', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#475569' }}>{ativos.length} ativos na carteira</span>
+            <span style={{ fontSize: '11px', color: '#475569' }}>
+              {ativosFiltrados.length === ativos.length
+                ? `${ativos.length} ativos na carteira`
+                : `${ativosFiltrados.length} de ${ativos.length} ativos`}
+            </span>
+            {resumo?.totalParaAportar > 0 && (
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#60a5fa' }}>
+                Total a Aportar p/ equilíbrio: {fmt(resumo.totalParaAportar)}
+              </span>
+            )}
             <span style={{ fontSize: '12px', fontWeight: 600 }}>
               Soma % Ideal:{' '}
               <span style={{ color: Math.abs(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0) - 1) < 0.001 ? '#4ade80' : '#f87171' }}>

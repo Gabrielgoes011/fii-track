@@ -121,6 +121,25 @@ CREATE INDEX IF NOT EXISTS idx_rendimentos_ativo ON public.rendimentos USING btr
 CREATE INDEX IF NOT EXISTS idx_rendimentos_data ON public.rendimentos USING btree ("dtRendimento" ASC NULLS LAST) TABLESPACE pg_default;
 
 -- =================================================================
+-- Tabela: cotacoes
+-- Cache das cotações da brapi.dev — 1 linha por ticker, compartilhada
+-- entre todos os usuários (dado de mercado, sem RLS).
+-- =================================================================
+CREATE TABLE IF NOT EXISTS public.cotacoes
+(
+    ticker               character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    preco                numeric(12,2),
+    "fechamentoAnterior" numeric(12,2),
+    variacao             numeric(12,4),
+    "variacaoPerc"       numeric(8,4),
+    "dtPregao"           timestamp with time zone,
+    "dtConsulta"         timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT cotacoes_pkey PRIMARY KEY (ticker)
+) TABLESPACE pg_default;
+ALTER TABLE IF EXISTS public.cotacoes
+    OWNER to neondb_owner;
+
+-- =================================================================
 -- Tabela: controleAtivos (ou metas_carteira)
 -- Armazena as metas de alocação e preço teto para cada ativo.
 -- Nota: O nome da tabela no script original é 'controleAtivos', mas a documentação sugere 'metas_carteira'.
@@ -132,10 +151,13 @@ CREATE TABLE IF NOT EXISTS public."controleAtivos"
     "idAtivo" integer NOT NULL, -- Chave estrangeira para 'ativos'
     "idSegmento" integer NOT NULL, -- Chave estrangeira para 'seguimentos'
     objetivo character varying(50) COLLATE pg_catalog."default" NOT NULL, -- Objetivo do ativo na carteira (ex: Renda, Crescimento)
-    "percIdeal" numeric(5,2) NOT NULL, -- Percentual ideal da carteira para este ativo
+    "percIdeal" numeric(6,4) NOT NULL, -- Percentual ideal da carteira para este ativo (fração: 0.0834 = 8,34%)
+    "precoTeto" numeric(12,2), -- Preço máximo aceitável para a cota (nulo = não definido)
+    "modoPrecoTeto" character varying(10) NOT NULL DEFAULT 'manual', -- 'manual' (valor fixo) ou 'pvp' (valor patrimonial da cota — fundos de papel)
     "dtCadastro" date DEFAULT CURRENT_DATE,
     CONSTRAINT controle_ativos_pkey PRIMARY KEY (id),
-    CONSTRAINT controle_ativos_unico UNIQUE ("idUser", "idAtivo") -- Garante uma meta por ativo/usuário
+    CONSTRAINT controle_ativos_unico UNIQUE ("idUser", "idAtivo"), -- Garante uma meta por ativo/usuário
+    CONSTRAINT controle_ativos_modo_preco_teto_check CHECK ("modoPrecoTeto" IN ('manual', 'pvp'))
 ) TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public."controleAtivos"
     OWNER to neondb_owner;

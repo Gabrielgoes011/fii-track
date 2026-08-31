@@ -6,6 +6,13 @@ export const controleAtivosService = {
     return res.data;
   },
 
+  // Busca as cotações atuais dos ativos da carteira na brapi.dev (via backend).
+  // Só deve ser chamada sob demanda (botão "Atualizar Cotações").
+  atualizarCotacoes: async () => {
+    const res = await api.post('/controle-ativos/cotacoes');
+    return res.data; // { cotacoes: { TICKER: {...} }, atualizadoEm: ISO }
+  },
+
   listarSegmentos: async () => {
     const res = await api.get('/controle-ativos/segmentos');
     return res.data;
@@ -16,8 +23,8 @@ export const controleAtivosService = {
     return res.data;
   },
 
-  salvarPrecoTeto: async (idAtivo, precoTeto) => {
-    const res = await api.put(`/controle-ativos/preco-teto/${idAtivo}`, { precoTeto });
+  salvarPrecoTeto: async (idAtivo, precoTeto, modo = 'manual') => {
+    const res = await api.put(`/controle-ativos/preco-teto/${idAtivo}`, { precoTeto, modo });
     return res.data;
   },
 
@@ -28,6 +35,11 @@ export const controleAtivosService = {
 
   adicionar: async (dados) => {
     const res = await api.post('/controle-ativos/adicionar', dados);
+    return res.data;
+  },
+
+  excluir: async (idAtivo) => {
+    const res = await api.delete(`/controle-ativos/${idAtivo}`);
     return res.data;
   },
 };

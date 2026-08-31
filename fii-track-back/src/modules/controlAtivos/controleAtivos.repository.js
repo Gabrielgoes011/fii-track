@@ -75,15 +75,25 @@ async function getControleAtivosRepo(idUser) {
   // CTEs calculam a posição (custo médio ponderado) e os proventos por ativo.
   // LEFT JOIN garante que ativos sem operação ou sem provento ainda aparecem na lista.
   const result = await db.query(`
-    WITH posicao AS (
+    WITH operacoes_agg AS (
       SELECT
         o."idAtivo",
-        SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade ELSE -o.quantidade END)                                          "quantidade",
-        SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade * o.preco ELSE 0 END)
-          / NULLIF(SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade ELSE 0 END), 0)                                       "precoMedio"
+        SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade ELSE -o.quantidade END) "quantidadeLiquida",
+        SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade ELSE 0 END) "quantidadeComprada",
+        SUM(CASE WHEN o.tipo = 'Compra' THEN o.quantidade * o.preco ELSE 0 END) "custoCompras"
       FROM operacoes o
       WHERE o."idUser" = $1
       GROUP BY o."idAtivo"
+    ),
+    posicao AS (
+      SELECT
+        "idAtivo",
+        "quantidadeLiquida" AS "quantidade",
+        -- preco medio = custo total das compras / quantidade total comprada.
+        -- NULLIF(..., 0) troca o divisor 0 por NULL para evitar divisao por zero
+        -- (ativo sem nenhuma compra); o COALESCE la embaixo converte esse NULL em 0.
+        "custoCompras" / NULLIF("quantidadeComprada", 0) AS "precoMedio"
+      FROM operacoes_agg
     ),
     proventos AS (
       SELECT
@@ -94,29 +104,179 @@ async function getControleAtivosRepo(idUser) {
       GROUP BY r."idAtivo"
     )
     SELECT
-      ca.id,
-      ca."idAtivo",
-      a.ticker,
-      ca."idSegmento",
-      s."nomeSeguimento"                                                          "segmento",
-      ca."percIdeal",
-      ca.objetivo,
-      ca."dtCadastro",
-      COALESCE(p.quantidade,    0)                                                "quantidade",
-      COALESCE(p."precoMedio",  0)                                                "precoMedio",
-      COALESCE(p.quantidade, 0) * COALESCE(p."precoMedio", 0)                    "custo",
-      COALESCE(r."totalProventos", 0)                                             "totalProventos"
-    FROM "controleAtivos" ca
-    JOIN ativos      a ON a.id  = ca."idAtivo"
-    JOIN seguimentos s ON s.id  = ca."idSegmento"
-    LEFT JOIN posicao  p ON p."idAtivo" = ca."idAtivo"
-    LEFT JOIN proventos r ON r."idAtivo" = ca."idAtivo"
-    WHERE ca."idUser" = $1
-    ORDER BY s."nomeSeguimento" ASC, a.ticker ASC
+      a.id,
+      a."idAtivo",
+      b.ticker,
+      a."idSegmento",
+      c."nomeSeguimento" "segmento",
+      a."percIdeal",
+      a.objetivo,
+      a."precoTeto",
+      a."modoPrecoTeto",
+      a."dtCadastro",
+      COALESCE(d.quantidade, 0) "quantidade",
+      COALESCE(d."precoMedio", 0) "precoMedio",
+      COALESCE(d.quantidade, 0) * COALESCE(d."precoMedio", 0) "custo",
+      COALESCE(e."totalProventos", 0) "totalProventos",
+      f.preco "precoAtual",
+      f."variacaoPerc" "variacaoPercDia",
+      f."dtConsulta" "dtConsultaCotacao"
+    FROM "controleAtivos" a INNER JOIN ativos b
+      ON b.id = a."idAtivo"
+    INNER JOIN seguimentos c
+      ON c.id = a."idSegmento"
+    LEFT JOIN posicao d
+      ON d."idAtivo" = a."idAtivo"
+    LEFT JOIN proventos e
+      ON e."idAtivo" = a."idAtivo"
+    LEFT JOIN cotacoes f
+      ON f.ticker = b.ticker
+    WHERE a."idUser" = $1
+    ORDER BY c."nomeSeguimento" ASC, b.ticker ASC
   `, [idUser]);
 
   // Retorna os resultados da query
   return result.rows;
+}
+
+//#endregion
+
+//#region Query para listar os tickers que o usuário tem na carteira
+async function getTickersCarteiraRepo(idUser) {
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Busca os tickers dos ativos que compõem o controle de ativos do usuário
+  const result = await db.query(`
+    SELECT b.ticker
+    FROM "controleAtivos" a
+    INNER JOIN ativos b ON b.id = a."idAtivo"
+    WHERE a."idUser" = $1
+    ORDER BY b.ticker ASC
+  `, [idUser]);
+
+  // Retorna apenas a lista de tickers (strings)
+  return result.rows.map((row) => row.ticker);
+}
+
+//#endregion
+
+//#region Query para ler o cache de cotações de uma lista de tickers
+async function getCotacoesSalvasRepo(tickers) {
+
+  // Sem tickers: nada a consultar
+  if (!Array.isArray(tickers) || tickers.length === 0) {
+    return [];
+  }
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Busca as cotações já salvas para os tickers informados
+  const result = await db.query(`
+    SELECT ticker, preco, "fechamentoAnterior", variacao, "variacaoPerc", "dtPregao", "dtConsulta"
+    FROM cotacoes
+    WHERE ticker = ANY($1)
+  `, [tickers]);
+
+  return result.rows;
+}
+
+//#endregion
+
+//#region Query para gravar/atualizar o cache de cotações (UPSERT por ticker)
+async function upsertCotacoesRepo(itens) {
+
+  // Sem itens: nada a gravar
+  if (!Array.isArray(itens) || itens.length === 0) {
+    return;
+  }
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Poucos tickers por vez (carteira do usuário) — um UPSERT por linha é suficiente.
+  for (const item of itens) {
+    await db.query(`
+      INSERT INTO cotacoes (ticker, preco, "fechamentoAnterior", variacao, "variacaoPerc", "dtPregao", "dtConsulta")
+      VALUES ($1, $2, $3, $4, $5, $6, now())
+      ON CONFLICT (ticker) DO UPDATE SET
+        preco                = EXCLUDED.preco,
+        "fechamentoAnterior" = EXCLUDED."fechamentoAnterior",
+        variacao             = EXCLUDED.variacao,
+        "variacaoPerc"       = EXCLUDED."variacaoPerc",
+        "dtPregao"           = EXCLUDED."dtPregao",
+        "dtConsulta"         = now()
+    `, [
+      item.ticker,
+      item.preco ?? null,
+      item.fechamentoAnterior ?? null,
+      item.variacao ?? null,
+      item.variacaoPerc ?? null,
+      item.dtPregao ?? null,
+    ]);
+  }
+}
+
+//#endregion
+
+//#region Query para atualizar o percentual ideal de um ativo na carteira
+async function updatePercIdealRepo(idUser, idAtivo, percIdeal) {
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Atualiza somente o registro do próprio usuário (RLS + WHERE por idUser)
+  const result = await db.query(`
+    UPDATE "controleAtivos"
+    SET "percIdeal" = $3
+    WHERE "idUser" = $1 AND "idAtivo" = $2
+    RETURNING id
+  `, [idUser, idAtivo, percIdeal]);
+
+  // Retorna o registro atualizado (undefined se não existir)
+  return result.rows[0];
+}
+
+//#endregion
+
+//#region Query para atualizar o preço teto de um ativo na carteira
+async function updatePrecoTetoRepo(idUser, idAtivo, precoTeto, modoPrecoTeto) {
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Atualiza o preço teto e o modo de cálculo ('manual' ou 'pvp')
+  const result = await db.query(`
+    UPDATE "controleAtivos"
+    SET "precoTeto" = $3,
+        "modoPrecoTeto" = $4
+    WHERE "idUser" = $1 AND "idAtivo" = $2
+    RETURNING id, "precoTeto", "modoPrecoTeto"
+  `, [idUser, idAtivo, precoTeto, modoPrecoTeto]);
+
+  // Retorna o registro atualizado (undefined se não existir)
+  return result.rows[0];
+}
+
+//#endregion
+
+//#region Query para remover um ativo do controle de ativos do usuário
+async function deleteAtivoRepo(idUser, idAtivo) {
+
+  // Abre a conexão com o banco de dados
+  const db = await openDb();
+
+  // Remove apenas o registro do próprio usuário
+  const result = await db.query(`
+    DELETE FROM "controleAtivos"
+    WHERE "idUser" = $1 AND "idAtivo" = $2
+    RETURNING id
+  `, [idUser, idAtivo]);
+
+  // Retorna o registro removido (undefined se não existir)
+  return result.rows[0];
 }
 
 //#endregion
@@ -126,4 +286,10 @@ export {
   getAtivosDropListRepo,
   addAtivoRepo,
   getControleAtivosRepo,
+  getTickersCarteiraRepo,
+  getCotacoesSalvasRepo,
+  upsertCotacoesRepo,
+  updatePercIdealRepo,
+  updatePrecoTetoRepo,
+  deleteAtivoRepo,
 };
