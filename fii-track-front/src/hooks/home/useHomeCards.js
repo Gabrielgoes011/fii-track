@@ -18,6 +18,12 @@ export function useHomeCards() {
       setCards({
         operacoes: data?.operacoes ?? 0,
         fundos: data?.fundos ?? 0,
+        patrimonio: data?.patrimonio ?? 0,
+        custoTotal: data?.custoTotal ?? 0,
+        proventos: data?.proventos ?? 0,
+        rentabilidadePerc: data?.rentabilidadePerc ?? 0,
+        rentabilidadeComProventosPerc: data?.rentabilidadeComProventosPerc ?? 0,
+        rendaMensalMedia: data?.rendaMensalMedia ?? 0,
       });
     } catch (err) {
       handleError(err);

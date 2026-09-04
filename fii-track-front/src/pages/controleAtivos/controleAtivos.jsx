@@ -36,6 +36,7 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld }) {
     <div style={{
       background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
       padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '14px',
+      minWidth: 0, // permite o card respeitar a largura da coluna do grid (evita corte no mobile)
     }}>
       {Icon && (
         <div style={{
@@ -46,9 +47,12 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld }) {
           <Icon size={18} color={cor} />
         </div>
       )}
-      <div>
+      <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ margin: 0, fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-        <p style={{ margin: '2px 0 0', fontSize: '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
+        <p style={{
+          margin: '2px 0 0', fontSize: '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc',
+          fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere',
+        }}>
           {ld ? '···' : valor}
         </p>
         {sub && <p style={{ margin: '1px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
@@ -723,7 +727,7 @@ export default function PaginaControleAtivos() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
-      <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0' : '1rem 0.5rem' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0.75rem' : '1rem 0.5rem', overflowX: 'hidden' }}>
 
         {/* ── Header ── */}
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
@@ -751,6 +755,7 @@ export default function PaginaControleAtivos() {
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '10px', marginBottom: '1.25rem',
+          width: '100%', minWidth: 0, // trava a grade na largura do container (evita vazar no mobile)
         }}>
           <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} />
           <KpiCard icon={FiLayers} label="Saldo Atual" valor={fmt(resumo?.valorAtualTotal)} cor="#10b981" loading={loading} />
