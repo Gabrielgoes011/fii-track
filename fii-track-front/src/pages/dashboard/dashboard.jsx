@@ -1,9 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiTrendingUp, FiBarChart2, FiPieChart, FiArrowUpRight } from 'react-icons/fi';
+import { FiTrendingUp, FiArrowUpRight, FiDollarSign, FiActivity, FiGift, FiCalendar } from 'react-icons/fi';
 import { FaWallet, FaExchangeAlt, FaChartLine } from 'react-icons/fa';
 import { useHomeCards } from '../../hooks/home/useHomeCards';
-import { rendimentosService } from '../../services/rendimentos/rendimentosService';
+
+// Formata número em moeda BRL
+const fmtBRL = (v) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
+
+// Formata percentual com sinal (ex: +9,17% / -9,13%)
+const fmtPerc = (v) => {
+  const n = Number(v) || 0;
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2).replace('.', ',')}%`;
+};
 
 const cardsTemplate = [
   {
@@ -43,68 +52,45 @@ const cardsTemplate = [
   },
 ];
 
-const statsTemplate = [
-  { icon: FiTrendingUp, label: 'Rendimento Médio (12m)', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-  { icon: FiBarChart2, label: 'Operações', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)', dataKey: 'operacoes' },
-  { icon: FiPieChart, label: 'Fundos na Carteira', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', dataKey: 'fundos' },
-];
+// Cores semânticas de rentabilidade (verde = positivo, vermelho = negativo)
+const corRentabilidade = (v) => (Number(v) >= 0 ? '#34d399' : '#f87171');
 
 function PaginaDashboard() {
   const navigate = useNavigate();
   const { cards, loading, error } = useHomeCards();
-  const [rendimentoMedio, setRendimentoMedio] = useState(null);
-  const [loadingRendimento, setLoadingRendimento] = useState(true);
 
-  useEffect(() => {
-    let active = true;
-
-    const carregarRendimento = async () => {
-      setLoadingRendimento(true);
-      try {
-        const data = await rendimentosService.cardsRendimentos({
-          mes: null,
-          ano: new Date().getFullYear(),
-          idAtivo: null,
-        });
-
-        if (!active) return;
-
-        const valor = Number(data?.yieldOnCost12Meses ?? data?.retornoAcumulado ?? 0);
-        setRendimentoMedio(valor);
-      } catch (err) {
-        if (!active) return;
-        setRendimentoMedio(0);
-      } finally {
-        if (active) {
-          setLoadingRendimento(false);
-        }
-      }
-    };
-
-    carregarRendimento();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Atualizar os stats com os dados reais da API
-  const stats = statsTemplate.map(stat => {
-    if (stat.label === 'Rendimento Médio (12m)') {
-      return {
-        ...stat,
-        value: loadingRendimento ? '...' : `${(rendimentoMedio >= 0 ? '+' : '')}${rendimentoMedio.toFixed(2).replace('.', ',')}%`,
-      };
-    }
-
-    if (stat.dataKey && cards) {
-      return {
-        ...stat,
-        value: cards[stat.dataKey]?.toString() || '0'
-      };
-    }
-    return stat;
-  });
+  // Stats do topo (4 cards) derivados do resumo da carteira
+  const rentTotalPerc = cards?.rentabilidadeComProventosPerc ?? 0;         // resultado real (com proventos)
+  const stats = [
+    {
+      icon: FiDollarSign,
+      label: 'Patrimônio Investido',
+      color: '#60a5fa',
+      bg: 'rgba(96,165,250,0.1)',
+      value: fmtBRL(cards?.patrimonio),
+    },
+    {
+      icon: FiCalendar,
+      label: 'Renda Mensal Média',
+      color: '#34d399',
+      bg: 'rgba(52,211,153,0.1)',
+      value: fmtBRL(cards?.rendaMensalMedia),
+    },
+    {
+      icon: FiActivity,
+      label: 'Rentabilidade + Proventos',
+      color: corRentabilidade(rentTotalPerc),
+      bg: Number(rentTotalPerc) >= 0 ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
+      value: fmtPerc(rentTotalPerc),
+    },
+    {
+      icon: FiGift,
+      label: 'Proventos Recebidos',
+      color: '#a78bfa',
+      bg: 'rgba(167,139,250,0.1)',
+      value: fmtBRL(cards?.proventos),
+    },
+  ];
 
   // Função para obter o subtítulo com contagem
   const getSubtitleWithCount = (card) => {
@@ -178,11 +164,11 @@ function PaginaDashboard() {
               }}>
                 <Icon size={20} color={s.color} />
               </div>
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   {s.label}
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color, overflowWrap: 'anywhere' }}>
                   {loading ? '...' : (s.value || '0')}
                 </div>
               </div>

@@ -3,6 +3,7 @@ import apiResponse from '../../utils/httpResponse.js';
 import {
   autenticarUsuario,
   autenticarUsuarioCom2fa,
+  obterUsuarioLogado,
   iniciar2faService,
   confirmar2faService,
   desativar2faService,
@@ -85,6 +86,18 @@ async function login2faController(req, res) {
     return apiResponse.error(res, error.message, 401);
   }
 }
+// Retorna os dados do usuário logado, derivados do token (fonte de verdade do "adm").
+// Usado pelo front no boot e após o login para hidratar o estado sem confiar no localStorage.
+async function meController(req, res) {
+  try {
+    // req.user vem do verificaToken (token JWT já validado)
+    const usuario = await obterUsuarioLogado(req.user.id);
+
+    return apiResponse.success(res, 'Usuário autenticado.', { usuario }, 200);
+  } catch (error) {
+    return apiResponse.error(res, error.message, 401);
+  }
+}
 //#endregion
 
 //#region => Lógica para 2FA
@@ -161,6 +174,7 @@ async function validarCodigo2faController(req, res) {
 export {
   loginController,
   login2faController,
+  meController,
   iniciar2faController,
   confirmar2faController,
   desativar2faController,

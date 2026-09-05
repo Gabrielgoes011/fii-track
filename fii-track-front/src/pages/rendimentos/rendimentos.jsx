@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { BarChart, AreaChart } from '../../components/Charts';
 import NovoRendimentoModal from './components/modalNovoRendimento';
 import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
 import { toastSuccess, toastInfo, toastError } from '../../utils/responseUtils';
@@ -16,9 +15,6 @@ const MESES = [
   'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 const ANOS = ['2023', '2024', '2025', '2026'];
-const CHART_KEYS = ['Valor'];
-const CHART_COLORS = { Valor: 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)' };
-const AREA_COLORS = { Valor: '#3b82f6' };
 const COR_ANOS = { '2023': '#f59e0b', '2024': '#ef4444', '2025': '#3b82f6', '2026': '#10b981' };
 
 const fmt = (v) =>
@@ -263,14 +259,6 @@ const S = {
     alignItems: 'center',
     gap: '8px',
     flexWrap: 'wrap',
-  },
-
-  // toggle barras/área
-  toggleTipoGrafico: {
-    display: 'flex',
-    backgroundColor: '#1e293b',
-    padding: '4px',
-    borderRadius: '0.5rem',
   },
 
   // grid dois cards (Evolução + Comparação)
@@ -709,7 +697,6 @@ function BarChartHorizontal({ data, anos }) {
 // ─── Mobile Gráficos — com tap interativo ────────────────────────────────────
 function MobileGraficos({
   chartMensal, chartAnual, chartComparacao,
-  tipoGrafico, setTipoGrafico,
   anoGrafico, setAnoGrafico,
   anosComp, toggleAnoComp,
   mobileAccordion, setMobileAccordion,
@@ -718,6 +705,7 @@ function MobileGraficos({
   const [tooltipMensal,    setTooltipMensal]    = React.useState(null);
   const [tooltipAnual,     setTooltipAnual]     = React.useState(null);
   const [tooltipComp,      setTooltipComp]      = React.useState(null); // { mes, ano, valor }
+  const [mensalAberto,     setMensalAberto]     = React.useState(true); // colapsar/expandir o gráfico mensal
 
   const maxMensal = Math.max(...chartMensal.map(d => d.Valor || 0), 1);
   const maxAnual  = Math.max(...chartAnual.map(d => d.Valor || 0), 1);
@@ -732,13 +720,6 @@ function MobileGraficos({
     outline:         'none',
     cursor:          'pointer',
     fontWeight:      600,
-  };
-
-  const cardStyle = {
-    backgroundColor: '#0f172a',
-    borderRadius:    '10px',
-    border:          '1px solid #1e293b',
-    padding:         '14px 12px',
   };
 
   const accordionWrap = {
@@ -793,86 +774,75 @@ function MobileGraficos({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-      {/* ── Gráfico Mensal (sempre visível) ── */}
-      <div style={cardStyle}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
-            Rendimentos {anoGrafico}
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
-              {['barras', 'area'].map(tipo => {
-                const ativo = tipoGrafico === tipo;
+      {/* ── Gráfico Mensal (colapsável) ── */}
+      <div style={accordionWrap}>
+        <button
+          onClick={() => { setMensalAberto(v => !v); setTooltipMensal(null); }}
+          style={accordionBtn}
+        >
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Rendimentos {anoGrafico}</h3>
+          <span style={{
+            fontSize:   '16px',
+            color:      '#64748b',
+            transform:  mensalAberto ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}>▾</span>
+        </button>
+
+        {mensalAberto && (
+          <div style={{ padding: '0 12px 14px' }}>
+            {/* Seletor de ano */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+              <select value={anoGrafico} onChange={e => { setAnoGrafico(e.target.value); setTooltipMensal(null); }} style={selectAnoStyle}>
+                {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+
+            {/* Gráfico de barras */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '3px', height: '150px', padding: '0 2px' }}>
+              {chartMensal.map((item, idx) => {
+                const h     = Math.max((item.Valor / maxMensal) * 120, item.Valor > 0 ? 3 : 0);
+                const ativo = tooltipMensal?.idx === idx;
                 return (
-                  <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={{
-                    padding:         '4px 8px',
-                    backgroundColor: ativo ? '#0f172a' : 'transparent',
-                    color:           ativo ? '#10b981'  : '#475569',
-                    borderRadius:    '4px',
-                    border:          'none',
-                    cursor:          'pointer',
-                    fontSize:        '10px',
-                    fontWeight:      600,
-                  }}>
-                    {tipo === 'barras' ? '▊' : '〜'}
-                  </button>
+                  <div
+                    key={idx}
+                    onClick={() => setTooltipMensal(ativo ? null : { idx, label: item.name, valor: item.Valor })}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <div style={{
+                      width:        '100%',
+                      maxWidth:     '22px',
+                      height:       `${h}px`,
+                      background:   ativo
+                        ? 'linear-gradient(180deg,#a5f3fc 0%,#06b6d4 100%)'
+                        : 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
+                      borderRadius: '3px 3px 0 0',
+                      transition:   'height 0.5s ease, background 0.2s',
+                      boxShadow:    ativo ? '0 0 10px rgba(6,182,212,0.6)' : 'none',
+                    }} />
+                    <span style={{ fontSize: '9px', color: ativo ? '#7dd3fc' : '#475569', marginTop: '4px', fontWeight: 700 }}>
+                      {item.name.substring(0, 3)}
+                    </span>
+                  </div>
                 );
               })}
             </div>
-            <select value={anoGrafico} onChange={e => { setAnoGrafico(e.target.value); setTooltipMensal(null); }} style={selectAnoStyle}>
-              {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
-        </div>
 
-        {/* Gráfico */}
-        {tipoGrafico === 'barras' ? (
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '3px', height: '150px', padding: '0 2px' }}>
-            {chartMensal.map((item, idx) => {
-              const h     = Math.max((item.Valor / maxMensal) * 120, item.Valor > 0 ? 3 : 0);
-              const ativo = tooltipMensal?.idx === idx;
-              return (
-                <div
-                  key={idx}
-                  onClick={() => setTooltipMensal(ativo ? null : { idx, label: item.name, valor: item.Valor })}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  <div style={{
-                    width:        '100%',
-                    maxWidth:     '22px',
-                    height:       `${h}px`,
-                    background:   ativo
-                      ? 'linear-gradient(180deg,#a5f3fc 0%,#06b6d4 100%)'
-                      : 'linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)',
-                    borderRadius: '3px 3px 0 0',
-                    transition:   'height 0.5s ease, background 0.2s',
-                    boxShadow:    ativo ? '0 0 10px rgba(6,182,212,0.6)' : 'none',
-                  }} />
-                  <span style={{ fontSize: '9px', color: ativo ? '#7dd3fc' : '#475569', marginTop: '4px', fontWeight: 700 }}>
-                    {item.name.substring(0, 3)}
-                  </span>
-                </div>
-              );
-            })}
+            {/* Tooltip tap mensal */}
+            {tooltipMensal && (
+              <TooltipBadge
+                label={`${tooltipMensal.label} ${anoGrafico}`}
+                valor={tooltipMensal.valor}
+                cor="#60a5fa"
+                onClose={() => setTooltipMensal(null)}
+              />
+            )}
+            {!tooltipMensal && (
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+                Toque em uma barra para ver o valor
+              </p>
+            )}
           </div>
-        ) : (
-          <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={130} />
-        )}
-
-        {/* Tooltip tap mensal */}
-        {tooltipMensal && (
-          <TooltipBadge
-            label={`${tooltipMensal.label} ${anoGrafico}`}
-            valor={tooltipMensal.valor}
-            cor="#60a5fa"
-            onClose={() => setTooltipMensal(null)}
-          />
-        )}
-        {!tooltipMensal && (
-          <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
-            Toque em uma barra para ver o valor
-          </p>
         )}
       </div>
 
@@ -1076,7 +1046,6 @@ export default function PaginaRendimentos() {
   const [filtroMes, setFiltroMes] = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
   const [filtroAno, setFiltroAno] = useState(String(new Date().getFullYear()));
   const [anoGrafico, setAnoGrafico] = useState(String(new Date().getFullYear()));
-  const [tipoGrafico, setTipoGrafico] = useState('barras');
   const [anosComp, setAnosComp] = useState(['2024', '2025', '2026']);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalImportAberto, setModalImportAberto] = useState(false);
@@ -1136,6 +1105,7 @@ export default function PaginaRendimentos() {
       return { name: nome, Valor: item ? parseFloat(item.totalRendimento) || 0 : 0 };
     }),
     [detalheMensal]);
+
 
   const chartAnual = useMemo(() =>
     ANOS.map(ano => {
@@ -1720,8 +1690,6 @@ export default function PaginaRendimentos() {
                 chartMensal={chartMensal}
                 chartAnual={chartAnual}
                 chartComparacao={chartComparacao}
-                tipoGrafico={tipoGrafico}
-                setTipoGrafico={setTipoGrafico}
                 anoGrafico={anoGrafico}
                 setAnoGrafico={setAnoGrafico}
                 anosComp={anosComp}
@@ -1736,30 +1704,6 @@ export default function PaginaRendimentos() {
                   <div style={S.graficoMensalHeader}>
                     <h2 style={tituloGraficoMensal}>Rendimentos por Mês</h2>
                     <div style={S.graficoControles}>
-                      <div style={S.toggleTipoGrafico}>
-                        {['barras', 'area'].map(tipo => {
-                          const ativo = tipoGrafico === tipo;
-                          const estiloBtnTipo = {
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '6px 10px',
-                            backgroundColor: ativo ? '#0f172a' : 'transparent',
-                            color: ativo ? '#10b981' : '#64748b',
-                            borderRadius: '0.375rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                          };
-                          return (
-                            <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={estiloBtnTipo}>
-                              {tipo === 'barras' ? '▊ Barras' : '〜 Área'}
-                            </button>
-                          );
-                        })}
-                      </div>
                       <select
                         value={anoGrafico}
                         onChange={e => setAnoGrafico(e.target.value)}
@@ -1770,10 +1714,7 @@ export default function PaginaRendimentos() {
                     </div>
                   </div>
 
-                  {tipoGrafico === 'barras'
-                    ? <GraficoMensalBarras data={chartMensal} />
-                    : <AreaChart data={chartMensal} keys={CHART_KEYS} colors={AREA_COLORS} height={160} />
-                  }
+                  <GraficoMensalBarras data={chartMensal} />
                 </div>
 
                 <div style={gridDoisCards}>

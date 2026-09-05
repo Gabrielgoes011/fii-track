@@ -4,6 +4,7 @@ import verificaToken from '../../middleware/auth/verificaToken.js';
 import {
   loginController,
   login2faController,
+  meController,
   iniciar2faController,
   confirmar2faController,
   desativar2faController,
@@ -15,6 +16,9 @@ const router = express.Router();
 //rota de login
 router.post('/auth/login', loginController);
 router.post('/auth/login/2fa', login2faController);
+
+// Dados do usuário logado (protegida) — o "adm" vem daqui, derivado do token
+router.get('/auth/me', verificaToken, meController);
 
 //rotas de 2FA (protegidas, exigem token)
 router.post('/2fa/iniciar', verificaToken, iniciar2faController);

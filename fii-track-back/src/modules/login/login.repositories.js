@@ -19,6 +19,24 @@ async function findUserByEmail(email) {
     return result.rows[0];
 }
 
+// 1.1 Buscar usuário pelo id (usado no /auth/me)
+async function findUserById(userId) {
+
+    // Abre a conexão com o banco de dados
+    const db = await openDb();
+
+    const result = await db.query(`
+        SELECT
+            id, nome, email, ativo
+        FROM usuarios
+        WHERE id = $1`,
+        [userId]
+    );
+
+    // Retorna o usuário encontrado ou undefined se não houver correspondência
+    return result.rows[0];
+}
+
 // 2. Buscar credenciais (senha) do usuário
 async function findUserCredentials(userId) {
 
@@ -100,6 +118,7 @@ async function updateCredentials2fa(usuarioId, updates) {
 
 export {
     findUserByEmail,
+    findUserById,
     findUserCredentials,
     findCredentialsByUserId,
     updateCredentials2fa

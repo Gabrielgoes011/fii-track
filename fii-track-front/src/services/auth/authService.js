@@ -24,6 +24,17 @@ export const authService = {
     }
   },
 
+  // Retorna os dados do usuário logado derivados do token (fonte de verdade do "adm")
+  // GET /auth/me — exige token válido; devolve { usuario }
+  me: async () => {
+    try {
+      const res = await api.get('/auth/me');
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   iniciar2fa: async () => {
     try {
       const res = await api.post('/2fa/iniciar');

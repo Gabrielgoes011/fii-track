@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { encryptText, decryptText } from '../../utils/crypto.js';
 import {
     findUserByEmail,
+    findUserById,
     findUserCredentials,
     findCredentialsByUserId,
     updateCredentials2fa
@@ -157,6 +158,33 @@ async function autenticarUsuarioCom2fa(email, password, codigo) {
     };
 }
 
+// Retorna os dados do usuário logado a partir do id contido no token.
+// Reconsulta o banco para que o campo "adm" reflita o estado atual (ex.: se o
+// usuário foi rebaixado, o front deixa de exibir o painel sem esperar o token expirar).
+async function obterUsuarioLogado(usuarioId) {
+    // 1. Buscar dados básicos do usuário
+    const usuario = await findUserById(usuarioId);
+    if (!usuario) {
+        throw new Error('Usuário não encontrado.');
+    }
+
+    // 2. Usuário desativado após o login não deve continuar operando
+    if (usuario.ativo === false) {
+        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+    }
+
+    // 3. Buscar credenciais para saber o papel (adm) e o estado do 2FA atuais
+    const credenciais = await findUserCredentials(usuarioId);
+
+    return {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        adm: credenciais?.adm || false,
+        auth2faTotp: !!credenciais?.auth2faTotp,
+    };
+}
+
 //#endregion
 
 //#region => Logica para 2FA
@@ -281,6 +309,7 @@ async function validarCodigo2faService(usuarioId, codigo) {
 export {
     autenticarUsuario,
     autenticarUsuarioCom2fa,
+    obterUsuarioLogado,
     iniciar2faService,
     confirmar2faService,
     desativar2faService,
