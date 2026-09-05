@@ -9,19 +9,20 @@ import rendimentosRoutes from './modules/rendimentos/rendimentos.routes.js'; // 
 import authRoutes from './modules/login/login.routes.js'; // importa as rotas de autenticação
 import homeRoutes from './modules/home/home.routes.js'; // importa as rotas do home/dashboard
 import controleAtivosRoutes from './modules/controlAtivos/controleAtivos.routes.js'; // importa as rotas de controle de ativos
+import historicoRoutes from './modules/historico/historico.routes.js'; // importa as rotas de histórico da carteira
 import changePassRoutes from './modules/userProfile/changePassword/changePass.routes.js'; // importa as rotas de troca de senha
 
 //cria uma aplicação express
 
-const app = express(); 
+const app = express();
 //habilita o cors para todas as rotas
 app.use(cors({
     origin: true,
     credentials: true,
 }));
- 
+
 //habilita json no corpo da requisição para retornar dados em json
-app.use(express.json()); 
+app.use(express.json());
 app.use(cookieParser());
 
 
@@ -42,6 +43,7 @@ app.use('/', meusFundosRoutes); // Usa as rotas de meus fundos
 app.use('/', operacoesRoutes);  // Usa as rotas de operações
 app.use('/', rendimentosRoutes); // Usa as rotas de rendimentos
 app.use('/', controleAtivosRoutes); // Usa as rotas de controle de ativos
+app.use('/', historicoRoutes); // Usa as rotas de histórico da carteira
 app.use('/', changePassRoutes); // Usa as rotas de troca de senha
 
 

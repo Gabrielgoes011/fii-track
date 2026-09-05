@@ -131,3 +131,41 @@ BEGIN
     END IF;
 END $$;
 
+-- =================================================================
+-- Histórico da Carteira (migration 005) — dados privados por usuário.
+-- Snapshot por ativo e snapshot geral, correlacionados por "dtCaptura".
+-- =================================================================
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND lower(tablename) = 'historico_carteira_ativo'
+          AND lower(policyname) = 'historico_carteira_ativo_rls_policy'
+    ) THEN
+        ALTER TABLE public.historico_carteira_ativo ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY historico_carteira_ativo_rls_policy ON public.historico_carteira_ativo
+            FOR ALL
+            USING ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0))
+            WITH CHECK ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0));
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND lower(tablename) = 'historico_carteira_geral'
+          AND lower(policyname) = 'historico_carteira_geral_rls_policy'
+    ) THEN
+        ALTER TABLE public.historico_carteira_geral ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY historico_carteira_geral_rls_policy ON public.historico_carteira_geral
+            FOR ALL
+            USING ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0))
+            WITH CHECK ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0));
+    END IF;
+END $$;

@@ -168,7 +168,7 @@ function PaginaDashboard() {
                 <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   {s.label}
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color, overflowWrap: 'anywhere' }}>
+                <div className="vp" style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color, overflowWrap: 'anywhere' }}>
                   {loading ? '...' : (s.value || '0')}
                 </div>
               </div>

@@ -12,6 +12,7 @@ import {
   deleteAtivoRepo,
 } from './controleAtivos.repository.js';
 import { buscarCotacoes } from './brapi.service.js';
+import { registrarCaptura } from '../historico/historico.service.js';
 
 // Tempo (em minutos) que uma cotação salva é considerada "fresca".
 // Dentro dessa janela, o botão "Atualizar Cotações" usa o cache e NÃO
@@ -134,6 +135,10 @@ function montarCotacao(linha) {
 async function getCotacoesCarteiraService(idUser) {
   try {
 
+    // Instante do acionamento: horário do servidor no momento em que o botão
+    // "Atualizar Cotações" foi acionado. É o dtCaptura da Captura (Requirement 1.1).
+    const dtCaptura = new Date();
+
     // Tickers da carteira do usuário
     const tickers = await getTickersCarteiraRepo(idUser);
     if (tickers.length === 0) {
@@ -191,6 +196,13 @@ async function getCotacoesCarteiraService(idUser) {
         if (maisAntiga === null || t < maisAntiga) maisAntiga = t;
       }
     }
+
+    // Grava o histórico da Captura (Requirements 1.1, 1.2, 1.3, 1.5) na mesma
+    // transação/contexto RLS do request. O mapa `cotacoes` é indexado por ticker
+    // (uppercase) e cada valor traz { preco, fechamentoAnterior, variacao,
+    // variacaoPerc, dtConsulta }, formato tolerado por registrarCaptura.
+    // Não altera a resposta ao frontend, que segue sendo { cotacoes, atualizadoEm }.
+    await registrarCaptura(idUser, cotacoes, dtCaptura);
 
     return {
       cotacoes,

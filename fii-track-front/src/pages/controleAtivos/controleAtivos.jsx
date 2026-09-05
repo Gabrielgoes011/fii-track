@@ -4,7 +4,9 @@ import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useControleAtivos } from '../../hooks/controleAtivos/useControleAtivos';
+import { useHistoricoCarteira } from '../../hooks/controleAtivos/useHistoricoCarteira';
 import { controleAtivosService } from '../../services/controleAtivos/controleAtivosService';
+import AreaChart from '../../components/Charts/AreaChart';
 import { toastWarn, handleError } from '../../utils/responseUtils';
 
 // ─── Formatadores ─────────────────────────────────────────────────────────────
@@ -49,13 +51,13 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld }) {
       )}
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ margin: 0, fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-        <p style={{
+        <p className="vp" style={{
           margin: '2px 0 0', fontSize: '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc',
           fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere',
         }}>
           {ld ? '···' : valor}
         </p>
-        {sub && <p style={{ margin: '1px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
+        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
       </div>
     </div>
   );
@@ -296,11 +298,11 @@ function PrecoTetoEditor({ row, onSalvar }) {
   return (
     <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px', position: 'relative' }}>
       <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
-      <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+      <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
         {row.precoTeto ? fmt(row.precoTeto) : '—'}
         {row.modoPrecoTeto === 'pvp' && <span style={{ fontSize: '10px', color: '#fb923c', marginLeft: '5px' }}>P/VP</span>}
       </p>
-      <p style={{ margin: '2px 0 0', fontSize: '11px', color: corRent(row.desconto) }}>
+      <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: corRent(row.desconto) }}>
         {row.desconto != null ? `Desc: ${fmtPerc(row.desconto)}` : '—'}
       </p>
       <button onClick={abrir} title="Definir preço teto" style={{
@@ -373,15 +375,15 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
               <div>
                 <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Saldo</span>
-                <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
-                <p style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>{row.quantidade} cotas</p>
+                <p className="vp" style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
+                <p className="vp" style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>{row.quantidade} cotas</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Rent.</span>
-                <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
+                <p className="vp" style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
                   {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
                 </p>
-                <p style={{ margin: 0, fontSize: '10px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
+                <p className="vp" style={{ margin: 0, fontSize: '10px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
               </div>
             </div>
 
@@ -408,16 +410,16 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
 
             {/* Bloco 2: Saldo Atual */}
             <div style={{ flex: '1', minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
-              <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>{row.quantidade} cotas a {fmt(row.cotacao)}</p>
+              <p className="vp" style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
+              <p className="vp" style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>{row.quantidade} cotas a {fmt(row.cotacao)}</p>
             </div>
 
             {/* Bloco 3: Rentabilidade */}
             <div style={{ flex: '0.8', minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
+              <p className="vp" style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
                 {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
               </p>
-              <p style={{ margin: 0, fontSize: '11px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
+              <p className="vp" style={{ margin: 0, fontSize: '11px', color: corRent(row.rentabilidadeReais) }}>{fmtSinal(row.rentabilidadeReais)}</p>
             </div>
 
             {/* Bloco 4: Balanceamento */}
@@ -473,27 +475,27 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
             {/* Preço Médio vs Atual */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
               <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Médio vs Atual</p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.precoMedio)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.precoMedio)}</p>
+              <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
             </div>
             {/* Preço Teto & Desconto (editável) */}
             <PrecoTetoEditor row={row} onSalvar={onSalvarPrecoTeto} />
             {/* Proventos Recebidos */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
               <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Proventos Recebidos</p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#a78bfa' }}>{fmt(row.totalProventos)}</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#a78bfa' }}>{fmt(row.totalProventos)}</p>
               <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Total acumulado</p>
             </div>
             {/* Rent. + Proventos */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
               <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Rent. + Proventos</p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.rentabilidadeTotalPerc) }}>{fmtPerc(row.rentabilidadeTotalPerc)}</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.rentabilidadeTotalPerc) }}>{fmtPerc(row.rentabilidadeTotalPerc)}</p>
               <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Considerando dividendos</p>
             </div>
             {/* Valor para Equilíbrio */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
               <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Valor para Equilíbrio</p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.valorEquilibrio) }}>{fmtSinal(row.valorEquilibrio)}</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.valorEquilibrio) }}>{fmtSinal(row.valorEquilibrio)}</p>
               <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>
                 {row.valorEquilibrio > 0 ? 'Falta aportar' : 'Acima do ideal'}
               </p>
@@ -573,6 +575,429 @@ function BarraFiltros({
   );
 }
 
+// ─── Definição das abas ────────────────────────────────────────────────────────
+const ABAS = [
+  { id: 'carteira', label: 'Carteira de FIIs' },
+  { id: 'historico', label: 'Histórico da Carteira' },
+];
+
+// ─── Navegação por abas (acessível: roles ARIA + navegação por teclado) ────────
+function TabsNav({ abaAtiva, onSelecionar }) {
+  const handleKeyDown = (e) => {
+    const idx = ABAS.findIndex((a) => a.id === abaAtiva);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+      const prox = (idx + dir + ABAS.length) % ABAS.length;
+      onSelecionar(ABAS[prox].id);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      onSelecionar(ABAS[0].id);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      onSelecionar(ABAS[ABAS.length - 1].id);
+    }
+  };
+
+  return (
+    <nav
+      role="tablist"
+      aria-label="Seções do Controle de Ativos"
+      onKeyDown={handleKeyDown}
+      style={{
+        display: 'flex', gap: '4px', marginBottom: '1.25rem',
+        borderBottom: '1px solid #1e293b',
+      }}
+    >
+      {ABAS.map(({ id, label }) => {
+        const ativa = abaAtiva === id;
+        return (
+          <button
+            key={id}
+            role="tab"
+            id={`tab-${id}`}
+            aria-selected={ativa}
+            aria-controls={`painel-${id}`}
+            tabIndex={ativa ? 0 : -1}
+            onClick={() => onSelecionar(id)}
+            style={{
+              padding: '0.75rem 1.1rem',
+              background: ativa ? 'rgba(139,92,246,0.1)' : 'transparent',
+              color: ativa ? '#a78bfa' : '#64748b',
+              border: 'none',
+              borderBottom: ativa ? '3px solid #8b5cf6' : '3px solid transparent',
+              fontWeight: 600, fontSize: '14px', cursor: 'pointer',
+              transition: 'all 0.2s', whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ─── Agrupamento por dia (client-side, fuso America/Sao_Paulo) ────────────────
+//
+// Espelha a lógica do backend (historico.service.agruparPorDia): particiona os
+// pontos pela data-calendário no fuso informado (via Intl.DateTimeFormat 'en-CA',
+// que produz 'YYYY-MM-DD') e mantém, por dia, o ponto de maior `dtCaptura`.
+// Retorna a lista ordenada cronologicamente (antigo → recente). Req 5.4.
+function agruparPorDia(pontos, timeZone = 'America/Sao_Paulo') {
+  if (!Array.isArray(pontos) || pontos.length === 0) return [];
+
+  const fmtDia = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+
+  const porDia = new Map();
+  for (const ponto of pontos) {
+    const ts = new Date(ponto.dtCaptura).getTime();
+    if (Number.isNaN(ts)) continue;
+    const dia = fmtDia.format(ts);
+    const atual = porDia.get(dia);
+    // Mantém o ponto de maior dtCaptura dentro do dia.
+    if (!atual || ts > new Date(atual.dtCaptura).getTime()) {
+      porDia.set(dia, ponto);
+    }
+  }
+
+  // Ordena por dia-calendário (chave 'YYYY-MM-DD' ordena lexicograficamente).
+  return [...porDia.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([, ponto]) => ponto);
+}
+
+// Rótulo curto do eixo (dia/mês) no fuso America/Sao_Paulo.
+const fmtDiaMes = (dtCaptura) => {
+  const ts = new Date(dtCaptura).getTime();
+  if (Number.isNaN(ts)) return '—';
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit',
+  }).format(ts);
+};
+
+// ─── Indicador visual de direção (alta / baixa / neutra) por ponto ─────────────
+// Direção vem do backend em cada ponto: 'subiu' | 'desceu' | 'estável' | null.
+const DIRECAO_INFO = {
+  subiu:    { seta: '▲', cor: '#4ade80', label: 'Alta' },
+  desceu:   { seta: '▼', cor: '#f87171', label: 'Baixa' },
+  'estável': { seta: '▬', cor: '#94a3b8', label: 'Neutra' },
+};
+
+function IndicadorDirecao({ direcao, size = 12 }) {
+  // Primeiro ponto (sem anterior comparável) não tem direção — Req 4.7.
+  const info = DIRECAO_INFO[direcao];
+  if (!info) {
+    return <span style={{ color: '#475569', fontSize: `${size}px` }} aria-label="Sem variação">—</span>;
+  }
+  return (
+    <span
+      title={info.label}
+      aria-label={info.label}
+      style={{ color: info.cor, fontSize: `${size}px`, fontWeight: 700 }}
+    >
+      {info.seta}
+    </span>
+  );
+}
+
+// ─── Legenda de direção por ponto (lista cronológica) ─────────────────────────
+// Exibe cada ponto da série com seu indicador de direção (alta/baixa/neutra),
+// atendendo ao Req 5.6 de forma acessível e legível.
+function LegendaDirecao({ pontos, extrairValor, rotulo }) {
+  if (!pontos || pontos.length === 0) return null;
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
+      {pontos.map((p, i) => {
+        const info = DIRECAO_INFO[p.direcao];
+        const cor = info ? info.cor : '#64748b';
+        const bg = info ? `${info.cor}12` : 'rgba(100,116,139,0.08)';
+        const borda = info ? `${info.cor}30` : '#334155';
+        return (
+          <div
+            key={`${rotulo}-${i}`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: bg, border: `1px solid ${borda}`, borderRadius: '8px',
+              padding: '4px 8px',
+            }}
+          >
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
+              {fmtDiaMes(p.dtCaptura)}
+            </span>
+            <IndicadorDirecao direcao={p.direcao} size={11} />
+            <span className="vp" style={{ fontSize: '11px', fontWeight: 700, color: cor }}>
+              {fmt(extrairValor(p))}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Card wrapper de gráfico do histórico ─────────────────────────────────────
+function CardGrafico({ titulo, subtitulo, direita, children }) {
+  return (
+    <div style={{
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px',
+      padding: '1.25rem', marginBottom: '1rem',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: '12px', flexWrap: 'wrap', marginBottom: '8px',
+      }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{titulo}</h3>
+          {subtitulo && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>}
+        </div>
+        {direita}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Estados internos de conteúdo (vazio / erro) do Histórico ─────────────────
+// Reutilizados pelos gráficos e pelo painel para atender Req 5.7 e 5.8.
+
+// Mensagem de ausência de dados históricos (Req 5.7) — sem gráfico vazio nem erro.
+function HistoricoVazio({ mensagem = 'Sem dados históricos' }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', gap: '10px', padding: '2.5rem 1rem', color: '#64748b',
+    }}>
+      <div style={{
+        width: '48px', height: '48px', borderRadius: '12px',
+        background: 'rgba(100,116,139,0.1)', border: '1px solid #334155',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <FiLayers size={20} color="#64748b" />
+      </div>
+      <p style={{ margin: 0, fontSize: '13px', maxWidth: '320px', lineHeight: 1.5 }}>{mensagem}</p>
+    </div>
+  );
+}
+
+// Estado de erro com botão "Tentar novamente" (Req 5.8).
+function HistoricoErro({ mensagem = 'Não foi possível carregar o histórico.', onRetry }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', gap: '12px', padding: '2.5rem 1rem',
+    }}>
+      <div style={{
+        width: '48px', height: '48px', borderRadius: '12px',
+        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <FiX size={22} color="#f87171" />
+      </div>
+      <p style={{ margin: 0, fontSize: '13px', color: '#f87171', maxWidth: '320px', lineHeight: 1.5 }}>{mensagem}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
+            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '8px', color: '#fca5a5', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+          }}
+        >
+          <FiRefreshCw size={13} /> Tentar novamente
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Gráfico: evolução do patrimônio total ────────────────────────────────────
+// Reutiliza AreaChart plotando `valorMercadoTotal` ao longo de `dtCaptura`,
+// já agrupado por dia (America/Sao_Paulo) e em ordem cronológica.
+function HistoricoPatrimonioChart({ patrimonio }) {
+  const pontos = agruparPorDia(patrimonio, 'America/Sao_Paulo');
+  const extrairValor = (p) => Number(p.valorMercadoTotal) || 0;
+
+  const dados = pontos.map((p) => ({
+    name: fmtDiaMes(p.dtCaptura),
+    Patrimônio: extrairValor(p),
+  }));
+
+  return (
+    <CardGrafico
+      titulo="Evolução do Patrimônio"
+      subtitulo="Valor de mercado total da carteira (agrupado por dia)"
+    >
+      {/* Req 6.1/6.3: o gráfico exibe patrimônio, então borra sob o modo privacidade. */}
+      <div className="vp">
+        <AreaChart data={dados} keys={['Patrimônio']} colors={{ Patrimônio: '#8b5cf6' }} height={180} />
+      </div>
+      <LegendaDirecao pontos={pontos} extrairValor={extrairValor} rotulo="patr" />
+    </CardGrafico>
+  );
+}
+
+// ─── Gráfico: evolução de preço por ativo (com seletor de ticker) ─────────────
+function HistoricoTickerChart({
+  ativos, tickerSerie, tickerAtual, onSelecionarTicker,
+  loadingTicker, erroTicker, onRetryTicker,
+}) {
+  // Lista de tickers disponíveis a partir da carteira do usuário.
+  const tickers = [...new Set((ativos || []).map((a) => a.ticker).filter(Boolean))].sort();
+
+  const pontos = agruparPorDia(tickerSerie, 'America/Sao_Paulo');
+  const extrairValor = (p) => Number(p.preco) || 0;
+
+  const dados = pontos.map((p) => ({
+    name: fmtDiaMes(p.dtCaptura),
+    Preço: extrairValor(p),
+  }));
+
+  const seletor = (
+    <select
+      value={tickerAtual || ''}
+      onChange={(e) => onSelecionarTicker(e.target.value)}
+      aria-label="Selecionar ativo"
+      style={{
+        padding: '0.5rem 0.75rem', background: '#1e293b', border: '1px solid #334155',
+        borderRadius: '8px', color: '#f8fafc', fontSize: '13px', outline: 'none', cursor: 'pointer',
+        minWidth: '140px',
+      }}
+    >
+      <option value="">Selecione um ativo...</option>
+      {tickers.map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
+  );
+
+  // Conteúdo do card conforme o estado da série do ticker.
+  let conteudo;
+  if (!tickerAtual) {
+    conteudo = (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2.5rem 1rem', color: '#64748b', fontSize: '13px',
+      }}>
+        Selecione um ativo acima para visualizar a evolução do preço.
+      </div>
+    );
+  } else if (loadingTicker) {
+    conteudo = (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: '10px', padding: '2.5rem 1rem', color: '#64748b', fontSize: '13px',
+      }}>
+        <FiRefreshCw size={20} color="#475569" style={{ animation: 'spin 1s linear infinite' }} />
+        Carregando histórico de {tickerAtual}...
+      </div>
+    );
+  } else if (erroTicker) {
+    // Req 5.8 — erro na série do ticker com opção de tentar novamente.
+    conteudo = (
+      <HistoricoErro
+        mensagem={`Não foi possível carregar o histórico de ${tickerAtual}.`}
+        onRetry={onRetryTicker}
+      />
+    );
+  } else if (pontos.length === 0) {
+    // Req 5.7 — ticker selecionado, porém sem registros no período.
+    conteudo = <HistoricoVazio mensagem={`Sem dados históricos para ${tickerAtual}.`} />;
+  } else {
+    conteudo = (
+      <>
+        {/* Req 6.1/6.3: preço é valor financeiro → borra sob o modo privacidade. */}
+        <div className="vp">
+          <AreaChart data={dados} keys={['Preço']} colors={{ Preço: '#38bdf8' }} height={180} />
+        </div>
+        <LegendaDirecao pontos={pontos} extrairValor={extrairValor} rotulo="tk" />
+      </>
+    );
+  }
+
+  return (
+    <CardGrafico
+      titulo="Evolução de Preço por Ativo"
+      subtitulo={tickerAtual ? `Histórico de preço de ${tickerAtual} (agrupado por dia)` : 'Escolha um ativo para ver o histórico de preço'}
+      direita={seletor}
+    >
+      {conteudo}
+    </CardGrafico>
+  );
+}
+
+// ─── Painel da aba Histórico da Carteira ──────────────────────────────────────
+// Orquestra os estados de carregamento / erro / vazio (Req 5.7, 5.8), a
+// privacidade dos valores financeiros (Req 6.x) e os gráficos com agrupamento
+// por dia. O hook `useHistoricoCarteira` expõe loading/erro/vazio + retry.
+// Wrapper de card para os estados de tela cheia (loading/erro/vazio globais).
+function HistoricoWrapper({ children }) {
+  return (
+    <div style={{
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px',
+      padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', textAlign: 'center', gap: '10px', color: '#64748b',
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function HistoricoCarteiraPanel({ historico, ativos }) {
+  const {
+    patrimonio, loading, erro, vazio, retry,
+    tickerSerie, tickerAtual, loadingTicker, erroTicker,
+    onSelecionarTicker, retryTicker,
+  } = historico;
+
+  // Carregando a série de patrimônio.
+  if (loading) {
+    return (
+      <HistoricoWrapper>
+        <FiRefreshCw size={22} color="#475569" style={{ animation: 'spin 1s linear infinite' }} />
+        <p style={{ margin: 0, fontSize: '13px' }}>Carregando histórico da carteira...</p>
+      </HistoricoWrapper>
+    );
+  }
+
+  // Req 5.8 — falha ao carregar o histórico: mensagem + "Tentar novamente".
+  if (erro) {
+    return (
+      <HistoricoWrapper>
+        <HistoricoErro
+          mensagem="Não foi possível carregar o histórico da carteira."
+          onRetry={retry}
+        />
+      </HistoricoWrapper>
+    );
+  }
+
+  // Req 5.7 — sem nenhum registro histórico: mensagem, sem gráfico vazio nem erro.
+  if (vazio) {
+    return (
+      <HistoricoWrapper>
+        <HistoricoVazio mensagem="Sem dados históricos. Atualize as cotações na aba Carteira de FIIs para começar a registrar o histórico." />
+      </HistoricoWrapper>
+    );
+  }
+
+  return (
+    <div>
+      <HistoricoPatrimonioChart patrimonio={patrimonio} />
+      <HistoricoTickerChart
+        ativos={ativos}
+        tickerSerie={tickerSerie}
+        tickerAtual={tickerAtual}
+        loadingTicker={loadingTicker}
+        erroTicker={erroTicker}
+        onSelecionarTicker={onSelecionarTicker}
+        onRetryTicker={retryTicker}
+      />
+    </div>
+  );
+}
+
 // ─── Componente Principal ─────────────────────────────────────────────────────
 export default function PaginaControleAtivos() {
   const isMobile = useIsMobile();
@@ -581,6 +1006,39 @@ export default function PaginaControleAtivos() {
     getCarteira, atualizarCotacoes,
     handleSalvarPrecoTeto, handleSalvarPercIdeal, handleExcluirAtivo,
   } = useControleAtivos();
+
+  // Aba ativa: inicia em "Carteira de FIIs" (Req 5.2)
+  const [abaAtiva, setAbaAtiva] = useState('carteira');
+
+  // Dados da aba "Histórico da Carteira" (Req 5.3, 5.4, 5.6)
+  const {
+    patrimonio, loading: loadingHistorico, erro: erroHistorico, vazio: vazioHistorico,
+    carregou: carregouHistorico, carregarPatrimonio, retry: retryHistorico,
+    tickerSerie, tickerAtual, loadingTicker, erroTicker, carregarTicker,
+  } = useHistoricoCarteira();
+
+  // Carrega a série de patrimônio quando a aba Histórico se torna ativa (uma vez).
+  useEffect(() => {
+    if (abaAtiva === 'historico' && !carregouHistorico && !loadingHistorico) {
+      carregarPatrimonio();
+    }
+  }, [abaAtiva, carregouHistorico, loadingHistorico, carregarPatrimonio]);
+
+  // Objeto de estado do histórico repassado ao painel.
+  const historico = {
+    patrimonio,
+    loading: loadingHistorico,
+    erro: erroHistorico,
+    vazio: vazioHistorico,
+    retry: retryHistorico,
+    tickerSerie,
+    tickerAtual,
+    loadingTicker,
+    erroTicker,
+    onSelecionarTicker: (ticker) => carregarTicker(ticker),
+    // Req 5.8 — refaz a carga da série do ticker atualmente selecionado.
+    retryTicker: () => { if (tickerAtual) carregarTicker(tickerAtual); },
+  };
 
   const [expandido, setExpandido] = useState(null);
   const [busca, setBusca] = useState('');
@@ -750,6 +1208,16 @@ export default function PaginaControleAtivos() {
           </button>
         </header>
 
+        {/* ── Abas ── */}
+        <TabsNav abaAtiva={abaAtiva} onSelecionar={setAbaAtiva} />
+
+        {/* ── Aba: Carteira de FIIs (conteúdo original, inalterado) ── */}
+        <div
+          role="tabpanel"
+          id="painel-carteira"
+          aria-labelledby="tab-carteira"
+          hidden={abaAtiva !== 'carteira'}
+        >
         {/* ── KPI Cards ── */}
         <div style={{
           display: 'grid',
@@ -878,7 +1346,7 @@ export default function PaginaControleAtivos() {
                 : `${ativosFiltrados.length} de ${ativos.length} ativos`}
             </span>
             {resumo?.totalParaAportar > 0 && (
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#60a5fa' }}>
+              <span className="vp" style={{ fontSize: '12px', fontWeight: 600, color: '#60a5fa' }}>
                 Total a Aportar p/ equilíbrio: {fmt(resumo.totalParaAportar)}
               </span>
             )}
@@ -890,6 +1358,17 @@ export default function PaginaControleAtivos() {
             </span>
           </div>
         )}
+        </div>
+
+        {/* ── Aba: Histórico da Carteira (nova — conteúdo em task 9.3) ── */}
+        <div
+          role="tabpanel"
+          id="painel-historico"
+          aria-labelledby="tab-historico"
+          hidden={abaAtiva !== 'historico'}
+        >
+          <HistoricoCarteiraPanel historico={historico} ativos={ativos} />
+        </div>
 
       </main>
 

@@ -7,7 +7,9 @@ const PrivacyContext = createContext(null);
  * Envolve toda a aplicação em App.jsx.
  */
 export function PrivacyProvider({ children }) {
-  const [valoresOcultos, setValoresOcultos] = useState(false);
+  // Inicia borrado: ao abrir/recarregar o sistema os valores começam ocultos.
+  // Se o usuário desligar o olhinho, permanece visível até fechar/reabrir.
+  const [valoresOcultos, setValoresOcultos] = useState(true);
 
   const togglePrivacidade = useCallback(() => {
     setValoresOcultos(v => !v);

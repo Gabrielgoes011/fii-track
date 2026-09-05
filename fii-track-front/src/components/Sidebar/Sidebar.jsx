@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  FaHome, FaCog, FaCircle, FaBars, FaTimes,
+  FaHome, FaCog, FaBars, FaTimes,
   FaWallet, FaChartLine, FaTags, FaExchangeAlt,
   FaFileAlt, FaFolder, FaChevronDown, FaChevronUp,
 } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
+
+// Iniciais do nome (ex: "Gabriel Souza" -> "GS")
+function getInitials(nome = '') {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0].toUpperCase())
+    .join('') || 'U';
+}
+
+// Saudação conforme o horário atual
+function getSaudacao() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
 
 function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
@@ -119,17 +137,36 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
           </button>
         </div>
 
-        {/* ── Status servidor ── */}
-        <div style={{ padding: '16px 20px 20px' }}>
+        {/* ── Card de perfil do usuário ── */}
+        <div style={{ padding: '16px 16px 20px' }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '7px',
-            background: 'rgba(16,185,129,0.08)',
-            border: '1px solid rgba(16,185,129,0.2)',
-            padding: '5px 12px', borderRadius: '20px',
-            fontSize: '12px', color: '#10b981', fontWeight: 500,
+            display: 'flex', alignItems: 'center', gap: '12px',
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.10), rgba(16,185,129,0.02))',
+            border: '1px solid rgba(16,185,129,0.18)',
+            padding: '12px', borderRadius: '14px',
           }}>
-            <FaCircle size={7} style={{ color: '#10b981', filter: 'drop-shadow(0 0 4px #10b981)' }} />
-            Servidor Online
+            {/* Avatar com iniciais */}
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontWeight: 700, fontSize: '15px', letterSpacing: '0.3px',
+              boxShadow: '0 0 14px rgba(16,185,129,0.35)',
+            }}>
+              {getInitials(user?.nome)}
+            </div>
+            {/* Saudação + nome */}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
+                {getSaudacao()},
+              </div>
+              <div style={{
+                fontSize: '14px', color: '#f8fafc', fontWeight: 700, lineHeight: 1.3,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {user?.nome || 'Usuário'}
+              </div>
+            </div>
           </div>
         </div>
 
