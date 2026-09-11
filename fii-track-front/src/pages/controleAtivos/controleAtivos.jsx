@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiTrash2, FiCheck, FiX, FiBriefcase, FiSearch } from 'react-icons/fi';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
@@ -33,32 +33,208 @@ const BADGE = {
 };
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld }) {
+function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld, isMobile }) {
   return (
     <div style={{
       background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
-      padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '14px',
+      padding: isMobile ? '0.75rem 0.85rem' : '1rem 1.25rem',
+      display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '14px',
       minWidth: 0, // permite o card respeitar a largura da coluna do grid (evita corte no mobile)
     }}>
       {Icon && (
         <div style={{
-          width: '38px', height: '38px', borderRadius: '10px',
+          width: isMobile ? '32px' : '38px', height: isMobile ? '32px' : '38px', borderRadius: '10px',
           background: `${cor}15`, border: `1px solid ${cor}30`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <Icon size={18} color={cor} />
+          <Icon size={isMobile ? 16 : 18} color={cor} />
         </div>
       )}
       <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ margin: 0, fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+        <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
         <p className="vp" style={{
-          margin: '2px 0 0', fontSize: '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc',
-          fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere',
+          margin: '2px 0 0',
+          // fonte fluida: encolhe conforme a largura disponível, mostrando o valor completo sem cortar
+          fontSize: isMobile ? 'clamp(0.95rem, 4.5vw, 1.15rem)' : '1.15rem',
+          fontWeight: 700, color: cor ?? '#f8fafc',
+          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1.2, whiteSpace: 'nowrap',
         }}>
           {ld ? '···' : valor}
         </p>
-        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
+        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
       </div>
+    </div>
+  );
+}
+
+// ─── Aba: Oportunidades (variação do dia × preço médio) ───────────────────────
+// Interpretação: baixa no dia = oportunidade (comprar); alta no dia = esperar.
+// Reforça com a posição da cotação frente ao preço médio (abaixo/acima do PM).
+
+// Card de um ativo na listagem de oportunidades/espera.
+function OportunidadeItem({ a, tipo, vsPM, fmtVar, rotuloPM }) {
+  const abaixoPM = (vsPM(a) ?? 0) < 0;
+  const corVar = a.variacaoDia < 0 ? '#f87171' : a.variacaoDia > 0 ? '#4ade80' : '#94a3b8';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: '10px 12px', background: '#111c33', borderRadius: '10px', border: '1px solid #1e293b',
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>{a.ticker}</p>
+          {tipo === 'oportunidade' && abaixoPM && (
+            <span title="Cotação abaixo do seu preço médio" style={{
+              fontSize: '10px', fontWeight: 700, color: '#4ade80',
+              background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)',
+              borderRadius: '6px', padding: '1px 6px',
+            }}>★ abaixo do PM</span>
+          )}
+        </div>
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: abaixoPM ? '#4ade80' : '#64748b' }}>
+          {rotuloPM(a) ?? '—'}
+        </p>
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corVar }}>{fmtVar(a.variacaoDia)}</p>
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8' }}>
+          {fmt(a.cotacao)} <span style={{ color: '#475569' }}>/ cota</span>
+        </p>
+        {/* Valor atual estimado da posição na última consulta (qtd × cotação) */}
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', fontWeight: 600, color: '#cbd5e1' }}>
+          {fmt(a.valorAtual)}
+          <span style={{ color: '#475569', fontWeight: 400 }}> · {a.quantidade} cotas</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Card-coluna (Oportunidades ou Esperar). Empilha naturalmente no mobile.
+// No mobile o card é colapsável (cabeçalho clicável); no desktop fica sempre aberto.
+function OportunidadeGrupo({ titulo, subtitulo, cor, icone: Icone, itens, tipo, vazio, isMobile, ...itemProps }) {
+  // Só colapsa no mobile; no desktop permanece aberto.
+  const [abertoMobile, setAbertoMobile] = useState(false);
+  const aberto = !isMobile || abertoMobile;
+
+  const cabecalho = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{
+        width: '34px', height: '34px', borderRadius: '9px', flexShrink: 0,
+        background: `${cor}15`, border: `1px solid ${cor}30`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icone size={16} color={cor} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+          {titulo} <span style={{ color: cor }}>({itens.length})</span>
+        </p>
+        <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>
+      </div>
+      {isMobile && (
+        <FiChevronDown
+          size={16} color="#64748b"
+          style={{ flexShrink: 0, transition: 'transform 0.2s', transform: abertoMobile ? 'rotate(180deg)' : 'none' }}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{
+      flex: 1, minWidth: 0,
+      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '1.1rem',
+    }}>
+      {isMobile ? (
+        <button
+          onClick={() => setAbertoMobile((v) => !v)}
+          aria-expanded={abertoMobile}
+          style={{ width: '100%', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+        >
+          {cabecalho}
+        </button>
+      ) : cabecalho}
+
+      {aberto && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+          {itens.length === 0
+            ? <p style={{ margin: 0, fontSize: '12px', color: '#475569', padding: '8px 0' }}>{vazio}</p>
+            : itens.map((a) => <OportunidadeItem key={a.idAtivo} a={a} tipo={tipo} {...itemProps} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
+  // Só ativos com variação do dia conhecida e cotação real.
+  const comVar = ativos.filter((a) => a.variacaoDia != null && a.temCotacao);
+
+  const oportunidades = comVar
+    .filter((a) => a.variacaoDia < 0)
+    .sort((a, b) => a.variacaoDia - b.variacaoDia); // mais negativa primeiro
+  const esperar = comVar
+    .filter((a) => a.variacaoDia > 0)
+    .sort((a, b) => b.variacaoDia - a.variacaoDia); // maior alta primeiro
+  const neutros = comVar.filter((a) => a.variacaoDia === 0);
+
+  const fmtVar = (v) => (v > 0 ? '+' : '') + (v * 100).toFixed(2).replace('.', ',') + '%';
+
+  // Relação da cotação com o preço médio (fração): negativo = abaixo do PM.
+  const vsPM = (a) => (a.precoMedio > 0 ? (a.cotacao - a.precoMedio) / a.precoMedio : null);
+  const rotuloPM = (a) => {
+    const r = vsPM(a);
+    if (r == null) return null;
+    return r < 0
+      ? `${(Math.abs(r) * 100).toFixed(1).replace('.', ',')}% abaixo do PM`
+      : `${(r * 100).toFixed(1).replace('.', ',')}% acima do PM`;
+  };
+
+  // Sem dados: cotações ainda não atualizadas.
+  if (comVar.length === 0) {
+    return (
+      <HistoricoWrapper>
+        <FiSearch size={22} color="#475569" />
+        <p style={{ margin: 0, fontSize: '13px' }}>
+          Atualize as cotações na aba <strong>Carteira de FIIs</strong> para ver as oportunidades do dia.
+        </p>
+      </HistoricoWrapper>
+    );
+  }
+
+  return (
+    <div>
+      {dataConsulta && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+          <AiOutlineInfoCircle size={12} color="#475569" />
+          <span style={{ fontSize: '11px', color: '#475569' }}>
+            Valores estimados na última consulta de cotações · {dataConsulta}
+          </span>
+        </div>
+      )}
+      <div style={{
+        display: 'flex', gap: '12px',
+        flexDirection: isMobile ? 'column' : 'row',
+      }}>
+        <OportunidadeGrupo
+          titulo="Oportunidades" subtitulo="Em queda hoje — possível compra"
+          cor="#f87171" icone={FiRefreshCw}
+          itens={oportunidades} tipo="oportunidade" vazio="Nenhum ativo em queda hoje."
+          vsPM={vsPM} fmtVar={fmtVar} rotuloPM={rotuloPM} isMobile={isMobile}
+        />
+        <OportunidadeGrupo
+          titulo="Esperar" subtitulo="Em alta hoje — aguardar"
+          cor="#4ade80" icone={FiCheck}
+          itens={esperar} tipo="esperar" vazio="Nenhum ativo em alta hoje."
+          vsPM={vsPM} fmtVar={fmtVar} rotuloPM={rotuloPM} isMobile={isMobile}
+        />
+      </div>
+      <p style={{ margin: '12px 2px 0', fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
+        {neutros.length > 0 && `${neutros.length} ativo${neutros.length > 1 ? 's' : ''} sem variação no dia. `}
+        ★ indica cotação abaixo do seu preço médio (PM). Baseado na variação do pregão; não é recomendação de investimento.
+      </p>
     </div>
   );
 }
@@ -513,64 +689,102 @@ function BarraFiltros({
   segmentos, objetivos, total, exibidos,
 }) {
   const temFiltro = busca || segmento || objetivo || status;
+  const qtdFiltros = [busca, segmento, objetivo, status].filter(Boolean).length;
+
+  // Colapsável: começa fechado; abre automaticamente se já houver algum filtro ativo.
+  const [aberto, setAberto] = useState(false);
+  useEffect(() => { if (temFiltro) setAberto(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const selStyle = {
     padding: '0.5rem 0.75rem', background: '#1e293b', border: '1px solid #334155',
     borderRadius: '8px', color: '#f8fafc', fontSize: '13px', outline: 'none', cursor: 'pointer',
+    flex: '1 1 150px', minWidth: 0,
   };
 
   return (
     <div style={{
       background: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px',
-      padding: '0.75rem', marginBottom: '10px',
-      display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center',
+      marginBottom: '10px', overflow: 'hidden',
     }}>
-      {/* Busca */}
-      <div style={{ position: 'relative', flex: '1 1 220px' }}>
-        <FiSearch size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
-        <input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por ticker, setor ou objetivo..."
-          style={{
-            width: '100%', padding: '0.5rem 0.75rem 0.5rem 30px', background: '#1e293b',
-            border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc',
-            fontSize: '13px', outline: 'none', boxSizing: 'border-box',
-          }}
-          onFocus={(e) => (e.target.style.borderColor = '#10b981')}
-          onBlur={(e) => (e.target.style.borderColor = '#334155')}
-        />
-      </div>
-
-      {/* Filtros */}
-      <select value={segmento} onChange={(e) => setSegmento(e.target.value)} style={selStyle}>
-        <option value="">Todos os setores</option>
-        {segmentos.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
-      <select value={objetivo} onChange={(e) => setObjetivo(e.target.value)} style={selStyle}>
-        <option value="">Todos os objetivos</option>
-        {objetivos.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <select value={status} onChange={(e) => setStatus(e.target.value)} style={selStyle}>
-        <option value="">Todos os status</option>
-        <option value="aportar">Aportar</option>
-        <option value="equilibrio">Equilíbrio</option>
-        <option value="acima">Acima Ideal</option>
-      </select>
-
-      {temFiltro && (
+      {/* Cabeçalho clicável (colapso) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.6rem 0.75rem' }}>
         <button
-          onClick={() => { setBusca(''); setSegmento(''); setObjetivo(''); setStatus(''); }}
+          onClick={() => setAberto((v) => !v)}
+          aria-expanded={aberto}
           style={{
-            padding: '0.5rem 0.75rem', background: 'transparent', border: '1px solid #334155',
-            borderRadius: '8px', color: '#94a3b8', fontSize: '12px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '5px',
+            display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0,
           }}
         >
-          <FiX size={12} /> Limpar
+          <FiSearch size={14} color="#64748b" />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Buscar e filtrar</span>
+          {qtdFiltros > 0 && (
+            <span style={{
+              fontSize: '10px', fontWeight: 700, color: '#10b981',
+              background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
+              borderRadius: '999px', padding: '1px 7px',
+            }}>{qtdFiltros}</span>
+          )}
+          <FiChevronDown
+            size={16} color="#64748b"
+            style={{ marginLeft: 'auto', transition: 'transform 0.2s', transform: aberto ? 'rotate(180deg)' : 'none' }}
+          />
         </button>
-      )}
+        <span style={{ fontSize: '11px', color: '#475569', whiteSpace: 'nowrap' }}>{exibidos} de {total}</span>
+      </div>
 
-      <span style={{ fontSize: '11px', color: '#475569', marginLeft: 'auto' }}>{exibidos} de {total}</span>
+      {/* Corpo (busca em linha própria + filtros abaixo) */}
+      {aberto && (
+        <div style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Busca — largura total para o placeholder nunca cortar */}
+          <div style={{ position: 'relative', marginTop: '10px' }}>
+            <FiSearch size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por ticker, setor ou objetivo..."
+              style={{
+                width: '100%', padding: '0.5rem 0.75rem 0.5rem 30px', background: '#1e293b',
+                border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc',
+                fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+              onBlur={(e) => (e.target.style.borderColor = '#334155')}
+            />
+          </div>
+
+          {/* Filtros — quebram em linha conforme a largura */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <select value={segmento} onChange={(e) => setSegmento(e.target.value)} style={selStyle}>
+              <option value="">Todos os setores</option>
+              {segmentos.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={objetivo} onChange={(e) => setObjetivo(e.target.value)} style={selStyle}>
+              <option value="">Todos os objetivos</option>
+              {objetivos.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} style={selStyle}>
+              <option value="">Todos os status</option>
+              <option value="aportar">Aportar</option>
+              <option value="equilibrio">Equilíbrio</option>
+              <option value="acima">Acima Ideal</option>
+            </select>
+
+            {temFiltro && (
+              <button
+                onClick={() => { setBusca(''); setSegmento(''); setObjetivo(''); setStatus(''); }}
+                style={{
+                  padding: '0.5rem 0.75rem', background: 'transparent', border: '1px solid #334155',
+                  borderRadius: '8px', color: '#94a3b8', fontSize: '12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
+                }}
+              >
+                <FiX size={12} /> Limpar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -579,6 +793,7 @@ function BarraFiltros({
 const ABAS = [
   { id: 'carteira', label: 'Carteira de FIIs' },
   { id: 'historico', label: 'Histórico da Carteira' },
+  { id: 'oportunidades', label: 'Oportunidades' },
 ];
 
 // ─── Navegação por abas (acessível: roles ARIA + navegação por teclado) ────────
@@ -707,15 +922,44 @@ function IndicadorDirecao({ direcao, size = 12 }) {
 // Exibe cada ponto da série com seu indicador de direção (alta/baixa/neutra),
 // atendendo ao Req 5.6 de forma acessível e legível.
 function LegendaDirecao({ pontos, extrairValor, rotulo }) {
+  const isMobile = useIsMobile();
   if (!pontos || pontos.length === 0) return null;
 
+  // 1) Agrupa dias consecutivos com o MESMO valor num único item (evita cards
+  //    repetidos, ex.: 05/09, 06/09 e 07/09 todos em R$ 23.564,08).
+  const grupos = [];
+  for (const p of pontos) {
+    const valor = extrairValor(p);
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.valor === valor) {
+      ultimo.fim = p; // estende o intervalo do grupo atual
+    } else {
+      grupos.push({ valor, inicio: p, fim: p, direcao: p.direcao });
+    }
+  }
+
+  // 2) Limita a quantidade de cards: 3 no mobile, 7 no desktop, mantendo os
+  //    grupos mais recentes (a série vem em ordem cronológica).
+  const limite = isMobile ? 3 : 7;
+  const visiveis = grupos.slice(-limite);
+  const ocultos = grupos.length - visiveis.length;
+
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
-      {pontos.map((p, i) => {
-        const info = DIRECAO_INFO[p.direcao];
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px', alignItems: 'center' }}>
+      {ocultos > 0 && (
+        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+          +{ocultos} anterior{ocultos > 1 ? 'es' : ''}
+        </span>
+      )}
+      {visiveis.map((g, i) => {
+        const info = DIRECAO_INFO[g.direcao];
         const cor = info ? info.cor : '#64748b';
         const bg = info ? `${info.cor}12` : 'rgba(100,116,139,0.08)';
         const borda = info ? `${info.cor}30` : '#334155';
+        const mesmoDia = g.inicio === g.fim;
+        const rotuloData = mesmoDia
+          ? fmtDiaMes(g.inicio.dtCaptura)
+          : `${fmtDiaMes(g.inicio.dtCaptura)}–${fmtDiaMes(g.fim.dtCaptura)}`;
         return (
           <div
             key={`${rotulo}-${i}`}
@@ -726,11 +970,11 @@ function LegendaDirecao({ pontos, extrairValor, rotulo }) {
             }}
           >
             <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
-              {fmtDiaMes(p.dtCaptura)}
+              {rotuloData}
             </span>
-            <IndicadorDirecao direcao={p.direcao} size={11} />
+            <IndicadorDirecao direcao={g.direcao} size={11} />
             <span className="vp" style={{ fontSize: '11px', fontWeight: 700, color: cor }}>
-              {fmt(extrairValor(p))}
+              {fmt(g.valor)}
             </span>
           </div>
         );
@@ -739,8 +983,24 @@ function LegendaDirecao({ pontos, extrairValor, rotulo }) {
   );
 }
 
-// ─── Card wrapper de gráfico do histórico ─────────────────────────────────────
-function CardGrafico({ titulo, subtitulo, direita, children }) {
+// ─── Card wrapper de gráfico do histórico (opcionalmente colapsável) ──────────
+function CardGrafico({ titulo, subtitulo, direita, children, colapsavel = false, aberto = true, onToggle }) {
+  // Cabeçalho: quando colapsável, o título vira botão com chevron.
+  const cabecalhoTexto = (
+    <div style={{ minWidth: 0 }}>
+      <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {titulo}
+        {colapsavel && (
+          <FiChevronDown
+            size={16} color="#64748b"
+            style={{ transition: 'transform 0.2s', transform: aberto ? 'rotate(180deg)' : 'none' }}
+          />
+        )}
+      </h3>
+      {subtitulo && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>}
+    </div>
+  );
+
   return (
     <div style={{
       background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px',
@@ -748,15 +1008,21 @@ function CardGrafico({ titulo, subtitulo, direita, children }) {
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: '12px', flexWrap: 'wrap', marginBottom: '8px',
+        gap: '12px', flexWrap: 'wrap', marginBottom: aberto ? '8px' : 0,
       }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{titulo}</h3>
-          {subtitulo && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>}
-        </div>
-        {direita}
+        {colapsavel ? (
+          <button
+            onClick={onToggle}
+            aria-expanded={aberto}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0 }}
+          >
+            {cabecalhoTexto}
+          </button>
+        ) : cabecalhoTexto}
+        {/* Controles à direita (ex.: seletor) só fazem sentido com o card aberto */}
+        {(!colapsavel || aberto) && direita}
       </div>
-      {children}
+      {(!colapsavel || aberto) && children}
     </div>
   );
 }
@@ -818,6 +1084,9 @@ function HistoricoErro({ mensagem = 'Não foi possível carregar o histórico.',
 // Reutiliza AreaChart plotando `valorMercadoTotal` ao longo de `dtCaptura`,
 // já agrupado por dia (America/Sao_Paulo) e em ordem cronológica.
 function HistoricoPatrimonioChart({ patrimonio }) {
+  // Card colapsável — começa aberto (gráfico principal da aba).
+  const [aberto, setAberto] = useState(true);
+
   const pontos = agruparPorDia(patrimonio, 'America/Sao_Paulo');
   const extrairValor = (p) => Number(p.valorMercadoTotal) || 0;
 
@@ -830,10 +1099,13 @@ function HistoricoPatrimonioChart({ patrimonio }) {
     <CardGrafico
       titulo="Evolução do Patrimônio"
       subtitulo="Valor de mercado total da carteira (agrupado por dia)"
+      colapsavel
+      aberto={aberto}
+      onToggle={() => setAberto((v) => !v)}
     >
       {/* Req 6.1/6.3: o gráfico exibe patrimônio, então borra sob o modo privacidade. */}
       <div className="vp">
-        <AreaChart data={dados} keys={['Patrimônio']} colors={{ Patrimônio: '#8b5cf6' }} height={180} />
+        <AreaChart data={dados} keys={['Patrimônio']} colors={{ Patrimônio: '#8b5cf6' }} height={180} autoScale />
       </div>
       <LegendaDirecao pontos={pontos} extrairValor={extrairValor} rotulo="patr" />
     </CardGrafico>
@@ -845,6 +1117,9 @@ function HistoricoTickerChart({
   ativos, tickerSerie, tickerAtual, onSelecionarTicker,
   loadingTicker, erroTicker, onRetryTicker,
 }) {
+  // Card colapsável — começa fechado para deixar a aba mais limpa.
+  const [aberto, setAberto] = useState(false);
+
   // Lista de tickers disponíveis a partir da carteira do usuário.
   const tickers = [...new Set((ativos || []).map((a) => a.ticker).filter(Boolean))].sort();
 
@@ -909,7 +1184,7 @@ function HistoricoTickerChart({
       <>
         {/* Req 6.1/6.3: preço é valor financeiro → borra sob o modo privacidade. */}
         <div className="vp">
-          <AreaChart data={dados} keys={['Preço']} colors={{ Preço: '#38bdf8' }} height={180} />
+          <AreaChart data={dados} keys={['Preço']} colors={{ Preço: '#38bdf8' }} height={180} autoScale />
         </div>
         <LegendaDirecao pontos={pontos} extrairValor={extrairValor} rotulo="tk" />
       </>
@@ -921,6 +1196,9 @@ function HistoricoTickerChart({
       titulo="Evolução de Preço por Ativo"
       subtitulo={tickerAtual ? `Histórico de preço de ${tickerAtual} (agrupado por dia)` : 'Escolha um ativo para ver o histórico de preço'}
       direita={seletor}
+      colapsavel
+      aberto={aberto}
+      onToggle={() => setAberto((v) => !v)}
     >
       {conteudo}
     </CardGrafico>
@@ -1023,6 +1301,16 @@ export default function PaginaControleAtivos() {
       carregarPatrimonio();
     }
   }, [abaAtiva, carregouHistorico, loadingHistorico, carregarPatrimonio]);
+
+  // Atualiza cotações e, em caso de sucesso, recarrega as séries do Histórico
+  // da Carteira (o backend grava um novo snapshot a cada atualização).
+  const handleAtualizarCotacoes = useCallback(async () => {
+    const ok = await atualizarCotacoes();
+    if (!ok) return;
+    // Recarrega o patrimônio e, se houver um ticker selecionado, sua série também.
+    carregarPatrimonio();
+    if (tickerAtual) carregarTicker(tickerAtual);
+  }, [atualizarCotacoes, carregarPatrimonio, tickerAtual, carregarTicker]);
 
   // Objeto de estado do histórico repassado ao painel.
   const historico = {
@@ -1221,28 +1509,28 @@ export default function PaginaControleAtivos() {
         {/* ── KPI Cards ── */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '10px', marginBottom: '1.25rem',
           width: '100%', minWidth: 0, // trava a grade na largura do container (evita vazar no mobile)
         }}>
-          <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} />
-          <KpiCard icon={FiLayers} label="Saldo Atual" valor={fmt(resumo?.valorAtualTotal)} cor="#10b981" loading={loading} />
+          <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} isMobile={isMobile} />
+          <KpiCard icon={FiLayers} label="Saldo Atual" valor={fmt(resumo?.valorAtualTotal)} cor="#10b981" loading={loading} isMobile={isMobile} />
           <KpiCard
             icon={FiRefreshCw} label="Rentabilidade Global"
             valor={fmtSinal(resumo?.rentabilidadeReais)}
             sub={{ txt: fmtPerc(resumo?.rentabilidadePerc), cor: corRentResumo }}
-            cor={corRentResumo} loading={loading}
+            cor={corRentResumo} loading={loading} isMobile={isMobile}
           />
           <KpiCard
             icon={FiCheck} label="Proventos Recebidos"
             valor={fmt(resumo?.totalProventos)}
-            cor="#a78bfa" loading={loading}
+            cor="#a78bfa" loading={loading} isMobile={isMobile}
           />
           <KpiCard
             icon={FiRefreshCw} label="Rent. + Proventos"
             valor={fmtSinal(resumo?.rentabilidadeComProventosReais)}
             sub={{ txt: fmtPerc(resumo?.rentabilidadeComProventosPerc), cor: corRent(resumo?.rentabilidadeComProventosReais) }}
-            cor={corRent(resumo?.rentabilidadeComProventosReais)} loading={loading}
+            cor={corRent(resumo?.rentabilidadeComProventosReais)} loading={loading} isMobile={isMobile}
           />
         </div>
 
@@ -1256,7 +1544,7 @@ export default function PaginaControleAtivos() {
                 : 'Cotações ainda não carregadas · clique em Atualizar'}
             </span>
           </div>
-          <button onClick={atualizarCotacoes} disabled={loadingCotacoes || loading} style={{
+          <button onClick={handleAtualizarCotacoes} disabled={loadingCotacoes || loading} style={{
             display: 'flex', alignItems: 'center', gap: '5px',
             padding: '6px 12px', background: 'rgba(139,92,246,0.1)',
             border: '1px solid rgba(139,92,246,0.25)', borderRadius: '8px',
@@ -1368,6 +1656,16 @@ export default function PaginaControleAtivos() {
           hidden={abaAtiva !== 'historico'}
         >
           <HistoricoCarteiraPanel historico={historico} ativos={ativos} />
+        </div>
+
+        {/* ── Aba: Oportunidades (variação do dia × preço médio) ── */}
+        <div
+          role="tabpanel"
+          id="painel-oportunidades"
+          aria-labelledby="tab-oportunidades"
+          hidden={abaAtiva !== 'oportunidades'}
+        >
+          <OportunidadesPanel ativos={ativos} isMobile={isMobile} dataConsulta={resumo?.dataAtualizacaoCotacoes} />
         </div>
 
       </main>

@@ -14,9 +14,16 @@ function calcularAtivo(raw, cotacoesMap = {}) {
   const totalProventos = Number(raw.totalProventos) || 0;
 
   // Cotação vinda da brapi (último preço / fechamento do pregão anterior)
-  const cotacaoApi = cotacoesMap[String(raw.ticker || '').toUpperCase()]?.preco;
+  const cotacaoObj = cotacoesMap[String(raw.ticker || '').toUpperCase()];
+  const cotacaoApi = cotacaoObj?.preco;
   const temCotacao = cotacaoApi != null && Number(cotacaoApi) > 0;
   const cotacao    = temCotacao ? Number(cotacaoApi) : precoMedio;
+  // Variação percentual do dia (fração, ex.: 0,015 = +1,5%) — usada na seção de
+  // oportunidades (altas/baixas do dia). Vem da brapi em % → converte p/ fração.
+  const variacaoDiaRaw = cotacaoObj?.variacaoPerc;
+  const variacaoDia = variacaoDiaRaw != null && !Number.isNaN(Number(variacaoDiaRaw))
+    ? Number(variacaoDiaRaw) / 100
+    : null;
 
   const valorAtual   = quantidade * cotacao;
   const rentabilidadeReais = valorAtual - custo + totalProventos;
@@ -41,6 +48,7 @@ function calcularAtivo(raw, cotacoesMap = {}) {
     precoMedio,
     cotacao,
     temCotacao,
+    variacaoDia,
     valorAtual,
     custo,
     totalProventos,
@@ -174,7 +182,7 @@ export const useControleAtivos = () => {
 
   // ── Atualiza cotações (consome 1 requisição da brapi — só sob demanda) ────
   const atualizarCotacoes = useCallback(async () => {
-    if (rowsRef.current.length === 0) return;
+    if (rowsRef.current.length === 0) return false;
 
     setLoadingCotacoes(true);
     try {
@@ -190,8 +198,10 @@ export const useControleAtivos = () => {
       atualizadoEmRef.current = atualizadoEm || atualizadoEmRef.current || new Date().toISOString();
       recomputar();
       toastSuccess('Cotações atualizadas!');
+      return true; // permite à tela recarregar dados dependentes (ex.: histórico)
     } catch (error) {
       handleError(error);
+      return false;
     } finally {
       setLoadingCotacoes(false);
     }

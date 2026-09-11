@@ -128,7 +128,8 @@ function PaginaDashboard() {
       {/* ── Stats ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        // min(100%, 220px): em telas muito estreitas cai para 1 coluna (evita apertar o número)
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
         gap: '16px',
         marginBottom: '2rem',
       }}>
@@ -141,10 +142,11 @@ function PaginaDashboard() {
                 background: '#0f172a',
                 border: '1px solid #1e293b',
                 borderRadius: '12px',
-                padding: '1.25rem',
+                padding: '1.1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1rem',
+                gap: '0.85rem',
+                minWidth: 0,
                 transition: 'border-color 0.2s, transform 0.2s',
               }}
               onMouseEnter={e => {
@@ -168,7 +170,13 @@ function PaginaDashboard() {
                 <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   {s.label}
                 </div>
-                <div className="vp" style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color, overflowWrap: 'anywhere' }}>
+                <div className="vp" style={{
+                  // fonte fluida: encolhe em telas estreitas, mostrando o valor completo em uma linha
+                  fontSize: 'clamp(1.05rem, 4.5vw, 1.4rem)',
+                  fontWeight: 800, color: s.color,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  fontVariantNumeric: 'tabular-nums', lineHeight: 1.2,
+                }}>
                   {loading ? '...' : (s.value || '0')}
                 </div>
               </div>
