@@ -46,3 +46,8 @@ Thumbs.db
 # Coverage
 # =========================================
 coverage
+
+# =========================================
+# Credenciais Git locais (conta pessoal — NÃO versionar)
+# =========================================
+.git-credentials

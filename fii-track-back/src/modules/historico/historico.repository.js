@@ -81,6 +81,37 @@ async function getPosicaoCarteira(idUser) {
 }
 //#endregion
 
+//#region Verificação de captura redundante no mesmo dia
+// Verifica se já existe, HOJE (data-calendário no fuso America/Sao_Paulo), um
+// Snapshot_Geral do usuário com os mesmos valores consolidados (valorMercadoTotal
+// e custoTotal). Serve para evitar gravar Capturas idênticas em cliques repetidos
+// no mesmo dia sem que a cotação tenha mudado — economiza espaço sem perder
+// histórico real (quando o preço muda no dia, os valores diferem e a gravação ocorre).
+//
+// Retorna true quando já há uma captura equivalente hoje; false caso contrário.
+async function existeCapturaHojeComValores(idUser, valorMercadoTotal, custoTotal) {
+
+  // Abre a conexão (mesmo escopo/transação do request com RLS).
+  const db = await openDb();
+
+  // Compara a data-calendário de dtCaptura no fuso local com "hoje" no mesmo fuso.
+  // Os valores são numeric(16,2)/(14,2); arredondamos os parâmetros para 2 casas
+  // na comparação para casar com a escala persistida.
+  const result = await db.query(`
+    SELECT 1
+    FROM historico_carteira_geral
+    WHERE "idUser" = $1
+      AND ("dtCaptura" AT TIME ZONE 'America/Sao_Paulo')::date
+          = (now() AT TIME ZONE 'America/Sao_Paulo')::date
+      AND ROUND("valorMercadoTotal", 2) = ROUND($2::numeric, 2)
+      AND ROUND("custoTotal", 2)        = ROUND($3::numeric, 2)
+    LIMIT 1
+  `, [idUser, valorMercadoTotal ?? 0, custoTotal ?? 0]);
+
+  return result.rows.length > 0;
+}
+//#endregion
+
 //#region Inserção append-only do histórico de cotações
 // Grava, em `historico_cotacoes`, um NOVO registro por item (append-only,
 // sem UPSERT). Preserva a precisão numérica recebida da fonte de cotação:
@@ -358,6 +389,7 @@ async function listarSnapshotAtivo(idUser, idAtivo, periodo) {
 
 export {
   getPosicaoCarteira,
+  existeCapturaHojeComValores,
   inserirHistoricoCotacoes,
   inserirSnapshotsAtivo,
   inserirSnapshotGeral,

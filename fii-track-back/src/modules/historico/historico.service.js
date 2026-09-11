@@ -9,6 +9,7 @@
 
 import {
   getPosicaoCarteira,
+  existeCapturaHojeComValores,
   inserirHistoricoCotacoes,
   inserirSnapshotsAtivo,
   inserirSnapshotGeral,
@@ -323,6 +324,26 @@ async function registrarCaptura(idUser, cotacoesPorTicker, dtCaptura) {
 
   // Snapshot geral consolidado (Requirement 3.2, 3.8, 3.9), mesmo dtCaptura.
   const geral = calcularSnapshotGeral(snapshotsParaGeral);
+
+  // Dedup por dia: se já houve hoje uma Captura com os mesmos valores consolidados
+  // (mesmo valorMercadoTotal e custoTotal), pula a gravação. Isso evita acumular
+  // linhas idênticas em cliques repetidos no mesmo dia sem mudança de cotação.
+  // Quando o preço muda ao longo do dia, os valores diferem e a Captura é gravada.
+  const jaExisteHoje = await existeCapturaHojeComValores(
+    idUser,
+    geral.valorMercadoTotal,
+    geral.custoTotal,
+  );
+  if (jaExisteHoje) {
+    return {
+      dtCaptura: dtCapturaIso,
+      historicoCotacoes: [],
+      snapshotsAtivo: [],
+      snapshotGeral: null,
+      duplicadaIgnorada: true,
+    };
+  }
+
   const registroGeral = {
     idUser,
     custoTotal: geral.custoTotal,
@@ -367,7 +388,11 @@ async function getHistoricoTicker(ticker, periodo) {
     return [];
   }
 
-  return calcularVariacoes(serie, (p) => p.preco);
+  // Consolida 1 ponto por dia (a Captura mais recente do dia) antes de calcular
+  // as variações — evita que capturas duplicadas no mesmo dia zerem a variação
+  // e neutralizem a cor de alta/baixa (Requirement 5.4).
+  const porDia = agruparPorDia(serie);
+  return calcularVariacoes(porDia, (p) => p.preco);
 }
 //#endregion
 
@@ -389,7 +414,9 @@ async function getHistoricoPatrimonio(idUser, periodo) {
     return [];
   }
 
-  return calcularVariacoes(serie, (p) => p.valorMercadoTotal);
+  // Consolida 1 ponto por dia (Captura mais recente) antes das variações (Req. 5.4).
+  const porDia = agruparPorDia(serie);
+  return calcularVariacoes(porDia, (p) => p.valorMercadoTotal);
 }
 //#endregion
 
@@ -413,7 +440,9 @@ async function getHistoricoAtivo(idUser, idAtivo, periodo) {
     return [];
   }
 
-  return calcularVariacoes(serie, (p) => p.valorMercado);
+  // Consolida 1 ponto por dia (Captura mais recente) antes das variações (Req. 5.4).
+  const porDia = agruparPorDia(serie);
+  return calcularVariacoes(porDia, (p) => p.valorMercado);
 }
 //#endregion
 
