@@ -819,9 +819,15 @@ function TabsNav({ abaAtiva, onSelecionar }) {
       role="tablist"
       aria-label="Seções do Controle de Ativos"
       onKeyDown={handleKeyDown}
+      className="tabs-nav-scroll"
       style={{
         display: 'flex', gap: '4px', marginBottom: '1.25rem',
         borderBottom: '1px solid #1e293b',
+        // Permite rolar as abas na horizontal quando não cabem (ex.: mobile),
+        // mantendo cada aba clicável sem quebrar linha.
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none', // Firefox: esconde a barra
       }}
     >
       {ABAS.map(({ id, label }) => {
@@ -843,6 +849,7 @@ function TabsNav({ abaAtiva, onSelecionar }) {
               borderBottom: ativa ? '3px solid #8b5cf6' : '3px solid transparent',
               fontWeight: 600, fontSize: '14px', cursor: 'pointer',
               transition: 'all 0.2s', whiteSpace: 'nowrap',
+              flexShrink: 0, // não encolhe: garante que o scroll horizontal funcione
             }}
           >
             {label}
@@ -1670,7 +1677,8 @@ export default function PaginaControleAtivos() {
 
       </main>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .tabs-nav-scroll::-webkit-scrollbar { display: none; }`}</style>
     </div>
   );
 }

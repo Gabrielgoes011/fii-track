@@ -10,7 +10,9 @@ export const controleAtivosService = {
   // Só deve ser chamada sob demanda (botão "Atualizar Cotações").
   atualizarCotacoes: async () => {
     const res = await api.post('/controle-ativos/cotacoes');
-    return res.data; // { cotacoes: { TICKER: {...} }, atualizadoEm: ISO }
+    // { cotacoes: { TICKER: {...} }, atualizadoEm: ISO,
+    //   origem: 'brapi'|'cache'|'cache-fallback', ttlMinutos, proximaAtualizacaoEm: ISO }
+    return res.data;
   },
 
   listarSegmentos: async () => {

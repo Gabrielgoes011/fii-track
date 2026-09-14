@@ -142,7 +142,7 @@ async function getCotacoesCarteiraService(idUser) {
     // Tickers da carteira do usuário
     const tickers = await getTickersCarteiraRepo(idUser);
     if (tickers.length === 0) {
-      return { cotacoes: {}, atualizadoEm: null };
+      return { cotacoes: {}, atualizadoEm: null, origem: 'cache', ttlMinutos: COTACAO_TTL_MINUTOS, proximaAtualizacaoEm: null };
     }
 
     // Cache atual
@@ -156,6 +156,11 @@ async function getCotacoesCarteiraService(idUser) {
       if (!linha || !linha.dtConsulta) return true;
       return new Date(linha.dtConsulta).getTime() < limite;
     });
+
+    // Rastreia a origem dos dados para o frontend saber se buscou preços novos
+    // ('brapi'), se tudo veio do cache dentro do TTL ('cache'), ou se tentou
+    // buscar mas a brapi falhou e caiu no cache ('cache-fallback').
+    let origem = desatualizados.length > 0 ? 'brapi' : 'cache';
 
     // Busca na brapi só o que precisa e grava no cache
     if (desatualizados.length > 0) {
@@ -181,6 +186,8 @@ async function getCotacoesCarteiraService(idUser) {
         // Se a brapi falhar mas houver cache, seguimos com o que temos.
         if (cache.size === 0) throw erroBrapi;
         console.error('brapi indisponível, usando cache existente:', erroBrapi.message);
+        // Tentou buscar preços novos, mas caiu no cache por falha externa.
+        origem = 'cache-fallback';
       }
     }
 
@@ -204,9 +211,22 @@ async function getCotacoesCarteiraService(idUser) {
     // Não altera a resposta ao frontend, que segue sendo { cotacoes, atualizadoEm }.
     await registrarCaptura(idUser, cotacoes, dtCaptura);
 
+    // Momento em que o cache mais antigo expira: a partir daí um novo clique
+    // volta a consultar a brapi. Útil para a mensagem "disponível novamente às…".
+    const proximaAtualizacaoEm = maisAntiga !== null
+      ? new Date(maisAntiga + COTACAO_TTL_MINUTOS * 60 * 1000).toISOString()
+      : null;
+
     return {
       cotacoes,
       atualizadoEm: maisAntiga !== null ? new Date(maisAntiga).toISOString() : null,
+      // Sinaliza ao frontend a natureza da resposta (Requirement: mensagem
+      // "cotações já atualizadas / disponível no próximo pregão").
+      // 'brapi' = buscou preços novos | 'cache' = tudo fresco dentro do TTL
+      // | 'cache-fallback' = tentou buscar mas a brapi falhou e usou cache.
+      origem,
+      ttlMinutos: COTACAO_TTL_MINUTOS,
+      proximaAtualizacaoEm,
     };
 
   } catch (error) {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { handleError, toastSuccess } from '../../utils/responseUtils';
+import { handleError, toastSuccess, toastInfo, toastWarn } from '../../utils/responseUtils';
 import { controleAtivosService } from '../../services/controleAtivos/controleAtivosService';
 
 // ── Helpers de cálculo ────────────────────────────────────────────────────────
@@ -186,7 +186,8 @@ export const useControleAtivos = () => {
 
     setLoadingCotacoes(true);
     try {
-      const { cotacoes, atualizadoEm } = await controleAtivosService.atualizarCotacoes();
+      const { cotacoes, atualizadoEm, origem, proximaAtualizacaoEm } =
+        await controleAtivosService.atualizarCotacoes();
 
       // Normaliza as chaves do mapa para MAIÚSCULO (bate com o ticker)
       const mapa = {};
@@ -197,7 +198,25 @@ export const useControleAtivos = () => {
       cotacoesRef.current  = mapa;
       atualizadoEmRef.current = atualizadoEm || atualizadoEmRef.current || new Date().toISOString();
       recomputar();
-      toastSuccess('Cotações atualizadas!');
+
+      // Mensagem contextual conforme a origem dos dados (informada pelo backend):
+      //  • brapi          → buscou preços novos de fato
+      //  • cache          → tudo já estava fresco dentro do TTL; nada mudou
+      //  • cache-fallback → tentou buscar, a fonte falhou e usamos o cache
+      if (origem === 'cache') {
+        const horaProx = proximaAtualizacaoEm
+          ? new Date(proximaAtualizacaoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          : null;
+        toastInfo(
+          horaProx
+            ? `Cotações já atualizadas. Novos preços a partir das ${horaProx} ou no próximo pregão.`
+            : 'Cotações já atualizadas. Novos preços apenas no próximo pregão.'
+        );
+      } else if (origem === 'cache-fallback') {
+        toastWarn('Fonte de cotações indisponível. Exibindo os últimos preços salvos.');
+      } else {
+        toastSuccess('Cotações atualizadas!');
+      }
       return true; // permite à tela recarregar dados dependentes (ex.: histórico)
     } catch (error) {
       handleError(error);
