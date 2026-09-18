@@ -142,7 +142,11 @@ async function getCotacoesCarteiraService(idUser) {
     // Tickers da carteira do usuário
     const tickers = await getTickersCarteiraRepo(idUser);
     if (tickers.length === 0) {
-      return { cotacoes: {}, atualizadoEm: null, origem: 'cache', ttlMinutos: COTACAO_TTL_MINUTOS, proximaAtualizacaoEm: null };
+      return {
+        cotacoes: {}, atualizadoEm: null, consultaMaisAntiga: null,
+        tickersDesatualizados: [], origem: 'cache',
+        ttlMinutos: COTACAO_TTL_MINUTOS, proximaAtualizacaoEm: null,
+      };
     }
 
     // Cache atual
@@ -191,16 +195,30 @@ async function getCotacoesCarteiraService(idUser) {
       }
     }
 
-    // Monta o mapa de retorno e descobre a consulta mais antiga
+    // Monta o mapa de retorno e descobre a consulta mais antiga e a mais recente.
+    // `tickersDesatualizados` lista os tickers cuja última consulta ainda está
+    // fora do TTL após esta tentativa (ex.: brapi indisponível / limite atingido),
+    // permitindo ao frontend sinalizar a defasagem de forma precisa.
     const cotacoes = {};
     let maisAntiga = null;
+    let maisRecente = null;
+    const tickersDesatualizados = [];
+    const limiteAtual = Date.now() - COTACAO_TTL_MINUTOS * 60 * 1000;
     for (const ticker of tickers) {
       const linha = cache.get(ticker.toUpperCase());
-      if (!linha) continue;
+      if (!linha) {
+        // Sem cache algum para o ticker: considera defasado.
+        tickersDesatualizados.push(ticker.toUpperCase());
+        continue;
+      }
       cotacoes[ticker.toUpperCase()] = montarCotacao(linha);
       if (linha.dtConsulta) {
         const t = new Date(linha.dtConsulta).getTime();
         if (maisAntiga === null || t < maisAntiga) maisAntiga = t;
+        if (maisRecente === null || t > maisRecente) maisRecente = t;
+        if (t < limiteAtual) tickersDesatualizados.push(ticker.toUpperCase());
+      } else {
+        tickersDesatualizados.push(ticker.toUpperCase());
       }
     }
 
@@ -219,7 +237,14 @@ async function getCotacoesCarteiraService(idUser) {
 
     return {
       cotacoes,
-      atualizadoEm: maisAntiga !== null ? new Date(maisAntiga).toISOString() : null,
+      // `atualizadoEm` reflete a consulta MAIS RECENTE com sucesso (o carimbo que
+      // o usuário deve ver). A defasagem passa a ser sinalizada por
+      // `tickersDesatualizados`, e não mais por "o ticker mais antigo puxar tudo".
+      atualizadoEm: maisRecente !== null ? new Date(maisRecente).toISOString() : null,
+      // Consulta mais antiga da carteira (mantida para eventual uso/depuração).
+      consultaMaisAntiga: maisAntiga !== null ? new Date(maisAntiga).toISOString() : null,
+      // Tickers ainda fora do TTL após esta tentativa. Vazio = tudo atualizado.
+      tickersDesatualizados,
       // Sinaliza ao frontend a natureza da resposta (Requirement: mensagem
       // "cotações já atualizadas / disponível no próximo pregão").
       // 'brapi' = buscou preços novos | 'cache' = tudo fresco dentro do TTL

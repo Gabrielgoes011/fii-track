@@ -8,16 +8,16 @@ import { controleAtivosService } from '../../services/controleAtivos/controleAti
 // `cotacoesMap` é o mapa ticker -> dados da brapi (pode estar vazio: aí caímos
 // no preço médio como referência, até o usuário clicar em "Atualizar Cotações").
 function calcularAtivo(raw, cotacoesMap = {}) {
-  const quantidade     = Number(raw.quantidade)     || 0;
-  const precoMedio     = Number(raw.precoMedio)     || 0;
-  const custo          = Number(raw.custo)          || 0;
+  const quantidade = Number(raw.quantidade) || 0;
+  const precoMedio = Number(raw.precoMedio) || 0;
+  const custo = Number(raw.custo) || 0;
   const totalProventos = Number(raw.totalProventos) || 0;
 
   // Cotação vinda da brapi (último preço / fechamento do pregão anterior)
   const cotacaoObj = cotacoesMap[String(raw.ticker || '').toUpperCase()];
   const cotacaoApi = cotacaoObj?.preco;
   const temCotacao = cotacaoApi != null && Number(cotacaoApi) > 0;
-  const cotacao    = temCotacao ? Number(cotacaoApi) : precoMedio;
+  const cotacao = temCotacao ? Number(cotacaoApi) : precoMedio;
   // Variação percentual do dia (fração, ex.: 0,015 = +1,5%) — usada na seção de
   // oportunidades (altas/baixas do dia). Vem da brapi em % → converte p/ fração.
   const variacaoDiaRaw = cotacaoObj?.variacaoPerc;
@@ -25,25 +25,25 @@ function calcularAtivo(raw, cotacoesMap = {}) {
     ? Number(variacaoDiaRaw) / 100
     : null;
 
-  const valorAtual   = quantidade * cotacao;
+  const valorAtual = quantidade * cotacao;
   const rentabilidadeReais = valorAtual - custo + totalProventos;
-  const rentabilidadePerc  = custo > 0 ? (valorAtual - custo) / custo : null;
+  const rentabilidadePerc = custo > 0 ? (valorAtual - custo) / custo : null;
   const rentabilidadeTotalPerc = custo > 0 ? rentabilidadeReais / custo : null;
 
   const precoTeto = raw.precoTeto != null ? Number(raw.precoTeto) : null;
   const modoPrecoTeto = raw.modoPrecoTeto === 'pvp' ? 'pvp' : 'manual';
   // Desconto: quanto a cota está abaixo (+) ou acima (−) do preço teto
-  const desconto  = precoTeto && precoTeto > 0 ? (precoTeto - cotacao) / precoTeto : null;
+  const desconto = precoTeto && precoTeto > 0 ? (precoTeto - cotacao) / precoTeto : null;
 
   return {
-    idAtivo:      raw.idAtivo,
-    id:           raw.id,
-    ticker:       raw.ticker,
-    segmento:     raw.segmento,
-    idSegmento:   raw.idSegmento,
-    percIdeal:    Number(raw.percIdeal) || 0,
-    objetivo:     raw.objetivo,
-    dtCadastro:   raw.dtCadastro,
+    idAtivo: raw.idAtivo,
+    id: raw.id,
+    ticker: raw.ticker,
+    segmento: raw.segmento,
+    idSegmento: raw.idSegmento,
+    percIdeal: Number(raw.percIdeal) || 0,
+    objetivo: raw.objetivo,
+    dtCadastro: raw.dtCadastro,
     quantidade,
     precoMedio,
     cotacao,
@@ -59,9 +59,9 @@ function calcularAtivo(raw, cotacoesMap = {}) {
     modoPrecoTeto,
     desconto,
     // equilibrio calculado depois (precisa do total da carteira)
-    percAtual:       0,
+    percAtual: 0,
     valorEquilibrio: 0,
-    acaoEquilibrio:  'equilibrio',
+    acaoEquilibrio: 'equilibrio',
   };
 }
 
@@ -71,12 +71,12 @@ function recalcularEquilibrio(lista) {
   const tolerancia = valorTotal * 0.005; // 0,5%
 
   return lista.map((a) => {
-    const percAtual      = valorTotal > 0 ? a.valorAtual / valorTotal : 0;
-    const metaValor      = a.percIdeal * valorTotal;
-    const diff           = metaValor - a.valorAtual;
+    const percAtual = valorTotal > 0 ? a.valorAtual / valorTotal : 0;
+    const metaValor = a.percIdeal * valorTotal;
+    const diff = metaValor - a.valorAtual;
     const acaoEquilibrio =
-      diff > tolerancia  ? 'aportar' :
-      diff < -tolerancia ? 'acima'   : 'equilibrio';
+      diff > tolerancia ? 'aportar' :
+        diff < -tolerancia ? 'acima' : 'equilibrio';
 
     return { ...a, percAtual, valorEquilibrio: diff, acaoEquilibrio };
   });
@@ -84,16 +84,16 @@ function recalcularEquilibrio(lista) {
 
 // Monta o objeto resumo a partir da lista calculada
 function calcularResumo(lista) {
-  const custoTotal        = lista.reduce((s, a) => s + a.custo, 0);
-  const valorAtualTotal   = lista.reduce((s, a) => s + a.valorAtual, 0);
-  const totalProventos    = lista.reduce((s, a) => s + a.totalProventos, 0);
+  const custoTotal = lista.reduce((s, a) => s + a.custo, 0);
+  const valorAtualTotal = lista.reduce((s, a) => s + a.valorAtual, 0);
+  const totalProventos = lista.reduce((s, a) => s + a.totalProventos, 0);
 
   const rentabilidadeReais = valorAtualTotal - custoTotal;
-  const rentabilidadePerc  = custoTotal > 0 ? rentabilidadeReais / custoTotal : null;
+  const rentabilidadePerc = custoTotal > 0 ? rentabilidadeReais / custoTotal : null;
 
   // Rentabilidade considerando os proventos já recebidos
   const rentabilidadeComProventosReais = rentabilidadeReais + totalProventos;
-  const rentabilidadeComProventosPerc  = custoTotal > 0 ? rentabilidadeComProventosReais / custoTotal : null;
+  const rentabilidadeComProventosPerc = custoTotal > 0 ? rentabilidadeComProventosReais / custoTotal : null;
 
   // Quanto falta aportar (soma só o que está abaixo da meta) para rebalancear
   const totalParaAportar = lista.reduce((s, a) => s + Math.max(a.valorEquilibrio, 0), 0);
@@ -113,26 +113,31 @@ function calcularResumo(lista) {
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useControleAtivos = () => {
-  const [resumo, setResumo]               = useState(null);
-  const [ativos, setAtivos]               = useState([]);
-  const [loading, setLoading]             = useState(false);
+  const [resumo, setResumo] = useState(null);
+  const [ativos, setAtivos] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [loadingCotacoes, setLoadingCotacoes] = useState(false);
 
+  // TTL (em minutos) que uma cotação salva é considerada "fresca".
+  // Mantém-se alinhado ao COTACAO_TTL_MINUTOS do backend.
+  const TTL_MINUTOS = 15;
+
   // Guardam o estado "cru" para permitir recalcular sem nova ida à API:
-  const rowsRef        = useRef([]);   // linhas da carteira (backend)
-  const cotacoesRef    = useRef({});   // mapa ticker -> cotação (brapi)
-  const atualizadoEmRef = useRef(null); // ISO da última atualização de cotações
+  const rowsRef = useRef([]);   // linhas da carteira (backend)
+  const cotacoesRef = useRef({});   // mapa ticker -> cotação (brapi)
+  const atualizadoEmRef = useRef(null); // ISO da última atualização de cotações (mais recente)
+  // Tickers cuja última consulta está fora do TTL. A defasagem é determinada por
+  // esta lista (fonte de verdade do backend), não mais por uma heurística de horas.
+  const tickersDesatualizadosRef = useRef([]);
 
   // ── Recalcula tudo a partir do estado cru + cotações em memória ───────────
   const recomputar = useCallback(() => {
-    const calculados    = rowsRef.current.map((r) => calcularAtivo(r, cotacoesRef.current));
+    const calculados = rowsRef.current.map((r) => calcularAtivo(r, cotacoesRef.current));
     const comEquilibrio = recalcularEquilibrio(calculados);
 
-    // Cotação "desatualizada" = consulta mais antiga com mais de 6 horas
-    const seisHoras = 6 * 60 * 60 * 1000;
-    const desatualizada = atualizadoEmRef.current
-      ? (Date.now() - new Date(atualizadoEmRef.current).getTime()) > seisHoras
-      : false;
+    // "Desatualizada" = existe ao menos um ticker fora do TTL (informado/derivado).
+    const desatualizados = tickersDesatualizadosRef.current || [];
+    const desatualizada = desatualizados.length > 0;
 
     setAtivos(comEquilibrio);
     setResumo({
@@ -141,16 +146,25 @@ export const useControleAtivos = () => {
         ? new Date(atualizadoEmRef.current).toLocaleString('pt-BR')
         : null,
       cotacoesDesatualizadas: desatualizada,
+      // Quantidade e lista de tickers ainda defasados (para exibir o motivo).
+      qtdCotacoesDesatualizadas: desatualizados.length,
+      tickersDesatualizados: desatualizados,
     });
   }, []);
 
   // Reconstrói o mapa de cotações a partir do que o backend já enviou (cache)
   const semearCotacoesDasLinhas = (rows) => {
     const mapa = {};
-    let maisAntiga = null;
+    let maisRecente = null;
+    const desatualizados = [];
+    const limite = Date.now() - TTL_MINUTOS * 60 * 1000;
     rows.forEach((r) => {
-      if (r.precoAtual == null) return;
       const tk = String(r.ticker || '').toUpperCase();
+      if (r.precoAtual == null) {
+        // Sem preço salvo ainda: considera defasado.
+        if (tk) desatualizados.push(tk);
+        return;
+      }
       mapa[tk] = {
         preco: Number(r.precoAtual),
         variacaoPerc: r.variacaoPercDia != null ? Number(r.variacaoPercDia) : null,
@@ -158,11 +172,16 @@ export const useControleAtivos = () => {
       };
       if (r.dtConsultaCotacao) {
         const t = new Date(r.dtConsultaCotacao).getTime();
-        if (maisAntiga === null || t < maisAntiga) maisAntiga = t;
+        // Carimbo exibido = consulta mais recente (não o mais antigo).
+        if (maisRecente === null || t > maisRecente) maisRecente = t;
+        if (t < limite) desatualizados.push(tk);
+      } else {
+        desatualizados.push(tk);
       }
     });
     cotacoesRef.current = mapa;
-    atualizadoEmRef.current = maisAntiga !== null ? new Date(maisAntiga).toISOString() : null;
+    atualizadoEmRef.current = maisRecente !== null ? new Date(maisRecente).toISOString() : null;
+    tickersDesatualizadosRef.current = desatualizados;
   };
 
   // ── Carrega carteira completa (usa o cache do backend, NÃO chama a brapi) ──
@@ -186,7 +205,7 @@ export const useControleAtivos = () => {
 
     setLoadingCotacoes(true);
     try {
-      const { cotacoes, atualizadoEm, origem, proximaAtualizacaoEm } =
+      const { cotacoes, atualizadoEm, origem, proximaAtualizacaoEm, tickersDesatualizados } =
         await controleAtivosService.atualizarCotacoes();
 
       // Normaliza as chaves do mapa para MAIÚSCULO (bate com o ticker)
@@ -195,8 +214,12 @@ export const useControleAtivos = () => {
         mapa[ticker.toUpperCase()] = dados;
       });
 
-      cotacoesRef.current  = mapa;
+      cotacoesRef.current = mapa;
       atualizadoEmRef.current = atualizadoEm || atualizadoEmRef.current || new Date().toISOString();
+      // Fonte de verdade da defasagem: lista vinda do backend.
+      tickersDesatualizadosRef.current = Array.isArray(tickersDesatualizados)
+        ? tickersDesatualizados.map((t) => String(t).toUpperCase())
+        : [];
       recomputar();
 
       // Mensagem contextual conforme a origem dos dados (informada pelo backend):
@@ -213,9 +236,17 @@ export const useControleAtivos = () => {
             : 'Cotações já atualizadas. Novos preços apenas no próximo pregão.'
         );
       } else if (origem === 'cache-fallback') {
-        toastWarn('Fonte de cotações indisponível. Exibindo os últimos preços salvos.');
+        toastWarn('Fonte de cotações indisponível (limite da brapi atingido). Exibindo os últimos preços salvos.');
       } else {
-        toastSuccess('Cotações atualizadas!');
+        // origem 'brapi': buscou preços novos. Se ainda restaram tickers fora do
+        // TTL (ex.: limite da brapi atingido no meio da atualização), avisa que a
+        // atualização foi parcial — evitando um "atualizadas!" verde enganoso.
+        const restantes = tickersDesatualizadosRef.current || [];
+        if (restantes.length > 0) {
+          toastWarn(`Cotações parcialmente atualizadas. ${restantes.length} sem preço novo: ${restantes.join(', ')}.`);
+        } else {
+          toastSuccess('Cotações atualizadas!');
+        }
       }
       return true; // permite à tela recarregar dados dependentes (ex.: histórico)
     } catch (error) {

@@ -170,20 +170,17 @@ async function calculoCardsRendimento(mes, ano, idAtivo, idUser) {
 
     // Chama as funções do repositório para obter os dados necessários para os cards
     try {
-        // Dispara as 4 queries ao mesmo tempo para máxima performance
-        const [
-            totalPeriodo,
-            totalAcumulado,
-            totalAcumulado12Meses,
-            totalCompras,
-            totalReinvestido
-        ] = await Promise.all([
-            getRendimentosFiltro(mesFiltro, ano, idAtivo, idUser),
-            getTotalAcumulado(idUser),
-            getAcumulado12Meses(idUser),
-            getTotalCompras(idUser),
-            getTotalReinvestido(idUser)
-        ]);
+        // As queries rodam SEQUENCIALMENTE porque, em requests autenticados, todas
+        // compartilham a mesma conexão do request (dbContext + RLS via
+        // SET LOCAL app.current_user_id). Uma conexão do PostgreSQL processa uma
+        // query por vez: rodá-las em Promise.all no mesmo client dispara o
+        // DeprecationWarning "client is already executing a query" (erro no pg@9)
+        // e não traz ganho real de performance neste modelo de conexão única.
+        const totalPeriodo = await getRendimentosFiltro(mesFiltro, ano, idAtivo, idUser);
+        const totalAcumulado = await getTotalAcumulado(idUser);
+        const totalAcumulado12Meses = await getAcumulado12Meses(idUser);
+        const totalCompras = await getTotalCompras(idUser);
+        const totalReinvestido = await getTotalReinvestido(idUser);
 
         // Calcula YoC (Yield on Cost) Geral desde o inicio = (Total acumulado / Total Investido) * 100
         const retornoAcumulado = totalCompras > 0

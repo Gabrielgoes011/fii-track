@@ -1547,7 +1547,11 @@ export default function PaginaControleAtivos() {
             <AiOutlineInfoCircle size={12} color={resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569'} />
             <span style={{ fontSize: '11px', color: resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569' }}>
               {resumo?.dataAtualizacaoCotacoes
-                ? `Cotações de ${resumo.dataAtualizacaoCotacoes}${resumo.cotacoesDesatualizadas ? ' · desatualizadas, clique em Atualizar' : ''}`
+                ? `Cotações de ${resumo.dataAtualizacaoCotacoes}${
+                    resumo.cotacoesDesatualizadas
+                      ? ` · ${resumo.qtdCotacoesDesatualizadas ?? ''} sem preço novo (${(resumo.tickersDesatualizados || []).join(', ')}) · clique em Atualizar`
+                      : ''
+                  }`
                 : 'Cotações ainda não carregadas · clique em Atualizar'}
             </span>
           </div>
