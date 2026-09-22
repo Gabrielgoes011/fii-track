@@ -8,7 +8,7 @@
 //
 // Todas as funções usam `openDb()`, que devolve o client da transação do request
 // (contexto RLS aplicado via `dbContext`/`req.db`) quando existir, ou o pool caso
-// contrário. Assim as inserções privadas (historico_carteira_*) participam da
+// contrário. Assim as inserções privadas ("historicoCarteira*") participam da
 // mesma transação/RLS do request, e o histórico de cotações (compartilhado) é
 // gravado no mesmo escopo.
 
@@ -99,7 +99,7 @@ async function existeCapturaHojeComValores(idUser, valorMercadoTotal, custoTotal
   // na comparação para casar com a escala persistida.
   const result = await db.query(`
     SELECT 1
-    FROM historico_carteira_geral
+    FROM "historicoCarteiraGeral"
     WHERE "idUser" = $1
       AND ("dtCaptura" AT TIME ZONE 'America/Sao_Paulo')::date
           = (now() AT TIME ZONE 'America/Sao_Paulo')::date
@@ -113,7 +113,7 @@ async function existeCapturaHojeComValores(idUser, valorMercadoTotal, custoTotal
 //#endregion
 
 //#region Inserção append-only do histórico de cotações
-// Grava, em `historico_cotacoes`, um NOVO registro por item (append-only,
+// Grava, em `historicoCotacoes`, um NOVO registro por item (append-only,
 // sem UPSERT). Preserva a precisão numérica recebida da fonte de cotação:
 // os valores são passados adiante como recebidos e a escala das colunas
 // (numeric(12,2)/(12,4)/(8,4)) cuida do arredondamento.
@@ -154,7 +154,7 @@ async function inserirHistoricoCotacoes(itens) {
   }).join(', ');
 
   const result = await db.query(`
-    INSERT INTO historico_cotacoes
+    INSERT INTO "historicoCotacoes"
       (ticker, preco, "fechamentoAnterior", variacao, "variacaoPerc", "dtPregao", "dtCaptura")
     VALUES ${placeholders}
     RETURNING id, ticker, preco, "fechamentoAnterior", variacao, "variacaoPerc", "dtPregao", "dtCaptura"
@@ -165,7 +165,7 @@ async function inserirHistoricoCotacoes(itens) {
 //#endregion
 
 //#region Inserção append-only dos snapshots por ativo
-// Grava, em `historico_carteira_ativo`, um NOVO registro por ativo da Captura
+// Grava, em `historicoCarteiraAtivo`, um NOVO registro por ativo da Captura
 // (append-only, sem UPSERT). RLS garante o isolamento por `idUser` (transação
 // do request com `app.current_user_id` aplicado).
 //
@@ -209,7 +209,7 @@ async function inserirSnapshotsAtivo(itens) {
   }).join(', ');
 
   const result = await db.query(`
-    INSERT INTO historico_carteira_ativo
+    INSERT INTO "historicoCarteiraAtivo"
       ("idUser", "idAtivo", ticker, quantidade, "precoMedio", custo,
        "valorMercado", "rentabilidadeRs", "rentabilidadePerc", proventos,
        "precoIndisponivel", "dtCaptura")
@@ -224,7 +224,7 @@ async function inserirSnapshotsAtivo(itens) {
 //#endregion
 
 //#region Inserção append-only do snapshot geral
-// Grava, em `historico_carteira_geral`, o único registro consolidado da Captura
+// Grava, em `historicoCarteiraGeral`, o único registro consolidado da Captura
 // (append-only, sem UPSERT). RLS garante o isolamento por `idUser`.
 //
 // registro: {
@@ -244,7 +244,7 @@ async function inserirSnapshotGeral(registro) {
   const db = await openDb();
 
   const result = await db.query(`
-    INSERT INTO historico_carteira_geral
+    INSERT INTO "historicoCarteiraGeral"
       ("idUser", "custoTotal", "valorMercadoTotal", "rentabilidadeRs",
        "rentabilidadePerc", "proventosTotais", "dtCaptura")
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -265,7 +265,7 @@ async function inserirSnapshotGeral(registro) {
 //#endregion
 
 //#region Consulta do histórico de cotações por ticker (sem RLS)
-// Lê os registros de `historico_cotacoes` de um ticker, ordenados de forma
+// Lê os registros de `historicoCotacoes` de um ticker, ordenados de forma
 // crescente por `dtCaptura` e, em empates, por `dtPregao` (Requirement 2.1).
 // A tabela é compartilhada entre usuários (sem RLS).
 //
@@ -297,7 +297,7 @@ async function listarHistoricoCotacoes(ticker, periodo) {
   const result = await db.query(`
     SELECT id, ticker, preco, "fechamentoAnterior", variacao, "variacaoPerc",
       "dtPregao", "dtCaptura"
-    FROM historico_cotacoes
+    FROM "historicoCotacoes"
     WHERE ${condicoes.join(' AND ')}
     ORDER BY "dtCaptura" ASC, "dtPregao" ASC
   `, valores);
@@ -307,7 +307,7 @@ async function listarHistoricoCotacoes(ticker, periodo) {
 //#endregion
 
 //#region Consulta da série de Snapshot_Geral do usuário (com RLS)
-// Lê os registros de `historico_carteira_geral` ordenados de forma crescente
+// Lê os registros de `historicoCarteiraGeral` ordenados de forma crescente
 // por `dtCaptura` (Requirement 3.10). O isolamento por usuário é garantido pela
 // RLS (transação do request com `app.current_user_id` aplicado); o filtro por
 // `idUser` é reforçado explicitamente na consulta.
@@ -337,7 +337,7 @@ async function listarSnapshotGeral(idUser, periodo) {
   const result = await db.query(`
     SELECT id, "idUser", "custoTotal", "valorMercadoTotal", "rentabilidadeRs",
       "rentabilidadePerc", "proventosTotais", "dtCaptura"
-    FROM historico_carteira_geral
+    FROM "historicoCarteiraGeral"
     WHERE ${condicoes.join(' AND ')}
     ORDER BY "dtCaptura" ASC
   `, valores);
@@ -347,7 +347,7 @@ async function listarSnapshotGeral(idUser, periodo) {
 //#endregion
 
 //#region Consulta da série de Snapshot_por_Ativo de um ativo (com RLS)
-// Lê os registros de `historico_carteira_ativo` de um ativo do usuário,
+// Lê os registros de `historicoCarteiraAtivo` de um ativo do usuário,
 // ordenados de forma crescente por `dtCaptura`. O isolamento por usuário é
 // garantido pela RLS; o filtro por `idUser`/`idAtivo` é reforçado na consulta.
 //
@@ -378,7 +378,7 @@ async function listarSnapshotAtivo(idUser, idAtivo, periodo) {
     SELECT id, "idUser", "idAtivo", ticker, quantidade, "precoMedio", custo,
       "valorMercado", "rentabilidadeRs", "rentabilidadePerc", proventos,
       "precoIndisponivel", "dtCaptura"
-    FROM historico_carteira_ativo
+    FROM "historicoCarteiraAtivo"
     WHERE ${condicoes.join(' AND ')}
     ORDER BY "dtCaptura" ASC
   `, valores);

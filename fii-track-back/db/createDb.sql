@@ -176,10 +176,10 @@ CREATE TABLE IF NOT EXISTS public.cotacoes
 ALTER TABLE IF EXISTS public.cotacoes OWNER to neondb_owner;
 
 -- -----------------------------------------------------------------
--- Tabela: historico_cotacoes — histórico de preço por ticker
+-- Tabela: historicoCotacoes — histórico de preço por ticker
 -- (append-only). Dado de mercado, COMPARTILHADO (sem RLS).
 -- -----------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.historico_cotacoes
+CREATE TABLE IF NOT EXISTS public."historicoCotacoes"
 (
     id                   bigserial NOT NULL,
     ticker               character varying(10) COLLATE pg_catalog."default" NOT NULL,
@@ -191,13 +191,13 @@ CREATE TABLE IF NOT EXISTS public.historico_cotacoes
     "dtCaptura"          timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT historico_cotacoes_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
-ALTER TABLE IF EXISTS public.historico_cotacoes OWNER to neondb_owner;
+ALTER TABLE IF EXISTS public."historicoCotacoes" OWNER to neondb_owner;
 
 -- -----------------------------------------------------------------
--- Tabela: historico_carteira_ativo — snapshot por ativo a cada
+-- Tabela: historicoCarteiraAtivo — snapshot por ativo a cada
 -- Captura. Dado PRIVADO por usuário (COM RLS). Append-only.
 -- -----------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.historico_carteira_ativo
+CREATE TABLE IF NOT EXISTS public."historicoCarteiraAtivo"
 (
     id                  bigserial NOT NULL,
     "idUser"            integer NOT NULL,
@@ -214,13 +214,13 @@ CREATE TABLE IF NOT EXISTS public.historico_carteira_ativo
     "dtCaptura"         timestamp with time zone NOT NULL,
     CONSTRAINT historico_carteira_ativo_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
-ALTER TABLE IF EXISTS public.historico_carteira_ativo OWNER to neondb_owner;
+ALTER TABLE IF EXISTS public."historicoCarteiraAtivo" OWNER to neondb_owner;
 
 -- -----------------------------------------------------------------
--- Tabela: historico_carteira_geral — snapshot consolidado a cada
+-- Tabela: historicoCarteiraGeral — snapshot consolidado a cada
 -- Captura. Dado PRIVADO por usuário (COM RLS). Append-only.
 -- -----------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.historico_carteira_geral
+CREATE TABLE IF NOT EXISTS public."historicoCarteiraGeral"
 (
     id                  bigserial NOT NULL,
     "idUser"            integer NOT NULL,
@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS public.historico_carteira_geral
     "dtCaptura"         timestamp with time zone NOT NULL,
     CONSTRAINT historico_carteira_geral_pkey PRIMARY KEY (id)
 ) TABLESPACE pg_default;
-ALTER TABLE IF EXISTS public.historico_carteira_geral OWNER to neondb_owner;
+ALTER TABLE IF EXISTS public."historicoCarteiraGeral" OWNER to neondb_owner;
 
 
 -- =================================================================
@@ -246,13 +246,13 @@ CREATE INDEX IF NOT EXISTS idx_rendimentos_data
     ON public.rendimentos USING btree ("dtRendimento" ASC NULLS LAST) TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS historico_cotacoes_ticker_captura_pregao_idx
-    ON public.historico_cotacoes (ticker, "dtCaptura", "dtPregao");
+    ON public."historicoCotacoes" (ticker, "dtCaptura", "dtPregao");
 
 CREATE INDEX IF NOT EXISTS historico_carteira_ativo_iduser_idativo_dtcaptura_idx
-    ON public.historico_carteira_ativo ("idUser", "idAtivo", "dtCaptura");
+    ON public."historicoCarteiraAtivo" ("idUser", "idAtivo", "dtCaptura");
 
 CREATE INDEX IF NOT EXISTS historico_carteira_geral_iduser_dtcaptura_idx
-    ON public.historico_carteira_geral ("idUser", "dtCaptura");
+    ON public."historicoCarteiraGeral" ("idUser", "dtCaptura");
 
 
 -- =================================================================
@@ -267,9 +267,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.operacoes                 TO app_
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.rendimentos               TO app_fiitrack;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public."controleAtivos"          TO app_fiitrack;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.cotacoes                  TO app_fiitrack;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.historico_cotacoes        TO app_fiitrack;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.historico_carteira_ativo  TO app_fiitrack;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.historico_carteira_geral  TO app_fiitrack;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public."historicoCotacoes"       TO app_fiitrack;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public."historicoCarteiraAtivo"  TO app_fiitrack;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public."historicoCarteiraGeral"  TO app_fiitrack;
 
 -- Sequences (necessárias para os INSERT que usam serial/bigserial).
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_fiitrack;
@@ -282,7 +282,7 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_fiitrack;
 -- Blocos idempotentes: só criam a política se ainda não existir.
 --
 -- Tabelas SEM RLS (dado de mercado compartilhado):
---   cotacoes, historico_cotacoes.
+--   cotacoes, historicoCotacoes.
 -- =================================================================
 
 -- rendimentos
@@ -370,24 +370,24 @@ BEGIN
     END IF;
 END $$;
 
--- historico_carteira_ativo
+-- historicoCarteiraAtivo
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND lower(tablename)='historico_carteira_ativo' AND lower(policyname)='historico_carteira_ativo_rls_policy') THEN
-        ALTER TABLE public.historico_carteira_ativo ENABLE ROW LEVEL SECURITY;
-        CREATE POLICY historico_carteira_ativo_rls_policy ON public.historico_carteira_ativo
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND lower(tablename)='historicocarteiraativo' AND lower(policyname)='historico_carteira_ativo_rls_policy') THEN
+        ALTER TABLE public."historicoCarteiraAtivo" ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY historico_carteira_ativo_rls_policy ON public."historicoCarteiraAtivo"
             FOR ALL
             USING ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0))
             WITH CHECK ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0));
     END IF;
 END $$;
 
--- historico_carteira_geral
+-- historicoCarteiraGeral
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND lower(tablename)='historico_carteira_geral' AND lower(policyname)='historico_carteira_geral_rls_policy') THEN
-        ALTER TABLE public.historico_carteira_geral ENABLE ROW LEVEL SECURITY;
-        CREATE POLICY historico_carteira_geral_rls_policy ON public.historico_carteira_geral
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND lower(tablename)='historicocarteirageral' AND lower(policyname)='historico_carteira_geral_rls_policy') THEN
+        ALTER TABLE public."historicoCarteiraGeral" ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY historico_carteira_geral_rls_policy ON public."historicoCarteiraGeral"
             FOR ALL
             USING ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0))
             WITH CHECK ("idUser" = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::integer, 0));
