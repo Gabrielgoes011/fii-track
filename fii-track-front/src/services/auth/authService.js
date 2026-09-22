@@ -63,10 +63,10 @@ export const authService = {
   },
 
   // Troca a senha do usuário logado
-  // POST /controle-ativos/trocar-senha
+  // POST /perfil/trocar-senha
   trocarSenha: async ({ userId, senhaAtual, novaSenha }) => {
     try {
-      const res = await api.post('/controle-ativos/trocar-senha', { userId, senhaAtual, novaSenha });
+      const res = await api.post('/perfil/trocar-senha', { userId, senhaAtual, novaSenha });
       return res.data;
     } catch (error) {
       throw error;

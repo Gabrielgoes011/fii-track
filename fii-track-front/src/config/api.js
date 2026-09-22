@@ -24,6 +24,42 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// ── Controle do refresh de sessão ────────────────────────────────────────────
+// Garante que, mesmo com várias requisições falhando com 401 ao mesmo tempo,
+// o /auth/refresh seja chamado UMA única vez. As demais aguardam a mesma promessa.
+let refreshPromise = null;
+
+// Faz logout local: limpa o token e avisa o app para redirecionar ao login.
+function forcarLogout(mostrarToast) {
+  localStorage.removeItem('token');
+  if (mostrarToast) {
+    toastError('Sessão expirada. Faça login novamente.');
+  }
+  window.dispatchEvent(new Event('unauthorized'));
+}
+
+// Chama /auth/refresh reaproveitando a promessa em andamento, se houver.
+// Usa uma instância crua do axios para não recair nos interceptors deste arquivo.
+function renovarSessao() {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+      .then((res) => {
+        // A resposta segue o padrão { success, message, data:{ usuario, token } }
+        const novoToken = res.data?.data?.token ?? res.data?.token ?? null;
+        if (novoToken) {
+          localStorage.setItem('token', novoToken);
+        }
+        return novoToken;
+      })
+      .finally(() => {
+        // Libera para um próximo ciclo de refresh após concluir (sucesso ou falha)
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 // Interceptor de RESPONSE — padroniza respostas e trata erros
 
 api.interceptors.response.use(
@@ -35,23 +71,43 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
-    const isLoginRoute = error.config?.url?.includes('/auth/login');
+  async (error) => {
+    const originalRequest = error.config || {};
+    const url = originalRequest.url || '';
 
-    // Só trata 401 se NÃO for a rota de login (evita loop)
-    if (error.response?.status === 401 && !isLoginRoute) {
-      const hadToken = !!error.config?.headers?.['Authorization'];
+    // Rotas de autenticação não devem disparar o fluxo de refresh (evita loop):
+    // login (credenciais inválidas) e o próprio refresh (sessão realmente expirou).
+    const isAuthRoute =
+      url.includes('/auth/login') || url.includes('/auth/refresh');
 
-      localStorage.removeItem('token');
+    const is401 = error.response?.status === 401;
 
-      // Só exibe o toast se havia um token na requisição —
-      // evita mostrar "Sessão expirada" quando o usuário simplesmente não está logado
-      if (hadToken) {
-        toastError('Sessão expirada. Faça login novamente.');
+    // Primeira falha 401 numa rota comum: tenta renovar a sessão e repetir.
+    if (is401 && !isAuthRoute && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const novoToken = await renovarSessao();
+
+        // Refresh bem-sucedido: repete a requisição original com o token novo.
+        if (novoToken) {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${novoToken}`;
+        }
+        return api(originalRequest);
+      } catch {
+        // Refresh falhou (refresh token expirado/ausente): logout de verdade.
+        forcarLogout(true);
+        return Promise.reject(error);
       }
-
-      window.dispatchEvent(new Event('unauthorized'));
     }
+
+    // 401 numa rota de auth, ou já tentamos renovar e falhou de novo.
+    if (is401 && !isAuthRoute) {
+      const hadToken = !!originalRequest.headers?.['Authorization'];
+      forcarLogout(hadToken);
+    }
+
     return Promise.reject(error);
   }
 );

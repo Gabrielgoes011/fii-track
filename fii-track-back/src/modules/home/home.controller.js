@@ -1,5 +1,6 @@
 import { getCardsHome } from './home.service.js';
 import apiResponse from '../../utils/httpResponse.js';
+import pgErrorHandler from '../../utils/pgErrorHandler.js';
 
 //#função para carregar os dados do card
 async function cardsHomeController(req, res) {
@@ -16,8 +17,11 @@ async function cardsHomeController(req, res) {
         );
 
     } catch (error) {
-        // Retorna a mensagem detalhada do erro
-        return apiResponse.error(res, error.message);
+        // Loga o erro completo para depuração (só no servidor)
+        console.error('Erro ao carregar os cards do dashboard na etapa do controller:', error);
+        // Gera uma mensagem segura para o usuário, sem vazar detalhes internos
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar os dados do dashboard.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 export {

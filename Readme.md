@@ -1,8 +1,8 @@
-# 💚 fii-track
+# 💚 FII-Track
 
-Aplicação fullstack para controle e acompanhamento de carteira de Fundos de Investimento Imobiliário (FIIs). Permite gerenciar ativos, registrar operações de compra/venda, acompanhar rendimentos recebidos e visualizar a performance da carteira.
+Aplicação fullstack para gestão e acompanhamento de carteira de Fundos de Investimento Imobiliário (FIIs). Permite cadastrar ativos, registrar operações de compra/venda, acompanhar rendimentos, atualizar cotações em tempo (quase) real via Brapi, rebalancear a carteira por percentual ideal e visualizar o histórico de patrimônio ao longo do tempo.
 
-> **Status:** Em desenvolvimento — arquitetura sendo migrada para o padrão `Controller → Service → Repository`.
+> **Status:** Em desenvolvimento ativo. Arquitetura modular por domínio no backend, com autenticação JWT + 2FA e isolamento de dados por usuário (RLS).
 
 ---
 
@@ -10,137 +10,152 @@ Aplicação fullstack para controle e acompanhamento de carteira de Fundos de In
 
 ```
 fii-track/
-├── fii-track-back/   # API REST — Node.js + Express + PostgreSQL
-└── fii-track-front/  # SPA — React + Vite (estilização via inline styles)
+├── fii-track-back/    # API REST — Node.js + Express 5 + PostgreSQL
+└── fii-track-front/   # SPA — React 19 + Vite (estilização via inline styles)
 ```
+
+Cada subprojeto tem seu próprio README com detalhes:
+- Backend: [`fii-track-back/README.md`](fii-track-back/README.md)
+- KPIs de rendimentos: [`fii-track-back/DOCUMENTACAO_KPIs_RENDIMENTOS.md`](fii-track-back/DOCUMENTACAO_KPIs_RENDIMENTOS.md)
+- Backlog detalhado: [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md)
+
+---
+
+## Principais Funcionalidades
+
+- **Autenticação JWT com 2FA (TOTP)** — login com segunda etapa opcional via app autenticador (QR Code).
+- **Refresh token** — access token de vida curta (15 min) renovado por um refresh token (8h), sem logout no meio da sessão.
+- **Controle de Ativos** — posição consolidada da carteira, percentual ideal, preço teto e rebalanceamento.
+- **Cotações via Brapi** — atualização sob demanda com cache de 15 min para economizar requisições.
+- **Histórico da Carteira** — séries de preço por ticker e evolução do patrimônio ao longo do tempo.
+- **Operações e Rendimentos** — lançamento de compras/vendas, proventos, KPIs (YoC, Efeito Bola de Neve) e importação de rendimentos da B3.
+- **Row-Level Security (RLS)** — cada usuário só enxerga seus próprios dados, garantido no banco.
+- **Rate limiting** — proteção contra força bruta nas rotas de login e 2FA.
 
 ---
 
 ## Backend (`fii-track-back`)
 
-### Tecnologias
-
-| Pacote | Versão | Uso |
-|---|---|---|
-| Node.js (ESM) | v18+ | Runtime |
-| Express | ^5.1.0 | Framework HTTP |
-| pg (node-postgres) | ^8.20.0 | Conexão com PostgreSQL (Pool) |
-| jsonwebtoken | ^9.0.3 | Autenticação JWT |
-| bcrypt | ^6.0.0 | Hash de senhas |
-| cross-env | ^7.0.3 | Define `NODE_ENV` de forma multiplataforma no script `start` |
-| multer | ^2.1.1 | Upload de arquivos (configurado, ainda não usado em nenhuma rota) |
-| dotenv | ^17.x | Variáveis de ambiente |
-| uuid | ^13.x | Geração de IDs únicos |
-| cors | ^2.8.5 | Liberação de CORS |
-| nodemon | ^3.x | Hot-reload em desenvolvimento |
-
-> ⚠️ `src/config/s3.js` importa `@aws-sdk/client-s3`, mas esse pacote **não está mais** no `package.json`/`node_modules`. O arquivo não é usado por nenhum controller hoje, então não quebra a aplicação — mas vai quebrar assim que alguém tentar reativar o upload de fotos/extratos. Ver backlog.
+API RESTful em **Node.js (ESM) + Express 5 + PostgreSQL**, organizada de forma **modular por domínio**.
 
 ### Arquitetura
 
-O backend está em migração progressiva para a separação de responsabilidades em três camadas:
-
 ```
-Routes  →  Controller  →  Service  →  Repository  →  Banco de Dados
+Routes  →  Controller  →  Service  →  Repository  →  PostgreSQL (RLS)
 ```
 
-- **Routes** — define os endpoints HTTP e aplica middlewares (ex: `verificaToken`)
-- **Controller** — recebe a requisição, chama o Service e devolve a resposta HTTP
-- **Service** — contém as regras de negócio e validações
-- **Repository** — executa diretamente as queries SQL
+Cada módulo em `src/modules/<domínio>/` concentra suas próprias camadas. O `rlsMiddleware` injeta o contexto do usuário na conexão para que as políticas de RLS isolem os dados. O tratamento de erro é padronizado: os controllers logam o erro no servidor e devolvem uma mensagem segura via `pgErrorHandler`, sem vazar detalhes internos.
 
-> `operacoes` e `rendimentos` já seguem as 3 camadas por completo. `seguimentos` ainda acessa o banco direto no controller, e `usuarios` está parcialmente migrado (`atualizarUser`/`deleteUser` ainda fora do padrão). Detalhes em [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md).
+### Principais dependências
 
-### Middleware de Autenticação
+| Pacote | Uso |
+|---|---|
+| express ^5 | Servidor e roteamento |
+| pg ^8 | PostgreSQL (Pool) |
+| jsonwebtoken ^9 | JWT (access + refresh) |
+| bcrypt ^6 | Hash de senhas |
+| speakeasy / qrcode | 2FA (TOTP) e QR Code |
+| express-rate-limit ^7 | Rate limiting nas rotas sensíveis |
+| cookie-parser | Cookies httpOnly de sessão |
+| cors, dotenv, uuid, multer | CORS, env, IDs, upload |
 
-`src/middleware/auth/verificaToken.js`
+### Variáveis de ambiente
 
-Valida o JWT no header `Authorization: Bearer <token>`. Retorna `401` se ausente ou inválido. Injeta `req.user` com os dados do token para uso nos controllers.
-
-### Variáveis de Ambiente
-
-Crie `.env.development` na raiz de `fii-track-back/` com base no `.env.example`:
+Crie `.env.development` em `fii-track-back/` com base no `.env.example`:
 
 ```env
 PORT=3000
-JWT_SECRET=sua_chave_secreta_aqui
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY=sua_access_key
-AWS_SECRET_KEY=sua_secret_key
+JWT_SECRET=sua_chave_secreta
+BRAPI_TOKEN=seu_token_brapi          # cotações de ativos da B3
+ACCESS_TOKEN_EXPIRES=15m             # (opcional) duração do access token
+REFRESH_TOKEN_EXPIRES=8h             # (opcional) duração do refresh token
+# demais variáveis de conexão do banco conforme .env.example
 ```
 
-### Endpoints
+### Endpoints (visão geral)
 
-Todas as rotas (exceto `/auth/login`) exigem o header:
-```
-Authorization: Bearer <token>
-```
+Rotas protegidas exigem `Authorization: Bearer <token>` e aplicam RLS. Legenda: ❌ pública · ✅ requer token · 🔒 requer admin.
 
-#### Autenticação
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/auth/login` | Autentica o usuário e retorna o JWT |
+#### Autenticação e 2FA
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| POST | `/auth/login` | Login (pode exigir 2ª etapa) | ❌ |
+| POST | `/auth/login/2fa` | Conclui o login validando o código 2FA | ❌ |
+| POST | `/auth/refresh` | Renova o access token via refresh token (cookie) | ❌* |
+| GET | `/auth/me` | Dados do usuário logado | ✅ |
+| POST | `/2fa/iniciar` | Gera segredo + QR Code | ✅ |
+| POST | `/2fa/confirmar` | Ativa o 2FA | ✅ |
+| POST | `/2fa/desativar` | Desativa o 2FA | ✅ |
+| POST | `/2fa/validar` | Valida um código 2FA | ✅ |
 
-#### Home / Dashboard
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/home/cards` | Dados dos cards do dashboard |
+> \* `/auth/refresh` autentica pelo refresh token no cookie httpOnly, não pelo access token.
 
-#### Usuários
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/users` | Lista usuários |
-| GET | `/users/dash/count` | Conta total de usuários |
-| POST | `/usuario/cadastrar` | Cadastra novo usuário |
-| PUT | `/users/update/:id` | Atualiza dados do usuário (⚠️ bug: query aponta para tabela antiga `dbo."tabUser"`) |
-| PUT | `/users/on-off/:id` | Inativa ou reativa usuário |
-| DELETE | `/users/delete/:id` | Remove usuário |
+#### Home / Usuários / Perfil
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| GET | `/home/cards` | Cards do dashboard | ✅ |
+| GET | `/users` | Listar usuários (`?status=on\|off`) | 🔒 |
+| GET | `/users/dash/count` | Contar usuários | 🔒 |
+| POST | `/usuario/cadastrar` | Cadastrar usuário | 🔒 |
+| PUT | `/users/update/:id` | Atualizar usuário | 🔒 |
+| PUT | `/users/on-off/:id` | Inativar / reativar | 🔒 |
+| PUT | `/users/reset-password/:id` | Resetar senha para o padrão | 🔒 |
+| DELETE | `/users/delete/:id` | Deletar usuário | 🔒 |
+| GET | `/perfil` | Buscar o perfil do usuário logado | ✅ |
+| PUT | `/perfil` | Atualizar dados cadastrais do próprio usuário | ✅ |
+| POST | `/perfil/trocar-senha` | Trocar a senha do usuário logado | ✅ |
 
-#### Seguimentos (Segmentos)
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/seguimentos` | Lista todos os seguimentos |
-| GET | `/seguimentos/contar` | Conta seguimentos cadastrados |
-| POST | `/seguimentos` | Cadastra novo seguimento |
-| PUT | `/seguimentos/update` | Atualiza seguimento |
-| DELETE | `/seguimentos/delete/:id` | Remove seguimento |
+#### Cadastros
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| GET/POST/PUT/DELETE | `/meusFundos*` | CRUD de fundos (FIIs) | ✅ |
+| GET/POST/PUT/DELETE | `/seguimentos*` | CRUD de segmentos | ✅ |
 
-#### Meus Fundos (FIIs)
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/meusFundos` | Lista fundos do usuário logado |
-| GET | `/meusFundos/contar` | Conta fundos ativos |
-| POST | `/meusFundos/cadastrar` | Cadastra novo fundo |
-| PUT | `/meusFundos/editar/:id` | Atualiza nome do fundo |
-| DELETE | `/meusFundos/deletar/:id` | Remove fundo |
+#### Operações e Rendimentos
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| GET | `/ativosDropList` | Ativos para dropdown | ✅ |
+| POST | `/operacoes` | Listar operações por mês/ano | ✅ |
+| POST | `/lancarOperacao` | Lançar operação | ✅ |
+| POST | `/excluirOperacao` | Excluir operação | ✅ |
+| POST | `/carregaDadosGraficoOperacoes` | Gráfico de operações por ano | ✅ |
+| POST | `/rendimentos` | Listar rendimentos | ✅ |
+| POST | `/carregarGraficoDashboard` | Gráfico de rendimentos por ano | ✅ |
+| POST | `/carregarComparacaoAnual` | Comparação entre anos | ✅ |
+| GET | `/carregarDadosModalNovoRendimento` | Ativos para o modal | ✅ |
+| POST | `/criarRendimento` | Lançar rendimento | ✅ |
+| DELETE | `/rendimentos/:id` | Excluir rendimento | ✅ |
+| POST | `/cardsRendimentos` | KPIs (YoC, Bola de Neve, etc.) | ✅ |
+| POST | `/rendimentos/importar-b3` | Importar rendimentos em lote da B3 | ✅ |
 
-#### Operações (Compras e Vendas)
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/ativosDropList` | Lista ativos para dropdown |
-| POST | `/operacoes` | Lista operações filtradas por mês/ano |
-| POST | `/lancarOperacao` | Registra nova operação (compra/venda) |
-| POST | `/excluirOperacao` | Remove uma operação pelo ID |
-| POST | `/carregaDadosGraficoOperacoes` | Dados do gráfico de operações por ano |
+#### Controle de Ativos e Cotações
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| POST | `/controle-ativos/listar` | Posição consolidada da carteira | ✅ |
+| POST | `/controle-ativos/cotacoes` | Atualiza cotações (cache + Brapi) | ✅ |
+| GET | `/controle-ativos/segmentos` | Segmentos para dropdown | ✅ |
+| GET | `/controle-ativos/segmentos/:idSegmento/ativos` | Ativos por segmento | ✅ |
+| POST | `/controle-ativos/adicionar` | Adiciona ativo à carteira | ✅ |
+| PUT | `/controle-ativos/perc-ideal/:idAtivo` | Atualiza percentual ideal | ✅ |
+| PUT | `/controle-ativos/preco-teto/:idAtivo` | Atualiza preço teto | ✅ |
+| DELETE | `/controle-ativos/:idAtivo` | Remove ativo | ✅ |
 
-#### Rendimentos
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/rendimentos` | Lista rendimentos filtrados por mês/ano/ativo |
-| POST | `/carregarGraficoDashboard` | Dados do gráfico do dashboard por ano |
-| POST | `/carregarComparacaoAnual` | Comparativo de rendimentos entre anos |
-| GET | `/carregarDadosModalNovoRendimento` | Ativos disponíveis para lançar rendimento |
-| POST | `/criarRendimento` | Lança um novo rendimento (aceita flag `reinvestido`) |
-| DELETE | `/rendimentos/:id` | Exclui um rendimento |
-| POST | `/cardsRendimentos` | KPIs da tela de Rendimentos (ver [`DOCUMENTACAO_KPIs_RENDIMENTOS.md`](fii-track-back/DOCUMENTACAO_KPIs_RENDIMENTOS.md)) |
+#### Histórico da Carteira
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| GET | `/historico/cotacoes/:ticker` | Série histórica de preço de um ticker | ✅ |
+| GET | `/historico/patrimonio` | Série do patrimônio total | ✅ |
+| GET | `/historico/patrimonio/:idAtivo` | Série do patrimônio de um ativo | ✅ |
 
-### Como Executar
+> Detalhes completos de bodies e respostas em [`fii-track-back/README.md`](fii-track-back/README.md).
+
+### Como executar
 
 ```bash
 cd fii-track-back
 npm install
-npm run dev     # desenvolvimento com hot-reload
-npm start       # produção
+npm run dev     # desenvolvimento com hot-reload (nodemon)
+npm run start   # produção
 ```
 
 O servidor sobe em `http://localhost:3000`.
@@ -149,43 +164,48 @@ O servidor sobe em `http://localhost:3000`.
 
 ## Frontend (`fii-track-front`)
 
-### Tecnologias
+SPA em **React 19 + Vite**, estilização via inline styles, deploy na Vercel.
 
-| Pacote | Versão | Uso |
-|---|---|---|
-| React | ^19.x | UI |
-| Vite | ^8.x | Bundler / Dev server |
-| React Router DOM | ^7.x | Roteamento SPA |
-| Axios | ^1.x | Requisições HTTP |
-| React Toastify | ^11.x | Notificações |
-| React Icons | ^5.x | Ícones |
-| @vercel/speed-insights | ^2.x | Métricas de performance |
+### Principais dependências
 
-> Estilização é feita via **inline styles** (não há Tailwind CSS nem React Bootstrap no `package.json` — remova essas menções se encontrar em código ou docs antigos).
+| Pacote | Uso |
+|---|---|
+| react ^19 / react-dom | UI |
+| vite ^8 | Bundler / dev server |
+| react-router-dom ^7 | Roteamento SPA |
+| axios ^1 | Requisições HTTP |
+| react-toastify ^11 | Notificações |
+| react-icons ^5 | Ícones |
+| xlsx | Importação/leitura de planilhas (extrato B3) |
+| @vercel/speed-insights | Métricas de performance |
 
 ### Páginas
 
-| Rota | Página | Status |
+| Rota | Página | Observação |
 |---|---|---|
-| `/login` | Login | ✅ Pronto |
-| `/` | Dashboard | ✅ Pronto |
-| `/rendimentos` | Rendimentos | ✅ Pronto |
-| `/operacoes` | Compras e Vendas | ✅ Pronto |
-| `/cadastros/meusfiis` | Meus FIIs | ✅ Pronto |
-| `/cadastros/seguimentos` | Seguimentos | ⚠️ CRUD pronto — edição pendente |
-| `/cadastros/usuarios` | Usuários | ⚠️ CRUD pronto — edição e reset de senha pendentes |
-| `/controle-ativos` | Controle de Ativos | 🧪 UI completa — dados mockados, backend pendente |
-| `/precificacao` | Precificação | 🚧 Em desenvolvimento |
-| `/relatorios` | Relatórios | 🚧 Em desenvolvimento |
-| `/configuracoes` | Configurações | 🚧 Em desenvolvimento |
+| `/login` | Login | Suporta 2FA |
+| `/` | Dashboard | Cards navegáveis |
+| `/controle-ativos` | Controle de Ativos | Carteira, cotações e histórico (em abas) |
+| `/operacoes` | Compras e Vendas | |
+| `/rendimentos` | Rendimentos | KPIs e importação B3 |
+| `/precificacao` | Precificação | Em desenvolvimento |
+| `/relatorios` | Relatórios | Em desenvolvimento |
+| `/perfil` | Perfil | Troca de senha e 2FA |
+| `/cadastros/usuarios` | Usuários | Restrito a administradores |
+| `/cadastros/seguimentos` | Seguimentos | |
+| `/cadastros/meusfiis` | Meus FIIs | |
 
-> Todas as rotas exceto `/login` são protegidas. Sem token válido no `localStorage`, o usuário é redirecionado automaticamente.
+> Todas as rotas exceto `/login` são protegidas.
 
-### Autenticação no Frontend
+### Autenticação no frontend
 
-O token JWT é armazenado no `localStorage`. Um interceptor no Axios dispara o evento `unauthorized` ao receber `401`, forçando logout automático sem refresh de página.
+Sessão baseada em cookies httpOnly (access + refresh) com fallback de token no `localStorage`. Um interceptor no Axios trata `401` e dispara logout automático. Layout responsivo, com ajustes específicos para mobile (ex.: abas com scroll horizontal no Controle de Ativos).
 
-### Modos de Build
+### Cache e PWA
+
+O app é instalável como PWA. O `index.html` e o `manifest.json` são servidos com `no-cache` e os assets com hash em `/assets` com cache `immutable` (`vercel.json`), evitando que versões antigas fiquem presas no cache do mobile. Há ainda um auto-reload em caso de erro de chunk desatualizado após um novo deploy.
+
+### Como executar
 
 ```bash
 cd fii-track-front
@@ -200,86 +220,74 @@ npm run preview  # preview do build
 
 ## Banco de Dados
 
-PostgreSQL hospedado no [Neon](https://neon.tech), acessado via `Pool` de conexões com SSL habilitado (`pg`). A configuração fica em `api-nodeback/src/config/configDb.js`.
+PostgreSQL (hospedado no [Neon](https://neon.tech)), acessado via `Pool` com SSL. Configuração em `fii-track-back/src/config/configDb.js`.
 
-Script de criação das tabelas em `fii-track-back/db/createDb.sql`.
+- Schema base: `fii-track-back/db/createDb.sql`
+- Migrations (001 → 005): `fii-track-back/db/migrations/`
+- Políticas de RLS: `fii-track-back/db/RLS.sql`
 
 Tabelas principais:
 
 | Tabela | Descrição |
 |---|---|
-| `usuarios` | Dados cadastrais dos usuários |
-| `credenciaisUsuario` | Senhas com hash (relacionada a `usuarios`) |
-| `seguimentos` | Segmentos/categorias de fundos (ex: Logística, Lajes) |
-| `ativos` | Fundos cadastrados (ticker, nome, CNPJ, seguimento) |
-| `operacoes` | Compras e vendas de cotas |
-| `rendimentos` | Proventos recebidos por ativo |
+| `usuarios` | Dados cadastrais |
+| `credenciaisUsuario` | Senhas (hash) + estado do 2FA |
+| `seguimentos` | Segmentos de fundos |
+| `ativos` | Fundos cadastrados |
+| `controleAtivos` | Ativos da carteira do usuário (percentual ideal, preço teto) |
+| `operacoes` | Compras e vendas |
+| `rendimentos` | Proventos recebidos |
+| `cotacoes` | Cache da última cotação por ticker |
+| `historico_cotacoes` | Série histórica de preço por ticker |
+| `historico_carteira` | Snapshots de patrimônio por usuário |
 
 ---
 
 ## Atualizações Recentes
 
-- KPIs de Rendimentos implementados de ponta a ponta (`POST /cardsRendimentos`) — cards de Total do Período, Acumulado, YoC e Efeito Bola de Neve
-- Lançamento e exclusão de rendimento implementados (`POST /criarRendimento`, `DELETE /rendimentos/:id`), incluindo flag `reinvestido`
-- Exclusão de operação agora valida que a operação pertence ao usuário logado
-- Tela de Controle de Ativos construída no frontend (KPIs, tabela de 16 colunas, inputs editáveis, badges) — ainda rodando sobre dados mockados, aguardando backend
-- Cards do Dashboard navegam para as telas correspondentes ao clicar (`/rendimentos`, `/operacoes`, `/controle-ativos`)
-- Senha padrão de novos usuários (`Track@123`) armazenada com hash `bcrypt` (10 rounds)
-- Login agora valida senha com `bcrypt.compare`
-- Módulo de usuários migrado parcialmente para `Controller → Service → Repository`
-- Rota de cadastro de usuário alterada de `POST /cadUsers` para `POST /usuario/cadastrar`
-- Rota de edição de fundo padronizada para `PUT /meusFundos/editar/:id`
+- **Autenticação 2FA (TOTP)** com QR Code (speakeasy + qrcode).
+- **Refresh token** — access token de 15 min renovado por refresh de 8h (`POST /auth/refresh`), sem logout no meio da sessão.
+- **Controle de Ativos** completo no backend (posição, percentual ideal, preço teto) integrado ao frontend.
+- **Cotações via Brapi** com cache de 15 min; a resposta informa a origem (`brapi` / `cache` / `cache-fallback`) e o front exibe mensagens contextuais ("cotações já atualizadas / próximo pregão").
+- **Histórico da Carteira** — séries de preço por ticker e evolução do patrimônio, com gravação de snapshot a cada atualização.
+- **Importação de rendimentos da B3** em lote (`POST /rendimentos/importar-b3`).
+- **Rate limiting** nas rotas de login e 2FA (express-rate-limit).
+- **Tratamento de erro e logs padronizados** em todos os módulos, sem vazar detalhes internos ao cliente.
+- **Rota de troca de senha** renomeada para `/perfil/trocar-senha`.
+- **Correção de cache no mobile/PWA** — headers de cache no `vercel.json` e auto-reload em chunk desatualizado.
 
 ---
 
-## 📋 Backlog
+## 📋 Pendências Atuais
 
-> Backlog completo e detalhado (com specs) em [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md).
+> Backlog completo em [`ANALISE_PROJETO.md`](ANALISE_PROJETO.md).
 
-### 🚧 Em andamento
+- [x] **Seguimentos** — já segue o padrão `Controller → Service → Repository`. ✅
+- [ ] **Dependência do S3** — `src/config/s3.js` referencia `@aws-sdk/client-s3`, que não está instalado.
+- [x] **Módulo `userProfile/myProfile`** — rotas `GET/PUT /perfil` registradas no `app.js`. ✅
+- [ ] **Upload de extrato B3** — o parser em lote existe; falta o upload do arquivo e o destino de armazenamento.
+- [ ] **Páginas de Precificação e Relatórios** — em desenvolvimento.
 
-- [ ] **Controle de Ativos** — backend completo (o frontend já está pronto e usa dados mockados)
-- [ ] **Precificação** — integração com API externa para cotação em tempo real dos FIIs
+---
 
-### 🔐 Autenticação
+## 🚀 Futuro (pé no chão)
 
-- [ ] Rota de refresh de token JWT
+Melhorias realistas para a estrutura atual, sem depender de reescritas grandes.
 
-### 👤 Usuários
+**Qualidade e manutenção**
+- [ ] Testes automatizados começando pelos cálculos críticos (KPIs, rebalanceamento, histórico).
+- [ ] Documentação Swagger / OpenAPI a partir das rotas.
 
-- [ ] Corrigir query do `atualizarUser` — referencia tabela antiga (`dbo."tabUser"`) em vez de `usuarios`
-- [ ] Corrigir `validaEmailExistente` no `validaUser.js` — mesma referência errada
-- [ ] Migrar `atualizarUser` e `deleteUser` para `Service`/`Repository`
-- [ ] Coluna `perfil` (admin/user) + middleware `verificaAdmin`
-- [ ] Implementar edição de usuário e reset de senha no frontend (hoje só exibem toast)
-- [ ] Reativar validações de senha comentadas (confirmação, tamanho mínimo, letra maiúscula)
-- [ ] Validação real de CPF (dígitos verificadores)
+**API e segurança**
+- [x] Interceptor no frontend que chama `/auth/refresh` no `401`, refaz a requisição original e só desloga quando o refresh falha (fecha o ciclo do refresh token). ✅
+- [ ] Paginação nas listagens que tendem a crescer (`/users`, `/operacoes`, `/rendimentos`, `/historico/*`).
+- [ ] Refresh token stateful — revogação e logout real. Requer uma tabela nova (migration); pendente por depender do banco.
 
-### 🏷️ Seguimentos
+**Funcionalidades**
+- [ ] Endpoint de relatório consolidado por período (aportes, proventos e patrimônio).
+- [ ] Atualização agendada de cotações fora do horário de pico.
+- [ ] Exportação de dados em CSV / XLSX.
 
-- [ ] Migrar módulo inteiro para `Controller → Service → Repository` (hoje acessa o banco direto)
-- [ ] Implementar edição de seguimento no frontend (hoje só exibe toast — lógica comentada no hook)
-- [ ] Bloquear `deleteSeguimento` se houver ativos vinculados ao seguimento
-- [ ] Corrigir mensagem de erro no `catch` do `contarSeguimentos` ("Erro ao contar usuários" → "Erro ao contar seguimentos")
-- [ ] Implementar log de alterações (aguardando tabela de logs)
-
-### 📊 Operações
-
-- [ ] Criar endpoint `POST /cardsOperacoes` (total aportado, vendido e capital líquido) — spec pronta em `ANALISE_PROJETO.md`
-- [ ] Validar campo `tipo` em `lancarOperacao` (aceitar apenas `'Compra'` ou `'Venda'`)
-
-### 🛠️ Geral
-
-- [ ] Resolver dependência quebrada do S3 (`@aws-sdk/client-s3` não está mais instalado, mas `src/config/s3.js` ainda o importa)
-- [ ] Paginação nas rotas de listagem (`/users`, `/operacoes`, `/rendimentos`)
-- [ ] Upload de extrato para lançamento em lote (multer + S3 já configurados, mas não conectados a nenhuma rota)
-- [ ] Página de Relatórios — exportação por período (PDF / Excel)
-- [ ] Página de Configurações — preferências do usuário
-
-### 🔮 Possibilidades Futuras
-
-- [ ] Responsividade mobile
-- [ ] Testes automatizados (backend e frontend)
-- [ ] Dockerização da aplicação
-- [ ] Documentação Swagger / OpenAPI
-- [ ] Integração com serviços AWS (ex: S3 para extratos, SES para notificações)
+**Infraestrutura**
+- [ ] Dockerização (Dockerfile + docker-compose com PostgreSQL).
+- [ ] Pipeline de CI (lint + testes) quando os testes existirem.

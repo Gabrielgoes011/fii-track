@@ -18,6 +18,7 @@ const changePassController = async (req, res) => {
     return apiResponse.success(res, 'Senha alterada com sucesso.', resultado, 200);
 
   } catch (error) {
+    console.error('Erro ao trocar a senha na etapa do controller:', error);
 
     const pgError = error && error.code ? pgErrorHandler(error) : null;
     if (pgError) {

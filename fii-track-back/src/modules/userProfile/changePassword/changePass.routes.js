@@ -9,7 +9,7 @@ import {
 const router = express.Router();
 
 // Rota para trocar a senha
-router.post('/controle-ativos/trocar-senha', verificaToken, rlsMiddleware, changePassController);
+router.post('/perfil/trocar-senha', verificaToken, rlsMiddleware, changePassController);
 // exemplo de body para trocar a senha
 // {
 //  "userId": 1,

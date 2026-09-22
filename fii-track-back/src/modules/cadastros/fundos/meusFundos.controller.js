@@ -1,4 +1,5 @@
 import apiResponse from '../../../utils/httpResponse.js';
+import pgErrorHandler from '../../../utils/pgErrorHandler.js';
 import {
   listarFundosService,
   cadastrarFundosService,
@@ -26,9 +27,9 @@ async function cadastrarFundos(req, res) {
     );
 
   } catch (error) {
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res,
-      error.message);
+    console.error('Erro ao cadastrar fundo na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao cadastrar o fundo.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 //#endregion
@@ -47,10 +48,9 @@ async function listarFundos(req, res) {
     );
 
   } catch (error) {
-
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res,
-      error.message);
+    console.error('Erro ao listar fundos na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Erro ao listar os fundos.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 
@@ -70,9 +70,9 @@ async function contarFundosAtivos(req, res) {
     );
 
   } catch (error) {
-
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res, error.message);
+    console.error('Erro ao contar fundos ativos na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Erro ao contar os fundos.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 //#endregion 
@@ -92,10 +92,9 @@ async function deletarFundo(req, res) {
       'Fundo deletado com sucesso!', deletarFundo, 200, true
     );
   } catch (error) {
-
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res,
-      error.message);
+    console.error('Erro ao deletar fundo na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao deletar o fundo.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 //#endregion  
@@ -118,10 +117,9 @@ async function editarNomeFundo(req, res) {
     );
 
   } catch (error) {
-
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res,
-      error.message);
+    console.error('Erro ao editar nome do fundo na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao editar o nome do fundo.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 //#endregion

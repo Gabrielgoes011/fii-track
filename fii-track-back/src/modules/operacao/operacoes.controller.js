@@ -1,4 +1,5 @@
 import apiResponse from '../../utils/httpResponse.js';
+import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
     getAtivosDropListService,
     getOperacoesService,
@@ -24,8 +25,9 @@ export async function carregaAtivosDropList(req, res) {
         // Log do erro para depuração para o dev
         console.error('Erro ao carregar ativos para o dropdown na etapa do controller:', error);
 
-        //erro para o usuário
-        return apiResponse.error(res, 'Erro ao carregar ativos para o dropdown.');
+        //erro seguro para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar ativos para o dropdown.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -51,8 +53,9 @@ export async function listarOperacoes(req, res) {
         // Log do erro para depuração para o dev
         console.error('Erro ao listar operações na etapa do controller:', error);
 
-        //retornar um erro detalhado em caso de falha na consulta
-        return apiResponse.error(res, 'Erro ao listar as operações.');
+        //erro seguro para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao listar as operações.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -82,8 +85,9 @@ export async function lancarOperacao(req, res) {
         // Log do erro para depuração para o dev
         console.error('Erro ao lançar operação na etapa do controller:', error);
 
-        //erro para o usuário
-        return apiResponse.error(res, 'Erro ao lançar a operação.');
+        //erro seguro para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao lançar a operação.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -108,8 +112,9 @@ export async function carregaDadosGraficoOperacoes(req, res) {
         // Log do erro para depuração para o dev
         console.error('Erro ao carregar dados do gráfico na etapa do controller:', error);
 
-        //erro para o usuário
-        return apiResponse.error(res, 'Erro ao carregar os dados do gráfico.');
+        //erro seguro para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar os dados do gráfico.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -132,8 +137,9 @@ export async function excluirOperacao(req, res) {
         // Log do erro para depuração para o dev
         console.error('Erro ao excluir operação na etapa do controller:', error);
 
-        //erro para o usuário
-        return apiResponse.error(res, 'Erro ao excluir a operação.');
+        //erro seguro para o usuário
+        const secureMessage = pgErrorHandler(error, 'Erro ao excluir a operação.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion

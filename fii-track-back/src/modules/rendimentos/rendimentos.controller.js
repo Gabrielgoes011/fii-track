@@ -1,4 +1,5 @@
 import apiResponse from '../../utils/httpResponse.js';
+import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
     listarRendimentos,
     carregarGraficoDashboard,
@@ -21,7 +22,9 @@ async function listarRendimentosController(req, res) {
         return apiResponse.success(res, 'Rendimentos listados com sucesso.', rendimentos);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao listar rendimentos na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao listar os rendimentos.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -37,7 +40,9 @@ async function carregarGraficoDashboardController(req, res) {
         return apiResponse.success(res, 'Dados do gráfico carregados com sucesso.', dados);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao carregar gráfico do dashboard de rendimentos na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar os dados do gráfico.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -53,7 +58,9 @@ async function carregarComparacaoAnualController(req, res) {
         return apiResponse.success(res, 'Comparação anual carregada com sucesso.', dados);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao carregar comparação anual na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar a comparação anual.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -68,7 +75,9 @@ async function carregarDadosModalNovoRendimentoController(req, res) {
         return apiResponse.success(res, 'Ativos carregados com sucesso.', ativos);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao carregar ativos para o modal de rendimento na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao carregar os ativos.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -88,7 +97,9 @@ async function criarRendimentoController(req, res) {
         return apiResponse.success(res, 'Rendimento lançado com sucesso!', resultado, 201);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao criar rendimento na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao lançar o rendimento.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -104,7 +115,9 @@ async function deleteRendimentoController(req, res) {
         return apiResponse.success(res, 'Rendimento excluído com sucesso.');
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao excluir rendimento na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao excluir o rendimento.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -138,7 +151,9 @@ async function getCardsRendimentos(req, res) {
     }
     //caso ocorra algum erro, retorna a mensagem de erro
     catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao calcular os cards de rendimentos na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao calcular os indicadores de rendimentos.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion
@@ -154,7 +169,9 @@ async function importarRendimentosB3Controller(req, res) {
         return apiResponse.success(res, 'Importação concluída.', resultado);
 
     } catch (error) {
-        return apiResponse.error(res, error.message);
+        console.error('Erro ao importar rendimentos da B3 na etapa do controller:', error);
+        const secureMessage = pgErrorHandler(error, 'Erro ao importar os rendimentos.');
+        return apiResponse.error(res, secureMessage);
     }
 }
 //#endregion

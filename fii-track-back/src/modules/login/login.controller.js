@@ -1,14 +1,44 @@
-﻿import jwt from 'jsonwebtoken';
-import apiResponse from '../../utils/httpResponse.js';
+﻿import apiResponse from '../../utils/httpResponse.js';
+import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
   autenticarUsuario,
   autenticarUsuarioCom2fa,
   obterUsuarioLogado,
+  renovarAccessToken,
   iniciar2faService,
   confirmar2faService,
   desativar2faService,
   validarCodigo2faService,
 } from './login.service.js';
+
+// Duração dos cookies (em ms). Devem espelhar as durações dos tokens no service.
+const ACCESS_COOKIE_MAX_AGE = 1000 * 60 * 15;      // 15 minutos
+const REFRESH_COOKIE_MAX_AGE = 1000 * 60 * 60 * 8; // 8 horas
+
+// Opções base comuns a todos os cookies de autenticação.
+function baseCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  };
+}
+
+// Grava o access token (cookie 'token') na resposta.
+function setAccessCookie(res, token) {
+  res.cookie('token', token, { ...baseCookieOptions(), maxAge: ACCESS_COOKIE_MAX_AGE });
+}
+
+// Grava o refresh token (cookie 'refreshToken') restrito à rota de refresh.
+// O path mais estreito evita que o refresh token trafegue em toda requisição.
+function setRefreshCookie(res, refreshToken) {
+  res.cookie('refreshToken', refreshToken, {
+    ...baseCookieOptions(),
+    path: '/auth/refresh',
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+  });
+}
 
 //#region => Lógica para login
 async function loginController(req, res) {
@@ -27,14 +57,9 @@ async function loginController(req, res) {
       }, 200);
     }
 
-    // Grava o token em cookie httpOnly
-    res.cookie('token', resultado.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60,
-      path: '/',
-    });
+    // Grava access token e refresh token em cookies httpOnly
+    setAccessCookie(res, resultado.token);
+    setRefreshCookie(res, resultado.refreshToken);
 
     // Retorna usuário + token, avisando se a senha ainda é a padrão
     return apiResponse.success(res,
@@ -49,7 +74,9 @@ async function loginController(req, res) {
       true);
 
   } catch (error) {
-    return apiResponse.error(res, error.message, 401);
+    console.error('Erro no login na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível realizar o login.');
+    return apiResponse.error(res, secureMessage, 401);
   }
 }
 
@@ -61,14 +88,9 @@ async function login2faController(req, res) {
     // Chama o service para validar senha + código TOTP e gerar o token
     const resultado = await autenticarUsuarioCom2fa(email, password, codigo);
 
-    // Grava o token em cookie httpOnly
-    res.cookie('token', resultado.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60,
-      path: '/',
-    });
+    // Grava access token e refresh token em cookies httpOnly
+    setAccessCookie(res, resultado.token);
+    setRefreshCookie(res, resultado.refreshToken);
 
     // Retorna usuário + token, avisando se a senha ainda é a padrão
     return apiResponse.success(res,
@@ -83,7 +105,9 @@ async function login2faController(req, res) {
       true);
 
   } catch (error) {
-    return apiResponse.error(res, error.message, 401);
+    console.error('Erro no login 2FA na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível concluir o login com 2FA.');
+    return apiResponse.error(res, secureMessage, 401);
   }
 }
 // Retorna os dados do usuário logado, derivados do token (fonte de verdade do "adm").
@@ -95,7 +119,32 @@ async function meController(req, res) {
 
     return apiResponse.success(res, 'Usuário autenticado.', { usuario }, 200);
   } catch (error) {
-    return apiResponse.error(res, error.message, 401);
+    console.error('Erro ao obter usuário logado na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível validar a sessão.');
+    return apiResponse.error(res, secureMessage, 401);
+  }
+}
+
+// Emite um novo access token a partir do refresh token (cookie httpOnly).
+// Permite renovar a sessão sem pedir senha enquanto o refresh token for válido.
+async function refreshController(req, res) {
+  try {
+    // Prioriza o cookie; aceita o body como fallback para clientes sem cookie
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    const resultado = await renovarAccessToken(refreshToken);
+
+    // Grava o novo access token no cookie
+    setAccessCookie(res, resultado.token);
+
+    return apiResponse.success(res, 'Sessão renovada.', {
+      usuario: resultado.usuario,
+      token: resultado.token,
+    }, 200);
+  } catch (error) {
+    console.error('Erro ao renovar a sessão na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível renovar a sessão.');
+    return apiResponse.error(res, secureMessage, 401);
   }
 }
 //#endregion
@@ -112,7 +161,9 @@ async function iniciar2faController(req, res) {
     // Retorna o QR code para o usuário escanear no app autenticador
     return apiResponse.success(res, 'QR code gerado com sucesso.', resultado, 200);
   } catch (error) {
-    return apiResponse.error(res, error.message, 500);
+    console.error('Erro ao iniciar 2FA na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível iniciar a configuração do 2FA.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 
@@ -132,7 +183,9 @@ async function confirmar2faController(req, res) {
 
     return apiResponse.success(res, '2FA ativado com sucesso.', resultado, 200);
   } catch (error) {
-    return apiResponse.error(res, error.message, 400);
+    console.error('Erro ao confirmar 2FA na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível ativar o 2FA.');
+    return apiResponse.error(res, secureMessage, 400);
   }
 }
 
@@ -146,7 +199,9 @@ async function desativar2faController(req, res) {
 
     return apiResponse.success(res, '2FA desativado com sucesso.', resultado, 200);
   } catch (error) {
-    return apiResponse.error(res, error.message, 500);
+    console.error('Erro ao desativar 2FA na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível desativar o 2FA.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 
@@ -166,7 +221,9 @@ async function validarCodigo2faController(req, res) {
 
     return apiResponse.success(res, 'Código 2FA validado.', resultado, 200);
   } catch (error) {
-    return apiResponse.error(res, error.message, 400);
+    console.error('Erro ao validar código 2FA na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, 'Não foi possível validar o código 2FA.');
+    return apiResponse.error(res, secureMessage, 400);
   }
 }
 //#endregion
@@ -175,6 +232,7 @@ export {
   loginController,
   login2faController,
   meController,
+  refreshController,
   iniciar2faController,
   confirmar2faController,
   desativar2faController,

@@ -11,10 +11,19 @@ import homeRoutes from './modules/home/home.routes.js'; // importa as rotas do h
 import controleAtivosRoutes from './modules/controlAtivos/controleAtivos.routes.js'; // importa as rotas de controle de ativos
 import historicoRoutes from './modules/historico/historico.routes.js'; // importa as rotas de histórico da carteira
 import changePassRoutes from './modules/userProfile/changePassword/changePass.routes.js'; // importa as rotas de troca de senha
+import meuPerfilRoutes from './modules/userProfile/myProfile/meuPerfil.routes.js'; // importa as rotas de perfil do usuário
 
 //cria uma aplicação express
 
 const app = express();
+
+// Em produção a API costuma rodar atrás de um proxy/CDN (Nginx, Vercel, etc.).
+// Confiar no primeiro proxy faz o Express ler o IP real do cliente via
+// X-Forwarded-For, essencial para o rate limiting por IP funcionar corretamente.
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 //habilita o cors para todas as rotas
 app.use(cors({
     origin: true,
@@ -45,6 +54,7 @@ app.use('/', rendimentosRoutes); // Usa as rotas de rendimentos
 app.use('/', controleAtivosRoutes); // Usa as rotas de controle de ativos
 app.use('/', historicoRoutes); // Usa as rotas de histórico da carteira
 app.use('/', changePassRoutes); // Usa as rotas de troca de senha
+app.use('/', meuPerfilRoutes); // Usa as rotas de perfil do usuário
 
 
 //exporta o app para ser usado em outros arquivos

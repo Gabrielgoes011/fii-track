@@ -1,4 +1,5 @@
 import apiResponse from '../../utils/httpResponse.js';
+import pgErrorHandler from '../../utils/pgErrorHandler.js';
 import {
   listarUsuariosService,
   cadastrarUserService,
@@ -25,9 +26,9 @@ async function listarUsuarios(req, res) {
       'Usuários listados com sucesso!', usuarios, 200, true
     );
   } catch (error) {
-
-    apiResponse.error(res,
-      error.message || 'Erro ao listar usuários', 500);
+    console.error('Erro ao listar usuários na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao listar os usuários.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 //#endregion
@@ -46,13 +47,9 @@ async function contarUsuarios(req, res) {
     );
   }
   catch (error) {
-
-    // Log do erro para depuração
-    console.error('Erro ao contar usuários:', error);
-
-    // Retorna a mensagem detalhada do erro
-    apiResponse.error(res,
-      error.message || 'Erro ao contar usuários', 500);
+    console.error('Erro ao contar usuários na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao contar os usuários.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 //#endregion
@@ -69,10 +66,9 @@ async function cadastrarUser(req, res) {
       'Usuário cadastrado com sucesso!', cadastrarUser, 201, true
     );
   } catch (error) {
-    // Log do erro para depuração
-    console.error('Erro ao cadastrar usuário:', error);
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res, error.message);
+    console.error('Erro ao cadastrar usuário na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao cadastrar o usuário.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 //#endregion
@@ -91,10 +87,9 @@ async function atualizarUser(req, res) {
     // Retorna os resultados da consulta em formato JSON
     apiResponse.success(res, 'Usuário atualizado com sucesso!', usuarioAtualizado, 200);
   } catch (error) {
-    // Log do erro para depuração
-    console.error('Erro ao atualizar usuário:', error);
-    // Retorna a mensagem detalhada do erro
-    apiResponse.error(res, error.message || 'Erro ao atualizar o usuário.', 400);
+    console.error('Erro ao atualizar usuário na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao atualizar o usuário.');
+    return apiResponse.error(res, secureMessage, 400);
   }
 }
 //#endregion
@@ -117,10 +112,9 @@ async function onOffUserController(req, res) {
     );
   }
   catch (error) {
-
-    // Retorna a mensagem detalhada do erro
-    return apiResponse.error(res,
-      error.message);
+    console.error('Erro ao inativar/reativar usuário na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao alterar o status do usuário.');
+    return apiResponse.error(res, secureMessage);
   }
 }
 
@@ -142,10 +136,9 @@ async function deleteUser(req, res) {
       `O usuário ${usuarioDeletado.nome} foi deletado com sucesso!`, usuarioDeletado, 200
     );
   } catch (error) {
-    // Log do erro para depuração
-    console.error('Erro ao deletar o usuário:', error);
-    // Retorna a mensagem detalhada do erro
-    apiResponse.error(res, error.message || 'Erro ao deletar o usuário.', 400);
+    console.error('Erro ao deletar o usuário na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao deletar o usuário.');
+    return apiResponse.error(res, secureMessage, 400);
   }
 }
 //#endregion
@@ -165,10 +158,9 @@ async function resetarSenhaController(req, res) {
       `Senha do usuário ${usuario.nome} resetada para o padrão!`, usuario, 200
     );
   } catch (error) {
-    // Log do erro para depuração
-    console.error('Erro ao resetar a senha do usuário:', error);
-    // Retorna a mensagem detalhada do erro
-    apiResponse.error(res, error.message || 'Erro ao resetar a senha do usuário.', 400);
+    console.error('Erro ao resetar a senha do usuário na etapa do controller:', error);
+    const secureMessage = pgErrorHandler(error, error.message || 'Erro ao resetar a senha do usuário.');
+    return apiResponse.error(res, secureMessage, 400);
   }
 }
 //#endregion

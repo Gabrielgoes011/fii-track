@@ -13,6 +13,28 @@ import {
 
 const APP_NAME = process.env.APP_NAME || 'FII-TRACK';
 
+// Durações dos tokens.
+// - Access token: vida curta, autoriza as requisições (estilo bancário).
+// - Refresh token: vida mais longa, só serve para emitir um novo access token
+//   sem pedir senha. Define a duração máxima da sessão.
+const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || '15m';
+const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES || '8h';
+
+// Gera o access token (JWT) com os dados do usuário usados pela aplicação.
+function gerarAccessToken(payload) {
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES });
+}
+
+// Gera o refresh token. É um JWT separado, marcado com type: 'refresh', carregando
+// apenas o id do usuário — o mínimo necessário para reidentificá-lo na renovação.
+function gerarRefreshToken(usuarioId) {
+    return jwt.sign(
+        { id: usuarioId, type: 'refresh' },
+        process.env.JWT_SECRET,
+        { expiresIn: REFRESH_TOKEN_EXPIRES }
+    );
+}
+
 //#region => Logica  para login
 async function autenticarUsuario(email, password) {
 
@@ -64,20 +86,19 @@ async function autenticarUsuario(email, password) {
         };
     }
 
-    const token = jwt.sign(
-        {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            adm: credenciais.adm || false,
-            defaultPassword: defaultPassword || false
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-    );
+    const token = gerarAccessToken({
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        adm: credenciais.adm || false,
+        defaultPassword: defaultPassword || false
+    });
+
+    const refreshToken = gerarRefreshToken(usuario.id);
 
     return {
         token,
+        refreshToken,
         usuario: usuarioRetorno
     };
 }
@@ -132,21 +153,20 @@ async function autenticarUsuarioCom2fa(email, password, codigo) {
         defaultPassword = true;
     }
 
-    // 6. Gera o token JWT já com o 2FA validado
-    const token = jwt.sign(
-        {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            adm: credenciais.adm || false,
-            defaultPassword: defaultPassword || false
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-    );
+    // 6. Gera o access token JWT já com o 2FA validado + o refresh token
+    const token = gerarAccessToken({
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        adm: credenciais.adm || false,
+        defaultPassword: defaultPassword || false
+    });
+
+    const refreshToken = gerarRefreshToken(usuario.id);
 
     return {
         token,
+        refreshToken,
         usuario: {
             id: usuario.id,
             nome: usuario.nome,
@@ -182,6 +202,59 @@ async function obterUsuarioLogado(usuarioId) {
         email: usuario.email,
         adm: credenciais?.adm || false,
         auth2faTotp: !!credenciais?.auth2faTotp,
+    };
+}
+
+// Valida um refresh token e emite um novo access token.
+// Reconsulta o usuário no banco para que o novo access token reflita o estado
+// atual (ex.: usuário rebaixado de admin ou desativado deixa de ter acesso).
+async function renovarAccessToken(refreshToken) {
+    if (!refreshToken) {
+        throw new Error('Refresh token ausente.');
+    }
+
+    // 1. Verifica assinatura e expiração; jwt.verify lança se for inválido/expirado
+    let payload;
+    try {
+        payload = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    } catch {
+        throw new Error('Sessão expirada. Faça login novamente.');
+    }
+
+    // 2. Garante que é mesmo um refresh token (e não um access token reaproveitado)
+    if (payload.type !== 'refresh' || !payload.id) {
+        throw new Error('Refresh token inválido.');
+    }
+
+    // 3. Reconsulta o usuário para refletir o estado atual
+    const usuario = await findUserById(payload.id);
+    if (!usuario) {
+        throw new Error('Usuário não encontrado.');
+    }
+    if (usuario.ativo === false) {
+        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+    }
+
+    const credenciais = await findUserCredentials(payload.id);
+
+    // 4. Emite um novo access token com os dados atualizados
+    const token = gerarAccessToken({
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        adm: credenciais?.adm || false,
+        defaultPassword: false
+    });
+
+    return {
+        token,
+        usuario: {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            adm: credenciais?.adm || false,
+            auth2faTotp: !!credenciais?.auth2faTotp,
+        }
     };
 }
 
@@ -310,6 +383,7 @@ export {
     autenticarUsuario,
     autenticarUsuarioCom2fa,
     obterUsuarioLogado,
+    renovarAccessToken,
     iniciar2faService,
     confirmar2faService,
     desativar2faService,
