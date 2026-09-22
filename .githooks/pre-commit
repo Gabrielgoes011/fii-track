@@ -1,0 +1,21 @@
+#!/bin/sh
+# Hook de pre-commit: incrementa a versão (patch) do front a cada commit.
+#
+# Ativado por: git config core.hooksPath .githooks
+#
+# Fluxo:
+#  1. Roda o bump que altera fii-track-front/package.json
+#  2. Re-adiciona o package.json ao commit em andamento (git add)
+#
+# Para pular o bump em um commit específico: git commit --no-verify
+
+# Evita rodar em merge/rebase (não faz sentido bumpar nesses casos)
+if [ -f .git/MERGE_HEAD ]; then
+  exit 0
+fi
+
+node scripts/bump-version.mjs patch || exit 1
+
+git add fii-track-front/package.json
+
+exit 0

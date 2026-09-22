@@ -334,7 +334,7 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
           borderTop: '1px solid #1e293b',
           fontSize: '11px', color: '#334155', textAlign: 'center',
         }}>
-          © {new Date().getFullYear()} FIITrack
+          © {new Date().getFullYear()} FIITrack · v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'}
         </div>
       </div>
     </>

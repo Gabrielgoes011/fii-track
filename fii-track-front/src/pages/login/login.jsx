@@ -653,7 +653,7 @@ function Login({ onLogin }) {
             </form>
 
             <div className="form-footer">
-              © {new Date().getFullYear()} FIITrack · Todos os direitos reservados
+              © {new Date().getFullYear()} FIITrack · v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'} · Todos os direitos reservados
             </div>
           </div>
         </div>
