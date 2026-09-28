@@ -68,8 +68,9 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld, isMobile }) 
   );
 }
 
-// ─── Aba: Oportunidades (variação do dia × preço médio) ───────────────────────
-// Interpretação: baixa no dia = oportunidade (comprar); alta no dia = esperar.
+// ─── Aba: Movimento do Dia (variação do pregão × preço médio) ────────────────
+// Apenas informativo: mostra maiores quedas e maiores altas do dia. NÃO indica
+// se o ativo está barato/caro (não há fonte de valor justo) nem é recomendação.
 // Reforça com a posição da cotação frente ao preço médio (abaixo/acima do PM).
 
 // Card de um ativo na listagem de oportunidades/espera.
@@ -198,7 +199,7 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
       <HistoricoWrapper>
         <FiSearch size={22} color="#475569" />
         <p style={{ margin: 0, fontSize: '13px' }}>
-          Atualize as cotações na aba <strong>Carteira de FIIs</strong> para ver as oportunidades do dia.
+          Atualize as cotações na aba <strong>Carteira de FIIs</strong> para ver o movimento do dia.
         </p>
       </HistoricoWrapper>
     );
@@ -219,13 +220,13 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
         flexDirection: isMobile ? 'column' : 'row',
       }}>
         <OportunidadeGrupo
-          titulo="Oportunidades" subtitulo="Em queda hoje — possível compra"
+          titulo="Maiores quedas do dia" subtitulo="Ativos que mais caíram no pregão de hoje"
           cor="#f87171" icone={FiRefreshCw}
           itens={oportunidades} tipo="oportunidade" vazio="Nenhum ativo em queda hoje."
           vsPM={vsPM} fmtVar={fmtVar} rotuloPM={rotuloPM} isMobile={isMobile}
         />
         <OportunidadeGrupo
-          titulo="Esperar" subtitulo="Em alta hoje — aguardar"
+          titulo="Maiores altas do dia" subtitulo="Ativos que mais subiram no pregão de hoje"
           cor="#4ade80" icone={FiCheck}
           itens={esperar} tipo="esperar" vazio="Nenhum ativo em alta hoje."
           vsPM={vsPM} fmtVar={fmtVar} rotuloPM={rotuloPM} isMobile={isMobile}
@@ -233,7 +234,7 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
       </div>
       <p style={{ margin: '12px 2px 0', fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
         {neutros.length > 0 && `${neutros.length} ativo${neutros.length > 1 ? 's' : ''} sem variação no dia. `}
-        ★ indica cotação abaixo do seu preço médio (PM). Baseado na variação do pregão; não é recomendação de investimento.
+        ★ indica cotação abaixo do seu preço médio (PM). Este painel mostra apenas o movimento do pregão de hoje — não indica se o ativo está barato ou caro, nem é recomendação de investimento.
       </p>
     </div>
   );
@@ -793,7 +794,7 @@ function BarraFiltros({
 const ABAS = [
   { id: 'carteira', label: 'Carteira de FIIs' },
   { id: 'historico', label: 'Histórico da Carteira' },
-  { id: 'oportunidades', label: 'Oportunidades' },
+  { id: 'oportunidades', label: 'Movimento do Dia' },
 ];
 
 // ─── Navegação por abas (acessível: roles ARIA + navegação por teclado) ────────

@@ -6,6 +6,7 @@ import PaginaUsuarios from './pages/cadastros/usuarios/usuarios';
 import PaginaConfiguracoes from './pages/configuracoes/configuracoes';
 import PaginaPerfil from './pages/perfil/perfil';
 import PaginaControleAtivos from './pages/controleAtivos/controleAtivos';
+import PaginaDiversificacao from './pages/diversificacao/diversificacao';
 import PaginaRendimentos from './pages/rendimentos/rendimentos';
 import PaginaPrecificacao from './pages/precificacao/precificacao';
 import PaginaOperacoes from './pages/operacoes/operacoes';
@@ -78,6 +79,7 @@ function App() {
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<PaginaDashboard />} />
           <Route path="/controle-ativos" element={<PaginaControleAtivos />} />
+          <Route path="/diversificacao" element={<PaginaDiversificacao />} />
           <Route path="/operacoes" element={<PaginaOperacoes />} />
           <Route path="/precificacao" element={<PaginaPrecificacao />} />
           <Route path="/rendimentos" element={<PaginaRendimentos />} />

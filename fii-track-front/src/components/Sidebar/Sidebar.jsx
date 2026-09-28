@@ -4,6 +4,7 @@ import {
   FaHome, FaCog, FaBars, FaTimes,
   FaWallet, FaChartLine, FaTags, FaExchangeAlt,
   FaFileAlt, FaFolder, FaChevronDown, FaChevronUp,
+  FaChartPie,
 } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
 
@@ -52,6 +53,7 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
   const menuItems = [
     { id: 'dashboard', path: '/', label: 'Início', icon: FaHome },
     { id: 'controle-ativos', path: '/controle-ativos', label: 'Controle de Ativos', icon: FaWallet },
+    { id: 'diversificacao', path: '/diversificacao', label: 'Diversificação', icon: FaChartPie },
     { id: 'operacoes', path: '/operacoes', label: 'Operações', icon: FaExchangeAlt },
     { id: 'precificacao', path: '/precificacao', label: 'Precificação', icon: FaTags },
     { id: 'rendimentos', path: '/rendimentos', label: 'Rendimentos', icon: FaChartLine },

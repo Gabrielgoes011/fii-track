@@ -9,6 +9,7 @@ import rendimentosRoutes from './modules/rendimentos/rendimentos.routes.js'; // 
 import authRoutes from './modules/login/login.routes.js'; // importa as rotas de autenticação
 import homeRoutes from './modules/home/home.routes.js'; // importa as rotas do home/dashboard
 import controleAtivosRoutes from './modules/controlAtivos/controleAtivos.routes.js'; // importa as rotas de controle de ativos
+import diversificacaoRoutes from './modules/diversificacao/diversificacao.routes.js'; // importa as rotas de diversificação
 import historicoRoutes from './modules/historico/historico.routes.js'; // importa as rotas de histórico da carteira
 import changePassRoutes from './modules/userProfile/changePassword/changePass.routes.js'; // importa as rotas de troca de senha
 import meuPerfilRoutes from './modules/userProfile/myProfile/meuPerfil.routes.js'; // importa as rotas de perfil do usuário
@@ -52,6 +53,7 @@ app.use('/', meusFundosRoutes); // Usa as rotas de meus fundos
 app.use('/', operacoesRoutes);  // Usa as rotas de operações
 app.use('/', rendimentosRoutes); // Usa as rotas de rendimentos
 app.use('/', controleAtivosRoutes); // Usa as rotas de controle de ativos
+app.use('/', diversificacaoRoutes); // Usa as rotas de diversificação
 app.use('/', historicoRoutes); // Usa as rotas de histórico da carteira
 app.use('/', changePassRoutes); // Usa as rotas de troca de senha
 app.use('/', meuPerfilRoutes); // Usa as rotas de perfil do usuário
