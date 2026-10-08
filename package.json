@@ -1,12 +1,26 @@
 {
   "private": true,
   "description": "Monorepo FII-Track (back Express + front React/Vite) para deploy unico na Discloud.",
+  "type": "module",
   "scripts": {
-    "install:back": "npm --prefix fii-track-back install",
     "install:front": "npm --prefix fii-track-front install",
     "build:front": "npm --prefix fii-track-front run build",
-    "build": "npm --prefix fii-track-back install --omit=dev",
-    "build:full": "npm run install:front && npm run build:front && npm run install:back",
+    "build": "npm install --omit=dev",
+    "build:local": "npm run install:front && npm run build:front && npm install",
     "start": "node --import ./fii-track-back/src/config/env.js fii-track-back/server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
+    "uuid": "^13.0.0"
   }
 }
