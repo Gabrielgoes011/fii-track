@@ -7,6 +7,6 @@
     "build:front": "npm --prefix fii-track-front run build",
     "build": "npm --prefix fii-track-back install --omit=dev",
     "build:full": "npm run install:front && npm run build:front && npm run install:back",
-    "start": "npm --prefix fii-track-back run start"
+    "start": "node --import ./fii-track-back/src/config/env.js fii-track-back/server.js"
   }
 }
