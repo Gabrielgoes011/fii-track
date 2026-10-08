@@ -21,6 +21,10 @@ fii-track-front/.env.*
 dist
 build
 
+# Exceção: o build do front É versionado (deploy único na Discloud serve este dist)
+!fii-track-front/dist
+!fii-track-front/dist/**
+
 # =========================================
 # Logs
 # =========================================

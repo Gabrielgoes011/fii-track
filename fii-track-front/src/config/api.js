@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { toastError } from '../utils/responseUtils';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-if (!API_BASE_URL) {
-  throw new Error('VITE_API_URL não está definido. Verifique seu arquivo .env');
-}
+// Base da API. No deploy único (Discloud) o front e a API ficam na mesma origem,
+// então usamos o caminho relativo '/api'. VITE_API_URL continua opcional para
+// cenários de desenvolvimento em que a API roda em outra origem.
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
