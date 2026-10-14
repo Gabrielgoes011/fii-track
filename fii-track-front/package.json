@@ -1,6 +1,6 @@
 {
   "name": "meu-app",
-  "version": "1.2.13",
+  "version": "1.2.15",
   "private": true,
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",
