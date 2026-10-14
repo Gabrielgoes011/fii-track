@@ -1,0 +1,40 @@
+# Dependencias (a Discloud reinstala via BUILD)
+node_modules
+**/node_modules
+
+# Controle de versao
+.git
+.gitignore
+.githooks
+.gitattributes
+
+# Variaveis de ambiente (cadastradas no painel da Discloud)
+.env
+.env.*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Codigo-fonte do front (so o build em dist/ precisa subir)
+fii-track-front/src
+fii-track-front/public
+fii-track-front/index.html
+fii-track-front/vite.config.js
+fii-track-front/.env.*
+
+# Documentacao e metadados do editor/projeto
+*.md
+.vscode
+.idea
+.kiro
+.claude
+coverage
+.DS_Store
+Thumbs.db
+
+# Banco (scripts SQL nao precisam no runtime)
+fii-track-back/db
