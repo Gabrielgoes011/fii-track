@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AiOutlineBarChart, AiOutlineAreaChart } from 'react-icons/ai';
-import { FiAlertTriangle, FiPlus, FiTrash2, FiRepeat, FiUpload, FiFileText, FiDownload } from 'react-icons/fi';
+import { FiAlertTriangle, FiPlus, FiTrash2, FiRepeat, FiUpload, FiFileText, FiDownload, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import NovaOperacaoModal from './components/modalNovaOperacao';
 import { BarChart, AreaChart } from '../../components/Charts';
 import { useOperacoes } from '../../hooks/operacoes/useOperacoes';
 import { DataCard } from '../../components/DataCard';
 import SlideModal from '../../components/SlideModal/SlideModal';
+import PaginacaoMobile from '../../components/PaginacaoMobile/PaginacaoMobile';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toastInfo } from '../../utils/responseUtils';
 
@@ -33,6 +34,7 @@ export default function PaginaOperacoes() {
   const [operacaoParaExcluir,  setOperacaoParaExcluir]  = useState(null);
   const [graficoAberto,        setGraficoAberto]        = useState(false);
   const [modalImportAberto,    setModalImportAberto]    = useState(false);
+  const [paginaMobile,         setPaginaMobile]         = useState(1);
 
   const isMobile = useIsMobile();
 
@@ -60,6 +62,18 @@ export default function PaginaOperacoes() {
   };
 
   const operacoesComTotal = operacoes.map(op => ({ ...op, valorTotal: op.qtde * op.preco }));
+
+  // ─── Paginação da lista de cards (mobile) ───────────────────────────────────
+  const ITENS_POR_PAGINA_MOBILE = 5;
+  const totalPaginasMobile = Math.max(1, Math.ceil(operacoesComTotal.length / ITENS_POR_PAGINA_MOBILE));
+  // Volta para a 1ª página quando os filtros mudam.
+  useEffect(() => { setPaginaMobile(1); }, [mesSelecionado, anoSelecionado]);
+  // Nunca deixa a página passar do total disponível.
+  useEffect(() => { setPaginaMobile(p => Math.min(p, totalPaginasMobile)); }, [totalPaginasMobile]);
+  const operacoesPagina = operacoesComTotal.slice(
+    (paginaMobile - 1) * ITENS_POR_PAGINA_MOBILE,
+    (paginaMobile - 1) * ITENS_POR_PAGINA_MOBILE + ITENS_POR_PAGINA_MOBILE,
+  );
 
   // colunas para desktop (DataCard/GridDados)
   const colunasOperacoes = [
@@ -122,24 +136,6 @@ export default function PaginaOperacoes() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
 
-              {/* Botão ver/ocultar gráfico — só mobile */}
-              {isMobile && (
-                <button
-                  onClick={() => setGraficoAberto(v => !v)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '6px 12px', borderRadius: '8px',
-                    background: graficoAberto ? 'rgba(16,185,129,0.15)' : '#1e293b',
-                    color: graficoAberto ? '#10b981' : '#94a3b8',
-                    border: `1px solid ${graficoAberto ? 'rgba(16,185,129,0.3)' : '#334155'}`,
-                    cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {graficoAberto ? '▲ Ocultar' : '▼ Ver gráfico'}
-                </button>
-              )}
-
               {/* Controles — sempre visíveis no desktop, só quando aberto no mobile */}
               {(!isMobile || graficoAberto) && (
                 <>
@@ -177,6 +173,25 @@ export default function PaginaOperacoes() {
                     ))}
                   </select>
                 </>
+              )}
+
+              {/* Seta simples no lado direito para abrir/fechar o gráfico */}
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setGraficoAberto(v => !v)}
+                  title={graficoAberto ? 'Ocultar gráfico' : 'Mostrar gráfico'}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'transparent', border: '1px solid #334155',
+                    borderRadius: '8px', color: '#94a3b8', cursor: 'pointer',
+                    padding: '6px', transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+                >
+                  {graficoAberto ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                </button>
               )}
             </div>
           </div>
@@ -230,9 +245,10 @@ export default function PaginaOperacoes() {
                   color: '#fff', border: 'none', cursor: 'pointer',
                   fontSize: '13px', fontWeight: 600,
                   boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <FiPlus size={15} /> Nova
+                <FiPlus size={15} /> Nova Operação
               </button>
             </div>
             </div>
@@ -276,7 +292,7 @@ export default function PaginaOperacoes() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {operacoesComTotal.map((op, i) => {
+                {operacoesPagina.map((op, i) => {
                   const isCompra = op.operacao?.toUpperCase() === 'COMPRA';
                   return (
                     <div key={op.id ?? i} style={{
@@ -328,6 +344,13 @@ export default function PaginaOperacoes() {
                     </div>
                   );
                 })}
+
+                <PaginacaoMobile
+                  paginaAtual={paginaMobile}
+                  totalPaginas={totalPaginasMobile}
+                  onAnterior={() => setPaginaMobile(p => Math.max(1, p - 1))}
+                  onProxima={() => setPaginaMobile(p => Math.min(totalPaginasMobile, p + 1))}
+                />
               </div>
             )}
           </div>

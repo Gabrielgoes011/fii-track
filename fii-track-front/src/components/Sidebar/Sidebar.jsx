@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   FaHome, FaCog, FaBars, FaTimes,
   FaWallet, FaChartLine, FaTags, FaExchangeAlt,
-  FaFileAlt, FaFolder, FaChevronDown, FaChevronUp,
-  FaChartPie,
+  FaFileAlt, FaFolder, FaChevronDown, FaChevronUp, FaChevronRight,
+  FaChartPie, FaKey, FaSignOutAlt,
 } from 'react-icons/fa';
 import { FiTrendingUp } from 'react-icons/fi';
 
@@ -18,15 +18,7 @@ function getInitials(nome = '') {
     .join('') || 'U';
 }
 
-// Saudação conforme o horário atual
-function getSaudacao() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Bom dia';
-  if (h < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
-
-function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
+function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, onTrocarSenha, user }) {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [administracaoOpen, setAdministracaoOpen] = useState(false);
   const location = useLocation();
@@ -106,7 +98,14 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
           padding: '20px 20px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={() => handleNavigate('/')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
               background: 'linear-gradient(135deg, #10b981, #059669)',
@@ -119,7 +118,7 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
             <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.3px' }}>
               FII<span style={{ color: '#10b981' }}>Track</span>
             </span>
-          </div>
+          </button>
 
           {/* Botão fechar */}
           <button
@@ -139,14 +138,22 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
           </button>
         </div>
 
-        {/* ── Card de perfil do usuário ── */}
+        {/* ── Card de perfil do usuário (clicável → leva para o perfil) ── */}
         <div style={{ padding: '16px 16px 20px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '12px',
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.10), rgba(16,185,129,0.02))',
-            border: '1px solid rgba(16,185,129,0.18)',
-            padding: '12px', borderRadius: '14px',
-          }}>
+          <button
+            type="button"
+            onClick={() => handleNavigate('/perfil')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.10), rgba(16,185,129,0.02))',
+              border: '1px solid rgba(16,185,129,0.18)',
+              padding: '12px', borderRadius: '14px',
+              width: '100%', textAlign: 'left', cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.18)'; }}
+          >
             {/* Avatar com iniciais */}
             <div style={{
               width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
@@ -157,19 +164,21 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
             }}>
               {getInitials(user?.nome)}
             </div>
-            {/* Saudação + nome */}
+            {/* Nome + atalho "Editar perfil" */}
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
-                {getSaudacao()},
-              </div>
               <div style={{
                 fontSize: '14px', color: '#f8fafc', fontWeight: 700, lineHeight: 1.3,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {user?.nome || 'Usuário'}
               </div>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, lineHeight: 1.2, marginTop: '2px' }}>
+                Editar perfil
+              </div>
             </div>
-          </div>
+            {/* Chevron indicando que o card é clicável */}
+            <FaChevronRight size={13} color="#64748b" style={{ flexShrink: 0 }} />
+          </button>
         </div>
 
         {/* ── Divisória ── */}
@@ -329,6 +338,53 @@ function Sidebar({ isOpen, isMobile, onToggle, onClose, onLogout, user }) {
             )}
           </div>
         )}
+
+        {/* ── Conta: Trocar Senha + Sair ── */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '4px',
+          padding: '8px 12px',
+          borderTop: '1px solid #1e293b', marginTop: '8px',
+        }}>
+          {onTrocarSenha && (
+            <button
+              type="button"
+              onClick={() => { if (isMobile) onClose(); onTrocarSenha(); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 12px',
+                background: 'transparent', color: '#64748b',
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: 400,
+                transition: 'all 0.2s ease', width: '100%', textAlign: 'left',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#94a3b8'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
+            >
+              <FaKey size={16} />
+              <span>Trocar Senha</span>
+            </button>
+          )}
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={() => { if (isMobile) onClose(); onLogout(); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 12px',
+                background: 'transparent', color: '#f87171',
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: 400,
+                transition: 'all 0.2s ease', width: '100%', textAlign: 'left',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <FaSignOutAlt size={16} />
+              <span>Sair</span>
+            </button>
+          )}
+        </div>
 
         {/* ── Rodapé ── */}
         <div style={{

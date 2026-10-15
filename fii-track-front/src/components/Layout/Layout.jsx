@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
+import BottomNav, { BOTTOM_NAV_HEIGHT } from '../BottomNav/BottomNav';
 import ModalTrocarSenha from '../ModalTrocarSenha/ModalTrocarSenha';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { MOBILE_BP } from '../../hooks/useIsMobile';
@@ -54,6 +55,7 @@ function Layout({ children, onLogout, user }) {
         onToggle={toggleSidebar}
         onClose={closeSidebar}
         onLogout={onLogout}
+        onTrocarSenha={abrirTrocarSenha}
         user={user}
       />
 
@@ -62,6 +64,8 @@ function Layout({ children, onLogout, user }) {
         isMobile={isMobile}
         user={user}
         onToggleSidebar={toggleSidebar}
+        onOpenDrawer={() => setSidebarOpen(true)}
+        onLogoClick={() => navigate('/')}
         onLogout={onLogout}
         onMeuPerfil={() => navigate('/perfil')}
         onTrocarSenha={abrirTrocarSenha}
@@ -88,13 +92,21 @@ function Layout({ children, onLogout, user }) {
         paddingTop: '60px',
       }}>
         <div style={{
+          // no mobile reserva espaço extra embaixo para a barra de navegação
+          // (altura da barra + safe area do aparelho) e não cobrir o conteúdo
           padding: isMobile ? '16px 12px' : '24px',
+          paddingBottom: isMobile
+            ? `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom) + 16px)`
+            : '24px',
           maxWidth: '1400px',
           margin: '0 auto',
         }}>
           {children}
         </div>
       </div>
+
+      {/* Barra de navegação inferior — só no mobile (padrão app da B3/HUB3) */}
+      {isMobile && <BottomNav />}
 
     </div>
   );

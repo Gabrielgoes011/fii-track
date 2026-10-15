@@ -13,7 +13,7 @@ function getInitials(nome = '') {
     .join('') || 'U';
 }
 
-function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar }) {
+function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = null, onLogout, onTrocarSenha, onMeuPerfil, onToggleSidebar, onOpenDrawer, onLogoClick }) {
   const nome = user?.nome || 'Usuário';
   const email = user?.email || '';
   const iniciais = useMemo(() => getInitials(user?.nome), [user?.nome]);
@@ -62,8 +62,9 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
 
       {/* Lado esquerdo — hamburguer no mobile, logo no mobile */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Botão hamburguer — aparece sempre que sidebar está fechada */}
-        {(!sidebarOpen || isMobile) && (
+        {/* Botão hamburguer — só no desktop com a sidebar fechada.
+            No mobile, quem abre o menu lateral (drawer) é o avatar. */}
+        {!isMobile && !sidebarOpen && (
           <button
             onClick={onToggleSidebar}
             style={{
@@ -83,9 +84,16 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
           </button>
         )}
 
-        {/* Logo no mobile (sidebar escondida) */}
+        {/* Logo no mobile (sidebar escondida) — clicável, volta ao Início */}
         {isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={onLogoClick}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
             <div style={{
               width: '28px', height: '28px', borderRadius: '8px',
               background: 'linear-gradient(135deg, #10b981, #059669)',
@@ -96,7 +104,7 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
             <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>
               FII<span style={{ color: '#10b981' }}>Track</span>
             </span>
-          </div>
+          </button>
         )}
       </div>
 
@@ -130,10 +138,16 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
           {valoresOcultos ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
         </button>
 
-        {/* Avatar + dropdown */}
+        {/* Avatar — no mobile abre o drawer lateral; no desktop, o dropdown */}
         <div ref={menuRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => setMenuAberto(v => !v)}
+            onClick={() => {
+              if (isMobile) {
+                if (onOpenDrawer) onOpenDrawer();
+              } else {
+                setMenuAberto(v => !v);
+              }
+            }}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               background: menuAberto ? 'rgba(255,255,255,0.06)' : 'transparent',
@@ -173,15 +187,18 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
               )}
             </div>
 
-            <FaChevronDown
-              size={10}
-              color="#64748b"
-              style={{ transition: 'transform 0.2s', transform: menuAberto ? 'rotate(180deg)' : 'rotate(0deg)' }}
-            />
+            {/* Chevron do dropdown — só desktop (no mobile o avatar abre o drawer) */}
+            {!isMobile && (
+              <FaChevronDown
+                size={10}
+                color="#64748b"
+                style={{ transition: 'transform 0.2s', transform: menuAberto ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              />
+            )}
           </button>
 
-          {/* Dropdown */}
-          {menuAberto && (
+          {/* Dropdown — só desktop (no mobile as mesmas ações ficam no drawer) */}
+          {menuAberto && !isMobile && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 8px)', right: 0,
               background: '#1e293b',

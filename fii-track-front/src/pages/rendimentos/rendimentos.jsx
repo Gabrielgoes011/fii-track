@@ -4,8 +4,9 @@ import { useRendimentos } from '../../hooks/rendimentos/useRendimentos';
 import { toastSuccess, toastInfo, toastError } from '../../utils/responseUtils';
 import { DataCard } from '../../components/DataCard';
 import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmacao';
+import PaginacaoMobile from '../../components/PaginacaoMobile/PaginacaoMobile';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign, FiDownload, FiFileText, FiCheckCircle } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign, FiFileText, FiCheckCircle, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -1050,6 +1051,8 @@ export default function PaginaRendimentos() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modalImportAberto, setModalImportAberto] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState(isMobile ? 'historico' : 'graficos');
+  const [kpisAbertos, setKpisAbertos] = useState(true); // bloco de KPIs colapsável (aberto por padrão)
+  const [paginaMobile, setPaginaMobile] = useState(1); // paginação da lista de cards no mobile
 
   const [modalExclusao, setModalExclusao] = useState(false);
   const [rendimentoParaExcluir, setRendimentoParaExcluir] = useState(null);
@@ -1085,6 +1088,20 @@ export default function PaginaRendimentos() {
   // ─── Dados derivados ────────────────────────────────────────────────────────
   const ativos = useMemo(() => ['Todos', ...new Set(rendimentos.map(d => d.ticker))], [rendimentos]);
   const filtrados = useMemo(() => rendimentos.filter(d => filtroAtivo === 'Todos' || d.ticker === filtroAtivo), [rendimentos, filtroAtivo]);
+
+  // ─── Paginação da lista de cards (mobile) ───────────────────────────────────
+  const ITENS_POR_PAGINA_MOBILE = 5;
+  const totalPaginasMobile = Math.max(1, Math.ceil(filtrados.length / ITENS_POR_PAGINA_MOBILE));
+  // Volta para a 1ª página quando os filtros mudam ou a lista encolhe.
+  useEffect(() => { setPaginaMobile(1); }, [filtroAtivo, filtroMes, filtroAno]);
+  // Garante que a página atual nunca ultrapasse o total disponível.
+  useEffect(() => {
+    setPaginaMobile(p => Math.min(p, totalPaginasMobile));
+  }, [totalPaginasMobile]);
+  const filtradosPagina = useMemo(() => {
+    const inicio = (paginaMobile - 1) * ITENS_POR_PAGINA_MOBILE;
+    return filtrados.slice(inicio, inicio + ITENS_POR_PAGINA_MOBILE);
+  }, [filtrados, paginaMobile]);
 
   // Dados dos cards vindos do backend
   const cards = {
@@ -1381,8 +1398,31 @@ export default function PaginaRendimentos() {
             </div>
           </header>
 
-          {/* ── KPIs ── */}
+          {/* ── KPIs (colapsável — aberto por padrão) ── */}
           <div style={cardBase}>
+            {/* Cabeçalho com setinha para fechar/abrir os 4 cards de uma vez */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: kpisAbertos ? '12px' : '0' }}>
+              <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                Indicadores
+              </h2>
+              <button
+                type="button"
+                onClick={() => setKpisAbertos(v => !v)}
+                title={kpisAbertos ? 'Ocultar indicadores' : 'Mostrar indicadores'}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent', border: '1px solid #334155',
+                  borderRadius: '8px', color: '#94a3b8', cursor: 'pointer',
+                  padding: '6px', transition: 'all 0.2s',
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+              >
+                {kpisAbertos ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+              </button>
+            </div>
+
+            {kpisAbertos && (
             <div style={gridKpis}>
 
               {/* Card 1 — Total Recebido */}
@@ -1469,6 +1509,7 @@ export default function PaginaRendimentos() {
               </div>
 
             </div>
+            )}
           </div>
 
           {/* ── Abas ── */}
@@ -1506,11 +1547,12 @@ export default function PaginaRendimentos() {
                 <div style={{ ...S.mobileHeader, justifyContent: 'flex-end', gap: '8px' }}>
                   <button
                     onClick={() => setModalImportAberto(true)}
-                    style={{ ...S.btnNovoMobile, background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
+                    title="Importar Excel B3"
+                    style={{ ...S.btnNovoMobile, flex: '0 0 auto', padding: '10px 12px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
                     onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.45)'; }}
                     onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)'; }}
                   >
-                    <FiUpload size={15} /> Importar
+                    <FiUpload size={15} />
                   </button>
                   <button
                     onClick={() => setModalAberto(true)}
@@ -1561,7 +1603,7 @@ export default function PaginaRendimentos() {
                   </div>
                 ) : (
                   <div style={S.listaCardsMobile}>
-                    {filtrados.map((r, i) => (
+                    {filtradosPagina.map((r, i) => (
                       <div key={r.id ?? i} style={S.cardRendimento}>
                         <div style={S.cardLinha1}>
                           <div style={S.cardLinha1Esq}>
@@ -1605,6 +1647,13 @@ export default function PaginaRendimentos() {
                         </div>
                       </div>
                     ))}
+
+                    <PaginacaoMobile
+                      paginaAtual={paginaMobile}
+                      totalPaginas={totalPaginasMobile}
+                      onAnterior={() => setPaginaMobile(p => Math.max(1, p - 1))}
+                      onProxima={() => setPaginaMobile(p => Math.min(totalPaginasMobile, p + 1))}
+                    />
                   </div>
                 )}
               </div>
@@ -1870,7 +1919,7 @@ export default function PaginaRendimentos() {
                     Importar Rendimentos
                   </h2>
                   <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
-                    Escolha o formato do arquivo
+                    Importe o Excel de proventos da B3
                   </p>
                 </div>
                 <button
@@ -1884,32 +1933,7 @@ export default function PaginaRendimentos() {
               {/* Opções */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-                {/* Opção 1 — Padrão FIITrack */}
-                <button
-                  onClick={() => { fecharImportacao(); toastInfo('Em breve: importação pelo modelo FIITrack.'); }}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: '14px',
-                    padding: '1rem 1.25rem', borderRadius: '12px', cursor: 'pointer',
-                    background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)',
-                    textAlign: 'left', transition: 'all 0.2s',
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.14)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.07)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)'; }}
-                >
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <FiDownload size={18} color="#10b981" />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                      Modelo FIITrack
-                    </p>
-                    <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
-                      Baixe e preencha nossa planilha padrão. Importação simples e sem erros.
-                    </p>
-                  </div>
-                </button>
-
-                {/* Opção 2 — Excel B3 (Rendimentos) */}
+                {/* Excel B3 (Rendimentos) — única opção de importação */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   style={{
