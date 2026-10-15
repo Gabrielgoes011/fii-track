@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiTrash2, FiCheck, FiX, FiBriefcase, FiSearch } from 'react-icons/fi';
+import { FiLayers, FiRefreshCw, FiEdit2, FiPlus, FiChevronDown, FiChevronUp, FiTrash2, FiCheck, FiX, FiBriefcase, FiSearch } from 'react-icons/fi';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import SkeletonTable from '../../components/SkeletonTable/SkeletonTable';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -792,13 +792,13 @@ function BarraFiltros({
 
 // ─── Definição das abas ────────────────────────────────────────────────────────
 const ABAS = [
-  { id: 'carteira', label: 'Carteira de FIIs' },
-  { id: 'historico', label: 'Histórico da Carteira' },
-  { id: 'oportunidades', label: 'Movimento do Dia' },
+  { id: 'carteira', label: 'Carteira de FIIs', labelMobile: 'Carteira' },
+  { id: 'historico', label: 'Histórico da Carteira', labelMobile: 'Histórico' },
+  { id: 'oportunidades', label: 'Movimento do Dia', labelMobile: 'Movimento' },
 ];
 
 // ─── Navegação por abas (acessível: roles ARIA + navegação por teclado) ────────
-function TabsNav({ abaAtiva, onSelecionar }) {
+function TabsNav({ abaAtiva, onSelecionar, isMobile }) {
   const handleKeyDown = (e) => {
     const idx = ABAS.findIndex((a) => a.id === abaAtiva);
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
@@ -831,7 +831,7 @@ function TabsNav({ abaAtiva, onSelecionar }) {
         scrollbarWidth: 'none', // Firefox: esconde a barra
       }}
     >
-      {ABAS.map(({ id, label }) => {
+      {ABAS.map(({ id, label, labelMobile }) => {
         const ativa = abaAtiva === id;
         return (
           <button
@@ -853,7 +853,7 @@ function TabsNav({ abaAtiva, onSelecionar }) {
               flexShrink: 0, // não encolhe: garante que o scroll horizontal funcione
             }}
           >
-            {label}
+            {isMobile ? labelMobile : label}
           </button>
         );
       })}
@@ -1284,6 +1284,91 @@ function HistoricoCarteiraPanel({ historico, ativos }) {
   );
 }
 
+function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loading }) {
+  const tickersDesatualizados = resumo?.tickersDesatualizados || [];
+  const qtdCotacoesDesatualizadas = resumo?.qtdCotacoesDesatualizadas ?? tickersDesatualizados.length;
+  const cotacoesDesatualizadas = Boolean(resumo?.cotacoesDesatualizadas);
+  const [mostrarTickers, setMostrarTickers] = useState(false);
+  const corStatus = cotacoesDesatualizadas ? '#fbbf24' : '#475569';
+  const quantidadeLabel = `${qtdCotacoesDesatualizadas} ativo${qtdCotacoesDesatualizadas === 1 ? '' : 's'} sem preço novo`;
+  const textoData = resumo?.dataAtualizacaoCotacoes
+    ? `Cotações de ${resumo.dataAtualizacaoCotacoes}`
+    : 'Cotações ainda não carregadas';
+
+  const botaoAtualizar = (
+    <button onClick={onAtualizar} disabled={loadingCotacoes || loading} style={{
+      display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
+      padding: '6px 12px', background: 'rgba(139,92,246,0.1)',
+      border: '1px solid rgba(139,92,246,0.25)', borderRadius: '8px',
+      color: '#a78bfa', fontSize: '11px', fontWeight: 600,
+      cursor: loadingCotacoes || loading ? 'not-allowed' : 'pointer',
+      opacity: loadingCotacoes || loading ? 0.6 : 1,
+    }}>
+      <FiRefreshCw size={12} style={{ animation: loadingCotacoes ? 'spin 1s linear infinite' : 'none' }} />
+      {loadingCotacoes ? 'Atualizando...' : isMobile ? 'Atualizar' : 'Atualizar Cotações'}
+    </button>
+  );
+
+  if (isMobile) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1rem',
+        padding: '9px 10px', background: 'rgba(15,23,42,0.7)',
+        border: '1px solid #1e293b', borderRadius: '10px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <AiOutlineInfoCircle size={12} color={corStatus} />
+              <span style={{ fontSize: '11px', color: corStatus, whiteSpace: 'nowrap' }}>{textoData}</span>
+            </div>
+            <div style={{ marginTop: '3px', paddingLeft: '17px', fontSize: '11px', color: corStatus }}>
+              {quantidadeLabel}
+            </div>
+          </div>
+          {botaoAtualizar}
+        </div>
+        {tickersDesatualizados.length > 0 && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setMostrarTickers((v) => !v)}
+              aria-expanded={mostrarTickers}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '4px', padding: 0,
+                background: 'transparent', border: 'none', color: '#94a3b8',
+                fontSize: '11px', cursor: 'pointer',
+              }}
+            >
+              {mostrarTickers ? <FiChevronUp size={12} /> : <FiChevronDown size={12} />}
+              {mostrarTickers ? 'Ocultar tickers' : 'Ver tickers sem preço novo'}
+            </button>
+            {mostrarTickers && (
+              <p style={{ margin: '5px 0 0 17px', fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+                {tickersDesatualizados.join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <AiOutlineInfoCircle size={12} color={corStatus} />
+        <span style={{ fontSize: '11px', color: corStatus }}>
+          {textoData}{cotacoesDesatualizadas
+            ? ` · ${qtdCotacoesDesatualizadas ?? ''} sem preço novo (${tickersDesatualizados.join(', ')}) · clique em Atualizar`
+            : ''}
+        </span>
+      </div>
+      {botaoAtualizar}
+    </div>
+  );
+}
+
 // ─── Componente Principal ─────────────────────────────────────────────────────
 export default function PaginaControleAtivos() {
   const isMobile = useIsMobile();
@@ -1295,6 +1380,7 @@ export default function PaginaControleAtivos() {
 
   // Aba ativa: inicia em "Carteira de FIIs" (Req 5.2)
   const [abaAtiva, setAbaAtiva] = useState('carteira');
+  const [kpisAbertos, setKpisAbertos] = useState(true);
 
   // Dados da aba "Histórico da Carteira" (Req 5.3, 5.4, 5.6)
   const {
@@ -1484,28 +1570,43 @@ export default function PaginaControleAtivos() {
       <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0.75rem' : '1rem 0.5rem', overflowX: 'hidden' }}>
 
         {/* ── Header ── */}
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}>
-              <FiLayers size={20} color="#fff" />
+        <header style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: '1.25rem', gap: isMobile ? '8px' : '1rem',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px', minWidth: 0 }}>
+            <div style={{
+              width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px',
+              borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+            }}>
+              <FiLayers size={isMobile ? 16 : 20} color="#fff" />
             </div>
-            <div>
-              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Carteira de FIIs</h1>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Gestão de ativos e rebalanceamento inteligente</p>
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{
+                fontSize: isMobile ? '1rem' : '1.5rem', fontWeight: 800,
+                color: '#f8fafc', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>Carteira de FIIs</h1>
+              <p style={{ display: isMobile ? 'none' : 'block', fontSize: '12px', color: '#64748b', margin: 0 }}>
+                Gestão de ativos e rebalanceamento inteligente
+              </p>
             </div>
           </div>
           <button onClick={handleAbrirFormulario} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '0.55rem 1rem', background: 'linear-gradient(135deg, #1e40af, #1d4ed8)',
+            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+            padding: isMobile ? '0.5rem 0.7rem' : '0.55rem 1rem',
+            background: 'linear-gradient(135deg, #1e40af, #1d4ed8)',
             color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600,
-            fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(30,64,175,0.3)',
+            fontSize: isMobile ? '12px' : '13px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(30,64,175,0.3)',
           }}>
-            <FiPlus size={14} /> Adicionar Ativo
+            <FiPlus size={14} /> {isMobile ? 'Novo Ativo' : 'Adicionar Ativo'}
           </button>
         </header>
 
         {/* ── Abas ── */}
-        <TabsNav abaAtiva={abaAtiva} onSelecionar={setAbaAtiva} />
+        <TabsNav abaAtiva={abaAtiva} onSelecionar={setAbaAtiva} isMobile={isMobile} />
 
         {/* ── Aba: Carteira de FIIs (conteúdo original, inalterado) ── */}
         <div
@@ -1516,11 +1617,37 @@ export default function PaginaControleAtivos() {
         >
         {/* ── KPI Cards ── */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '10px', marginBottom: '1.25rem',
-          width: '100%', minWidth: 0, // trava a grade na largura do container (evita vazar no mobile)
+          display: isMobile ? 'flex' : 'none', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: kpisAbertos ? '8px' : '1.25rem',
         }}>
+          <h2 style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Indicadores da carteira
+          </h2>
+          <button
+            type="button"
+            onClick={() => setKpisAbertos((v) => !v)}
+            aria-expanded={kpisAbertos}
+            aria-controls="controle-ativos-kpis"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '28px', height: '28px', padding: 0,
+              background: 'transparent', border: '1px solid #334155', borderRadius: '7px',
+              color: '#94a3b8', cursor: 'pointer',
+            }}
+          >
+            {kpisAbertos ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+          </button>
+        </div>
+        <div
+          id="controle-ativos-kpis"
+          hidden={isMobile && !kpisAbertos}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '10px', marginBottom: '1.25rem',
+            width: '100%', minWidth: 0, // trava a grade na largura do container (evita vazar no mobile)
+          }}
+        >
           <KpiCard icon={FiBriefcase} label="Custo Total Investido" valor={fmt(resumo?.custoTotal)} cor="#60a5fa" loading={loading} isMobile={isMobile} />
           <KpiCard icon={FiLayers} label="Saldo Atual" valor={fmt(resumo?.valorAtualTotal)} cor="#10b981" loading={loading} isMobile={isMobile} />
           <KpiCard
@@ -1543,30 +1670,13 @@ export default function PaginaControleAtivos() {
         </div>
 
         {/* ── Aviso cotações ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <AiOutlineInfoCircle size={12} color={resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569'} />
-            <span style={{ fontSize: '11px', color: resumo?.cotacoesDesatualizadas ? '#fbbf24' : '#475569' }}>
-              {resumo?.dataAtualizacaoCotacoes
-                ? `Cotações de ${resumo.dataAtualizacaoCotacoes}${
-                    resumo.cotacoesDesatualizadas
-                      ? ` · ${resumo.qtdCotacoesDesatualizadas ?? ''} sem preço novo (${(resumo.tickersDesatualizados || []).join(', ')}) · clique em Atualizar`
-                      : ''
-                  }`
-                : 'Cotações ainda não carregadas · clique em Atualizar'}
-            </span>
-          </div>
-          <button onClick={handleAtualizarCotacoes} disabled={loadingCotacoes || loading} style={{
-            display: 'flex', alignItems: 'center', gap: '5px',
-            padding: '6px 12px', background: 'rgba(139,92,246,0.1)',
-            border: '1px solid rgba(139,92,246,0.25)', borderRadius: '8px',
-            color: '#a78bfa', fontSize: '11px', fontWeight: 600, cursor: loadingCotacoes ? 'not-allowed' : 'pointer',
-            opacity: loadingCotacoes ? 0.6 : 1,
-          }}>
-            <FiRefreshCw size={12} style={{ animation: loadingCotacoes ? 'spin 1s linear infinite' : 'none' }} />
-            {loadingCotacoes ? 'Atualizando...' : 'Atualizar Cotações'}
-          </button>
-        </div>
+        <StatusCotacoes
+          resumo={resumo}
+          isMobile={isMobile}
+          onAtualizar={handleAtualizarCotacoes}
+          loadingCotacoes={loadingCotacoes}
+          loading={loading}
+        />
 
         {/* ── Busca + Filtros ── */}
         {!loading && ativos.length > 0 && (
