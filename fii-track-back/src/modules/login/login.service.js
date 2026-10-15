@@ -60,6 +60,17 @@ async function autenticarUsuario(email, password) {
         throw new Error('Senha não encontrada.');
     }
 
+    // [DIAGNÓSTICO TEMPORÁRIO] Remover depois de identificar a causa.
+    // Não imprime a senha em claro — só o formato do hash e tamanhos.
+    const hashArmazenado = credenciais.password;
+    console.log('[LOGIN DEBUG]', {
+        emailRecebido: email,
+        tamanhoSenhaRecebida: typeof password === 'string' ? password.length : null,
+        hashPrefixo: typeof hashArmazenado === 'string' ? hashArmazenado.slice(0, 7) : null,
+        tamanhoHash: typeof hashArmazenado === 'string' ? hashArmazenado.length : null,
+        pareceBcrypt: typeof hashArmazenado === 'string' && /^\$2[aby]\$\d{2}\$/.test(hashArmazenado),
+    });
+
     const senhaValida = await bcrypt.compare(password, credenciais.password);
     if (!senhaValida) {
         throw new Error('E-mail ou senha inválidos.');

@@ -8,6 +8,20 @@
 
 const BRAPI_BASE_URL = 'https://brapi.dev/api';
 
+// Controle de concorrência/retry para o plano gratuito da brapi.dev.
+// O plano free aceita 1 ativo por requisição, então uma carteira com N tickers
+// gera N requisições. Dispará-las todas de uma vez (Promise.all) provoca HTTP 429
+// ("limite atingido"). Em vez disso, limitamos quantas rodam ao mesmo tempo e
+// repetimos automaticamente, com espera, quem tomar 429.
+const BRAPI_CONCORRENCIA = 3;        // nº de requisições simultâneas por vez
+const BRAPI_MAX_TENTATIVAS = 4;      // tentativas por ticker antes de desistir
+const BRAPI_BACKOFF_BASE_MS = 400;   // espera inicial do retry (cresce exponencialmente)
+
+// Marcador para distinguir o erro de limite (429) das demais falhas e permitir retry.
+class RateLimitError extends Error { }
+
+const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Faz uma requisição de cotação para uma lista de tickers e devolve um mapa
 // ticker -> dados de cotação. Lança erro com mensagem amigável em caso de falha.
 async function requisitarCotacoes(tickers, token) {
@@ -28,7 +42,7 @@ async function requisitarCotacoes(tickers, token) {
       throw new Error('O plano atual da brapi.dev não permite esta consulta.');
     }
     if (resposta.status === 429) {
-      throw new Error('Limite de requisições da brapi.dev atingido. Tente novamente mais tarde.');
+      throw new RateLimitError('Limite de requisições da brapi.dev atingido. Tente novamente mais tarde.');
     }
     throw new Error(`Falha ao buscar cotações na brapi.dev (HTTP ${resposta.status}).`);
   }
@@ -38,7 +52,12 @@ async function requisitarCotacoes(tickers, token) {
   // A brapi pode responder HTTP 200 com { error: true, message } — por exemplo
   // quando o plano gratuito recebe mais de 1 ticker por requisição.
   if (json?.error) {
-    throw new Error(json.message || 'A brapi.dev recusou a requisição de cotações.');
+    const mensagem = json.message || 'A brapi.dev recusou a requisição de cotações.';
+    // Alguns limites vêm como HTTP 200 + { error: true, message: '...limite...' }.
+    if (/limite|rate limit|too many/i.test(mensagem)) {
+      throw new RateLimitError(mensagem);
+    }
+    throw new Error(mensagem);
   }
 
   const resultados = Array.isArray(json?.results) ? json.results : [];
@@ -61,11 +80,34 @@ async function requisitarCotacoes(tickers, token) {
   return mapa;
 }
 
+// Busca a cotação de 1 ticker com retry automático em caso de HTTP 429.
+// Entre tentativas espera um backoff exponencial (400ms, 800ms, 1600ms...),
+// dando tempo para o limite de rajada da brapi liberar.
+async function requisitarComRetry(ticker, token) {
+  let ultimoErro;
+  for (let tentativa = 1; tentativa <= BRAPI_MAX_TENTATIVAS; tentativa++) {
+    try {
+      return await requisitarCotacoes([ticker], token);
+    } catch (erro) {
+      ultimoErro = erro;
+      // Só vale a pena repetir no caso de limite de requisições (429).
+      // Token inválido, plano insuficiente etc. não melhoram com retry.
+      if (!(erro instanceof RateLimitError) || tentativa === BRAPI_MAX_TENTATIVAS) {
+        throw erro;
+      }
+      await dormir(BRAPI_BACKOFF_BASE_MS * 2 ** (tentativa - 1));
+    }
+  }
+  throw ultimoErro;
+}
+
 // Busca a cotação de vários tickers.
 //
 // O plano gratuito da brapi.dev permite apenas 1 ativo por requisição, então
-// disparamos uma requisição por ticker em paralelo. Um ticker que falha não
-// derruba os demais — ele apenas fica sem cotação (a tela cai no preço médio).
+// cada ticker vira uma requisição. Em vez de dispará-las todas de uma vez (o que
+// provoca HTTP 429), processamos em lotes de BRAPI_CONCORRENCIA por vez, com
+// retry automático por ticker. Um ticker que falha de vez não derruba os demais —
+// ele apenas fica sem cotação (a tela cai no preço médio).
 async function buscarCotacoes(tickers) {
   const lista = [
     ...new Set(
@@ -85,22 +127,30 @@ async function buscarCotacoes(tickers) {
   }
 
   const mapa = {};
-  const resultados = await Promise.allSettled(
-    lista.map((ticker) => requisitarCotacoes([ticker], token)),
-  );
+  const falhas = [];
 
-  resultados.forEach((resultado, indice) => {
-    if (resultado.status === 'fulfilled') {
-      Object.assign(mapa, resultado.value);
-    } else {
-      console.error(`Cotação indisponível para ${lista[indice]}:`, resultado.reason?.message);
-    }
-  });
+  // Pool simples: fatia a lista em lotes de tamanho BRAPI_CONCORRENCIA e
+  // aguarda cada lote antes de disparar o próximo. Limita as requisições
+  // simultâneas sem precisar de biblioteca externa.
+  for (let i = 0; i < lista.length; i += BRAPI_CONCORRENCIA) {
+    const lote = lista.slice(i, i + BRAPI_CONCORRENCIA);
+    const resultados = await Promise.allSettled(
+      lote.map((ticker) => requisitarComRetry(ticker, token)),
+    );
+
+    resultados.forEach((resultado, indice) => {
+      if (resultado.status === 'fulfilled') {
+        Object.assign(mapa, resultado.value);
+      } else {
+        falhas.push(resultado.reason);
+        console.error(`Cotação indisponível para ${lote[indice]}:`, resultado.reason?.message);
+      }
+    });
+  }
 
   // Só propaga erro se NENHUM ticker retornou — provável token/limite inválido.
   if (Object.keys(mapa).length === 0) {
-    const primeiraFalha = resultados.find((r) => r.status === 'rejected');
-    throw new Error(primeiraFalha?.reason?.message || 'Não foi possível obter as cotações.');
+    throw new Error(falhas[0]?.message || 'Não foi possível obter as cotações.');
   }
 
   return mapa;

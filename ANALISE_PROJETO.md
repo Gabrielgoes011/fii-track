@@ -1,8 +1,12 @@
 # FIITrack — Análise do Projeto, Backlog e Débitos Técnicos
 
-> Última atualização: **13/08/2026**
+> Última atualização: **15/10/2026**
 >
 > Documentação de desenvolvimento: [`fii-track-front/PADROES.md`](fii-track-front/PADROES.md) | [`fii-track-back/GUIA_DESENVOLVIMENTO.md`](fii-track-back/GUIA_DESENVOLVIMENTO.md)
+>
+> **Nota desta revisão:** Seguimentos e Controle de Ativos estavam marcados como pendentes
+> em versões anteriores deste documento, mas ambos já estão concluídos no código. Esta
+> revisão corrige esses pontos para que o backlog reflita o estado real do projeto.
 
 ---
 
@@ -38,20 +42,20 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 | Rendimentos | ✅ | ✅ | ✅ | ✅ Completo (CRUD + KPIs `/cardsRendimentos`) |
 | Operações (CRUD + Gráfico) | ✅ | ✅ | ✅ | ✅ Completo — falta apenas o endpoint de cards (seção 6) |
 | Usuários | ✅ | ✅ | ✅ | ✅ Completo — `atualizarUser`/`deleteUser` migrados, `resetarSenha` novo, bug de tabela corrigido |
-| **Seguimentos** | ❌ direto no DB | ❌ não existe | ❌ não existe | ❌ Não migrado (`updateSeguimento` ganhou o filtro por `idUser` que faltava, mas continua sem service/repository) |
+| Seguimentos | ✅ | ✅ | ✅ | ✅ Completo — migrado para `seguimentos.controller.js` → `seguimentos.service.js` → `seguimentos.repositories.js` |
+| Controle de Ativos | ✅ | ✅ | ✅ | ✅ Completo — `controleAtivos.controller/service/repository.js` + `brapi.service.js` (cotações com cache) |
 
-### Seguimentos — o que migrar
+### Seguimentos — migração concluída ✅
 
-`seguimentos.controller.js` ainda usa `openDb()` direto. Não há `seguimentos.services.js` nem `seguimentos.repositories.js`.
+O `seguimentos.controller.js` não acessa mais o banco diretamente: valida a entrada e delega aos services. A regra de negócio (duplicata, bloqueio de segmento padrão do sistema, checagem de ativos vinculados) vive em `seguimentos.service.js`, e todo o SQL está isolado em `seguimentos.repositories.js` (todas as queries filtram por `idUser`).
 
-| Função atual | Para service | Para repository |
+| Função | Service | Repository |
 |---|---|---|
-| Validação de campo / duplicata | `seguimentos.services.js` | — |
-| `listarSeguimentos` | `listarSeguimentos()` | `findSeguimentos()` |
-| `contarSeguimentos` | `contarSeguimentos()` | `countSeguimentos()` |
-| `cadastrarSeguimento` | `cadastrarSeguimento()` | `insertSeguimento()` |
-| `deleteSeguimento` | `excluirSeguimento()` | `deleteSeguimento()` |
-| `updateSeguimento` | `atualizarSeguimento()` | `updateSeguimento()` |
+| Listar | `listarSeguimentosService` | `findSeguimentosRepo` |
+| Contar | `contarSeguimentosService` | `countSeguimentosRepo` |
+| Cadastrar | `cadastrarSeguimentoService` | `insertSeguimentoRepo` / `findSeguimentoByNomeRepo` |
+| Atualizar | `atualizarSeguimentoService` | `updateSeguimentoRepo` / `findSeguimentoByIdRepo` |
+| Excluir | `excluirSeguimentoService` | `deleteSeguimentoRepo` / `countAtivosVinculadosRepo` |
 
 ### Usuários — migração concluída ✅
 
@@ -72,7 +76,7 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 | ~~Seguimentos~~ | ~~Editar seguimento~~ | ✅ Feito — `handleUpdateSeguimento`/`handleEdit` chamam a API real |
 | ~~Usuários~~ | ~~Editar usuário~~ | ✅ Feito — `handleUpdateUser`/`handleEdit` chamam a API real, pré-preenchendo o formulário (inclusive `dataNascimento`, agora retornada pelo `GET /users`) |
 | ~~Usuários~~ | ~~Resetar senha~~ | ✅ Feito — `handleResetPassword` chama `PUT /users/reset-password/:id` |
-| Controle de Ativos | Integração com backend | Tela 100% construída (KPIs, tabela de 16 colunas, inputs editáveis, badges) mas rodando inteiramente sobre `MOCK_DATA` em `useControleAtivos.js` — não existe backend ainda (ver seção 7) |
+| ~~Controle de Ativos~~ | ~~Integração com backend~~ | ✅ Feito — backend completo (`controlAtivos` com 4 camadas + `brapi.service.js`) e o frontend consome os endpoints reais (ver seção 7) |
 
 ---
 
@@ -80,15 +84,15 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 
 ### Alta Prioridade
 
-- [ ] **Cards de Operações** — `totalAportado`, `totalVendido` e `capitalLiquido` na tela de Operações (spec na seção 6)
+- [ ] **Cards de Operações** — `totalAportado`, `totalVendido` e `capitalLiquido` na tela de Operações (spec na seção 6). **Pendente de verdade** — não há `cardsOperacoes` no backend ainda.
 - [x] ~~**Corrigir `atualizarUser`**~~ — migrado para `usuarios.services.js`/`usuarios.repositories.js`, apontando para `usuarios`
-- [ ] **Backend de Controle de Ativos** — o frontend já está pronto e aguardando os endpoints reais (spec completa em [`SPEC_CONTROLE_ATIVOS.md`](fii-track-front/src/pages/controleAtivos/SPEC_CONTROLE_ATIVOS.md))
+- [x] ~~**Backend de Controle de Ativos**~~ — concluído: `controlAtivos` com `controller/service/repository` + `brapi.service.js` (cotações com cache de 15 min); o frontend já consome os endpoints reais
 - [x] ~~**Middleware `verificaAdmin`**~~ — criado usando o `adm` boolean que já existe em `credenciaisUsuario` (dispensou a coluna `perfil`)
-- [ ] **Ocultar menu "Usuários" para não-admins** no frontend + guard de rota
+- [ ] **Ocultar menu "Usuários" para não-admins** no frontend + guard de rota — *verificar no `fii-track-front` (possivelmente já implementado); fora deste repositório backend*
 
 ### Média Prioridade
 
-- [ ] **Migrar Seguimentos para 3 camadas** (service + repository) — `updateSeguimento` já ganhou o filtro por `idUser` que faltava
+- [x] ~~**Migrar Seguimentos para 3 camadas**~~ (service + repository) — concluído: `seguimentos.controller/service/repositories.js`, sem acesso direto ao banco no controller
 - [x] ~~**Implementar edição de seguimento**~~ (front + back — back já tinha a query no controller)
 - [x] ~~**Implementar edição de usuário**~~ (front + back — bug de tabela corrigido)
 - [x] ~~**Implementar reset de senha**~~ (front + back)
@@ -97,12 +101,12 @@ O sistema opera em modo **multi-usuário real**. Cada usuário vê apenas seus p
 
 ### Baixa Prioridade / Melhorias
 
-- [ ] Remover `console.log(id, newValue)` de debug em `onOffUserRepository` (`usuarios.repositories.js`)
+- [x] ~~Remover `console.log(id, newValue)` de debug em `onOffUserRepository`~~ (`usuarios.repositories.js`) — já removido; a função está limpa
 - [ ] Paginação nas rotas de listagem (`/users`, `/operacoes`, `/rendimentos`)
 - [ ] Upload de extrato em lote (multer + S3 já configurados, mas não conectados a nenhuma rota)
-- [ ] Rota de refresh de token JWT
+- [x] ~~Rota de refresh de token JWT~~ — `POST /auth/refresh` (access 15 min + refresh 8h)
 - [ ] Endpoint de relatório consolidado por período
-- [ ] Integração com API externa (Brapi) para cotação em tempo real — necessária para o backend de Controle de Ativos
+- [x] ~~Integração com API externa (Brapi) para cotação em tempo real~~ — `brapi.service.js` com cache de 15 min; busca em lotes com retry para respeitar o limite do plano gratuito
 - [ ] Testes automatizados
 - [ ] Dockerização
 - [ ] Documentação Swagger / OpenAPI
