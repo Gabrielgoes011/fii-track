@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaWallet, FaChartLine, FaExchangeAlt } from 'react-icons/fa';
 
@@ -20,13 +21,14 @@ function BottomNav() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  return (
+  return createPortal(
     <nav
       style={{
         position: 'fixed',
         left: 0,
         right: 0,
         bottom: 0,
+        width: '100%',
         height: `${BOTTOM_NAV_HEIGHT}px`,
         background: 'rgba(10,15,30,0.98)',
         backdropFilter: 'blur(12px)',
@@ -82,7 +84,8 @@ function BottomNav() {
           </button>
         );
       })}
-    </nav>
+    </nav>,
+    document.body,
   );
 }
 

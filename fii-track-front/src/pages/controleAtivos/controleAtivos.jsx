@@ -1664,9 +1664,8 @@ export default function PaginaControleAtivos() {
         </div>
         <div
           id="controle-ativos-kpis"
-          hidden={isMobile && !kpisAbertos}
           style={{
-            display: 'grid',
+            display: isMobile && !kpisAbertos ? 'none' : 'grid',
             gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '10px', marginBottom: '1.25rem',
             width: '100%', minWidth: 0, // trava a grade na largura do container (evita vazar no mobile)
