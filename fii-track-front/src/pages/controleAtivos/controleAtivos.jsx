@@ -272,7 +272,7 @@ function EmptyState({ onAdd }) {
 }
 
 // ─── Formulário Inline (Adicionar/Editar — fundo laranja) ─────────────────────
-function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos, ativos, segmentoIdInicial, loadingAtivos, onSegmentoChange }) {
+function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos, ativos, segmentoIdInicial, loadingAtivos, onSegmentoChange, isMobile }) {
   const [objetivo, setObjetivo] = useState(inicial?.objetivo ?? 'Renda');
   const [segmentoId, setSegmentoId] = useState(inicial?.segmentoId ?? segmentoIdInicial ?? '');
   const [ticker, setTicker] = useState(inicial?.ticker ?? '');
@@ -308,10 +308,11 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           </span>
         </div>
         {inicial && onExcluir && (
-          <button onClick={() => onExcluir(inicial.idAtivo)} style={{
+          <button onClick={() => onExcluir(inicial.idAtivo)} aria-label="Excluir ativo" title="Excluir ativo" style={{
+            minWidth: isMobile ? '44px' : undefined, minHeight: isMobile ? '44px' : undefined,
             background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-            borderRadius: '7px', padding: '5px 8px', cursor: 'pointer', color: '#f87171',
-            display: 'flex', alignItems: 'center',
+            borderRadius: '7px', padding: isMobile ? '8px' : '5px 8px', cursor: 'pointer', color: '#f87171',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <FiTrash2 size={14} />
           </button>
@@ -319,7 +320,7 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
       </div>
 
       {/* Campos do formulário */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '14px' }}>
         <div>
           <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Objetivo</label>
           <select value={objetivo} onChange={e => setObjetivo(e.target.value)} style={{
@@ -372,8 +373,10 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
       </div>
 
       {/* Botões */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-end', gap: '8px' }}>
         <button onClick={onCancelar} style={{
+          minHeight: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined,
+          justifyContent: 'center',
           display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px',
           background: 'transparent', border: '1px solid #334155', borderRadius: '8px',
           color: '#94a3b8', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
@@ -381,6 +384,8 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           <FiX size={13} /> Cancelar
         </button>
         <button onClick={handleSalvar} style={{
+          minHeight: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined,
+          justifyContent: 'center',
           display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px',
           background: 'linear-gradient(135deg, #f97316, #ea580c)', border: 'none', borderRadius: '8px',
           color: '#fff', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
@@ -414,7 +419,7 @@ function BarraProgresso({ atual, ideal }) {
 }
 
 // ─── Editor de Preço Teto (dentro do painel expandido) ───────────────────────
-function PrecoTetoEditor({ row, onSalvar }) {
+function PrecoTetoEditor({ row, onSalvar, isMobile }) {
   const pvpDisponivel = /papel/i.test(row.segmento || '');
   const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState(row.precoTeto != null ? String(row.precoTeto) : '');
@@ -463,10 +468,10 @@ function PrecoTetoEditor({ row, onSalvar }) {
             Usa P/VP (valor patrimonial da cota)
           </label>
         )}
-        <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-          <button onClick={salvar} style={{ flex: 1, padding: '6px', background: 'linear-gradient(135deg,#f97316,#ea580c)', border: 'none', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
-          <button onClick={limpar} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>Limpar</button>
-          <button onClick={(e) => { stop(e); setEditando(false); }} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>X</button>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '6px', marginTop: '8px' }}>
+          <button onClick={salvar} style={{ flex: 1, minHeight: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px', background: 'linear-gradient(135deg,#f97316,#ea580c)', border: 'none', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
+          <button onClick={limpar} style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>Limpar</button>
+          <button onClick={(e) => { stop(e); setEditando(false); }} aria-label="Fechar editor de preço teto" style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>X</button>
         </div>
       </div>
     );
@@ -483,12 +488,13 @@ function PrecoTetoEditor({ row, onSalvar }) {
         {row.desconto != null ? `Desc: ${fmtPerc(row.desconto)}` : '—'}
       </p>
       <button onClick={abrir} title="Definir preço teto" style={{
-        position: 'absolute', top: '8px', right: '8px', width: '22px', height: '22px', padding: 0,
+        position: 'absolute', top: isMobile ? '6px' : '8px', right: isMobile ? '6px' : '8px',
+        width: isMobile ? '44px' : '22px', height: isMobile ? '44px' : '22px', padding: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
         borderRadius: '6px', color: '#fb923c', cursor: 'pointer',
       }}>
-        <FiEdit2 size={11} />
+        <FiEdit2 size={isMobile ? 14 : 11} />
       </button>
     </div>
   );
@@ -520,42 +526,55 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
           /* ── MOBILE: layout compacto de card ── */
           <>
             {/* Linha 1: Ticker + Badge + Ações */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>{row.ticker}</span>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', flexShrink: 0 }}>{row.ticker}</span>
+                <span style={{ fontSize: '11px', color: '#64748b', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                 <span style={{
                   background: cfg.bg, color: cfg.cor, border: `1px solid ${cfg.borda}`,
                   borderRadius: '9999px', padding: '2px 8px', fontSize: '10px', fontWeight: 600,
+                  maxWidth: 'min(34vw, 120px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {cfg.txt}
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); onEditar(row); }}
                   style={{
-                    width: '26px', height: '26px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '44px', height: '44px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
-                    borderRadius: '6px', color: '#a78bfa', cursor: 'pointer',
+                    borderRadius: '8px', color: '#a78bfa', cursor: 'pointer',
+                  }}
+                  title="Editar metas"
+                >
+                  <FiEdit2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                  aria-label={`${expandido ? 'Recolher' : 'Expandir'} detalhes de ${row.ticker}`}
+                  aria-expanded={expandido}
+                  style={{
+                    width: '44px', height: '44px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer',
                   }}
                 >
-                  <FiEdit2 size={11} />
+                  <FiChevronDown size={18} color="#64748b" style={{
+                    transition: 'transform 0.2s', transform: expandido ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }} />
                 </button>
-                <FiChevronDown size={14} color="#64748b" style={{
-                  transition: 'transform 0.2s', transform: expandido ? 'rotate(180deg)' : 'rotate(0deg)',
-                }} />
               </div>
             </div>
 
             {/* Linha 2: Saldo + Rentabilidade (lado a lado) */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
-              <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', marginBottom: '8px', minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                 <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Saldo</span>
                 <p className="vp" style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
                 <p className="vp" style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>{row.quantidade} cotas</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ minWidth: 0, flex: 1, overflow: 'hidden', textAlign: 'right' }}>
                 <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Rent.</span>
                 <p className="vp" style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
                   {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
@@ -656,7 +675,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
               <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
             </div>
             {/* Preço Teto & Desconto (editável) */}
-            <PrecoTetoEditor row={row} onSalvar={onSalvarPrecoTeto} />
+            <PrecoTetoEditor row={row} onSalvar={onSalvarPrecoTeto} isMobile={isMobile} />
             {/* Proventos Recebidos */}
             <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
               <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Proventos Recebidos</p>
@@ -1724,6 +1743,7 @@ export default function PaginaControleAtivos() {
                 ativos={ativosSegmentoDropdown}
                 segmentoIdInicial={segmentoSelecionadoId}
                 loadingAtivos={loadingAtivosSegmento}
+                isMobile={isMobile}
                 onSegmentoChange={setSegmentoSelecionadoId}
                 onCancelar={() => { setShowFormInline(false); setAtivoEmEdicao(null); setSegmentoSelecionadoId(''); setAtivosSegmentoDropdown([]); }}
                 onSalvar={handleSalvarFormulario}
