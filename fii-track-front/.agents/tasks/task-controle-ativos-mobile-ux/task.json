@@ -1,7 +1,0 @@
-{
-  "task_id": "task-controle-ativos-mobile-ux",
-  "task_description": "Otimizar a experiência mobile da tela Controle de Ativos mantendo desktop, regras, privacidade e ações existentes.",
-  "status": "completed",
-  "feature_order": ["FEAT-001", "FEAT-002"],
-  "blocked_reason": null
-}

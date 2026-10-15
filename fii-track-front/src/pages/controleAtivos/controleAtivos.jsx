@@ -37,32 +37,34 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld, isMobile }) 
   return (
     <div style={{
       background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
-      padding: isMobile ? '0.75rem 0.85rem' : '1rem 1.25rem',
-      display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '14px',
-      minWidth: 0, // permite o card respeitar a largura da coluna do grid (evita corte no mobile)
+      padding: isMobile ? '0.65rem 0.75rem' : '1rem 1.25rem',
+      display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+      alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '6px' : '14px',
+      minWidth: 0, boxSizing: 'border-box', // mantém o KPI contido na coluna mobile
     }}>
       {Icon && (
         <div style={{
-          width: isMobile ? '32px' : '38px', height: isMobile ? '32px' : '38px', borderRadius: '10px',
+          width: isMobile ? '30px' : '38px', height: isMobile ? '30px' : '38px', borderRadius: '10px',
           background: `${cor}15`, border: `1px solid ${cor}30`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <Icon size={isMobile ? 16 : 18} color={cor} />
+          <Icon size={isMobile ? 15 : 18} color={cor} />
         </div>
       )}
-      <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ minWidth: 0, width: isMobile ? '100%' : undefined, flex: isMobile ? undefined : 1 }}>
         <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
         <p className="vp" style={{
           margin: '2px 0 0',
-          // fonte fluida: encolhe conforme a largura disponível, mostrando o valor completo sem cortar
-          fontSize: isMobile ? 'clamp(0.95rem, 4.5vw, 1.15rem)' : '1.15rem',
+          // no mobile, o valor ocupa a largura inteira do card e só quebra se necessário
+          fontSize: isMobile ? 'clamp(0.75rem, 4vw, 1.05rem)' : '1.15rem',
           fontWeight: 700, color: cor ?? '#f8fafc',
           fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.2, whiteSpace: 'nowrap',
+          lineHeight: 1.2, whiteSpace: isMobile ? 'normal' : 'nowrap',
+          overflowWrap: isMobile ? 'anywhere' : undefined,
         }}>
           {ld ? '···' : valor}
         </p>
-        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? '#64748b' }}>{ld ? '' : sub.txt}</p>}
+        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? '#64748b', overflowWrap: isMobile ? 'anywhere' : undefined }}>{ld ? '' : sub.txt}</p>}
       </div>
     </div>
   );
