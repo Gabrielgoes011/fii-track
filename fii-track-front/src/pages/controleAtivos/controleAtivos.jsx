@@ -1294,6 +1294,9 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
   const textoData = resumo?.dataAtualizacaoCotacoes
     ? `Cotações de ${resumo.dataAtualizacaoCotacoes}`
     : 'Cotações ainda não carregadas';
+  const textoDataDesktop = resumo?.dataAtualizacaoCotacoes
+    ? textoData
+    : `${textoData} · clique em Atualizar`;
 
   const botaoAtualizar = (
     <button onClick={onAtualizar} disabled={loadingCotacoes || loading} style={{
@@ -1359,7 +1362,7 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
         <AiOutlineInfoCircle size={12} color={corStatus} />
         <span style={{ fontSize: '11px', color: corStatus }}>
-          {textoData}{cotacoesDesatualizadas
+          {textoDataDesktop}{cotacoesDesatualizadas
             ? ` · ${qtdCotacoesDesatualizadas ?? ''} sem preço novo (${tickersDesatualizados.join(', ')}) · clique em Atualizar`
             : ''}
         </span>
