@@ -189,10 +189,18 @@ async function autenticarUsuarioCom2fa(emailRecebido, password, codigoRecebido) 
     });
 
     if (!valid) {
+        // Diagnóstico SÓ para o log (nunca vai para a tela, não grava segredo nem o código digitado):
+        // procura o código em até 10 períodos de 30s para cada lado.
+        //  - achou com diferença: o segredo está certo, o problema é horário (celular ou servidor) ou o código foi digitado tarde
+        //  - não achou: o segredo do app é OUTRO (entrada antiga no autenticador, 2FA refeito, ou banco diferente)
+        const achado = speakeasy.totp.verifyDelta({ secret, encoding: 'base32', token: codigo, window: 10 });
+        const diagnostico = achado
+            ? `o código vale para outro período (${achado.delta * 30}s de diferença): horário do celular/servidor ou código digitado tarde`
+            : 'o código não bate em nenhum período próximo: o segredo do app é diferente do salvo no banco';
         throw _erroLogin(
             'Código 2FA incorreto ou expirado. Digite o código que aparece agora no app autenticador.',
             401,
-            `código 2FA recusado (código errado ou relógio do servidor/celular fora de hora): ${email}`
+            `código 2FA recusado (${diagnostico}; hora do servidor ${new Date().toISOString()}): ${email}`
         );
     }
 
