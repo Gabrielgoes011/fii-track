@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { encryptText, decryptText } from '../../utils/crypto.js';
+import { horaConfiavelSegundos, estadoDaHoraConfiavel } from '../../utils/horaConfiavel.js';
 import {
     findUserByEmail,
     findUserById,
@@ -186,21 +187,23 @@ async function autenticarUsuarioCom2fa(emailRecebido, password, codigoRecebido) 
         encoding: 'base32',
         token: codigo,
         window: 1,
+        time: horaConfiavelSegundos(), // hora corrigida: o relógio do container pode estar fora de hora
     });
 
     if (!valid) {
         // Diagnóstico SÓ para o log (nunca vai para a tela, não grava segredo nem o código digitado):
-        // procura o código em até 10 períodos de 30s para cada lado.
-        //  - achou com diferença: o segredo está certo, o problema é horário (celular ou servidor) ou o código foi digitado tarde
+        // procura o código em até 60 períodos de 30s (±30 min), já com a hora corrigida do servidor.
+        //  - achou com diferença: o segredo está certo, o problema é horário (celular) ou o código foi digitado tarde
         //  - não achou: o segredo do app é OUTRO (entrada antiga no autenticador, 2FA refeito, ou banco diferente)
-        const achado = speakeasy.totp.verifyDelta({ secret, encoding: 'base32', token: codigo, window: 10 });
+        const achado = speakeasy.totp.verifyDelta({ secret, encoding: 'base32', token: codigo, window: 60, time: horaConfiavelSegundos() });
+        const hora = estadoDaHoraConfiavel();
         const diagnostico = achado
-            ? `o código vale para outro período (${achado.delta * 30}s de diferença): horário do celular/servidor ou código digitado tarde`
-            : 'o código não bate em nenhum período próximo: o segredo do app é diferente do salvo no banco';
+            ? `o código vale para outro período (${achado.delta * 30}s de diferença): horário do celular ou código digitado tarde`
+            : 'o código não bate em nenhum período em ±30 min: o segredo do app é diferente do salvo no banco (entrada antiga no autenticador, 2FA refeito ou banco diferente)';
         throw _erroLogin(
             'Código 2FA incorreto ou expirado. Digite o código que aparece agora no app autenticador.',
             401,
-            `código 2FA recusado (${diagnostico}; hora do servidor ${new Date().toISOString()}): ${email}`
+            `código 2FA recusado (${diagnostico}; hora do servidor ${new Date().toISOString()}, desvio medido do relógio ${hora.medido ? hora.deslocamentoSegundos + ' s' : 'não medido'}): ${email}`
         );
     }
 
@@ -375,6 +378,7 @@ async function confirmar2faService(usuarioId, codigo) {
         encoding: 'base32',
         token: codigo,
         window: 1,
+        time: horaConfiavelSegundos(), // hora corrigida: o relógio do container pode estar fora de hora
     });
 
     if (!valid) {
@@ -426,6 +430,7 @@ async function validarCodigo2faService(usuarioId, codigo) {
         encoding: 'base32',
         token: codigo,
         window: 1,
+        time: horaConfiavelSegundos(), // hora corrigida: o relógio do container pode estar fora de hora
     });
 
     if (!valid) {
