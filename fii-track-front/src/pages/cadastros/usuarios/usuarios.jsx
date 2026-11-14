@@ -59,40 +59,40 @@ function PaginaUsuarios() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'Inter, sans-serif', padding: isMobile ? '1rem 0.75rem' : '2rem 1rem' }}>
+    <div style={{ minHeight: 'var(--altura-util, 100vh)', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto)', fontFamily: 'Inter, sans-serif', padding: isMobile ? '1rem 0.75rem' : '2rem 1rem' }}>
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* Header */}
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 700, marginBottom: '0.25rem', color: '#f8fafc' }}>Usuários</h1>
-            <p style={{ color: '#64748b', margin: 0, fontSize: '13px' }}>Gerencie usuários ativos e inativos</p>
+            <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--texto)' }}>Usuários</h1>
+            <p style={{ color: 'var(--texto-mudo)', margin: 0, fontSize: '13px' }}>Gerencie usuários ativos e inativos</p>
           </div>
-          <button onClick={handleOpenCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.65rem 1.1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.3)', fontSize: '13px' }}>
+          <button onClick={handleOpenCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.65rem 1.1rem', background: 'var(--accent-gradiente)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.3)', fontSize: '13px' }}>
             <FiPlus size={15} /> {isMobile ? 'Novo' : 'Novo Usuário'}
           </button>
         </header>
 
         {/* Cards métricas */}
         <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, minmax(0,1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <div style={{ background: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Ativos</p>
-            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: '#10b981' }}>{dashboard.ativos}</h2>
+          <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--texto-mudo)' }}>Ativos</p>
+            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)' }}>{dashboard.ativos}</h2>
           </div>
-          <div style={{ background: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Inativos</p>
-            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: '#f87171' }}>{dashboard.inativos}</h2>
+          <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--texto-mudo)' }}>Inativos</p>
+            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: 'var(--perigo)' }}>{dashboard.inativos}</h2>
           </div>
-          <div style={{ background: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', gridColumn: isMobile ? '1 / -1' : 'auto' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Total</p>
-            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: '#60a5fa' }}>{dashboard.total}</h2>
+          <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', padding: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', gridColumn: isMobile ? '1 / -1' : 'auto' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--texto-mudo)' }}>Total</p>
+            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: 'var(--info)' }}>{dashboard.total}</h2>
           </div>
         </section>
 
         {/* Abas */}
-        <nav style={{ display: 'flex', backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '1rem' }}>
+        <nav style={{ display: 'flex', backgroundColor: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '1rem' }}>
           {['ativos', 'inativos'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: '0.75rem 1rem', backgroundColor: activeTab === tab ? 'rgba(16,185,129,0.1)' : 'transparent', color: activeTab === tab ? '#10b981' : '#64748b', border: 'none', borderBottom: activeTab === tab ? '3px solid #10b981' : '3px solid transparent', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '14px' }}>
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: '0.75rem 1rem', backgroundColor: activeTab === tab ? 'rgba(16,185,129,0.1)' : 'transparent', color: activeTab === tab ? 'var(--accent)' : 'var(--texto-mudo)', border: 'none', borderBottom: activeTab === tab ? '3px solid var(--accent)' : '3px solid transparent', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '14px' }}>
               {tab === 'ativos' ? 'Ativos' : 'Inativos'}
             </button>
           ))}
@@ -102,34 +102,34 @@ function PaginaUsuarios() {
         {isMobile ? (
           <div>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Carregando...</div>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)' }}>Carregando...</div>
             ) : users.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b' }}>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--borda)' }}>
                 Nenhum usuário encontrado.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {users.map((user, i) => (
-                  <div key={user.id ?? i} style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', padding: '14px 16px', borderLeft: `3px solid ${activeTab === 'ativos' ? '#10b981' : '#f87171'}` }}>
+                  <div key={user.id ?? i} style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px', padding: '14px 16px', borderLeft: `3px solid ${activeTab === 'ativos' ? '#10b981' : '#f87171'}` }}>
                     {/* linha 1: nome + ações */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{user.nome}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--texto)' }}>{user.nome}</span>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         {activeTab === 'ativos' && <>
-                          <button onClick={() => handleEdit(user)} title="Editar" style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#60a5fa', display: 'flex', alignItems: 'center' }}><FiEdit2 size={13} /></button>
-                          <button onClick={() => handleOpenModal(user, 'reset')} title="Resetar senha" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#fbbf24', display: 'flex', alignItems: 'center' }}><FiKey size={13} /></button>
-                          <button onClick={() => handleOpenModal(user, 'inactivate')} title="Inativar" style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}><FiUserX size={13} /></button>
+                          <button onClick={() => handleEdit(user)} title="Editar" style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--info)', display: 'flex', alignItems: 'center' }}><FiEdit2 size={13} /></button>
+                          <button onClick={() => handleOpenModal(user, 'reset')} title="Resetar senha" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--aviso)', display: 'flex', alignItems: 'center' }}><FiKey size={13} /></button>
+                          <button onClick={() => handleOpenModal(user, 'inactivate')} title="Inativar" style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--texto-suave)', display: 'flex', alignItems: 'center' }}><FiUserX size={13} /></button>
                         </>}
                         {activeTab === 'inativos' &&
-                          <button onClick={() => handleOpenModal(user, 'reactivate')} title="Reativar" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#10b981', display: 'flex', alignItems: 'center' }}><FiUserCheck size={13} /></button>
+                          <button onClick={() => handleOpenModal(user, 'reactivate')} title="Reativar" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--accent)', display: 'flex', alignItems: 'center' }}><FiUserCheck size={13} /></button>
                         }
-                        <button onClick={() => handleOpenModal(user, 'delete')} title="Excluir" style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center' }}><FiTrash2 size={13} /></button>
+                        <button onClick={() => handleOpenModal(user, 'delete')} title="Excluir" style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--perigo)', display: 'flex', alignItems: 'center' }}><FiTrash2 size={13} /></button>
                       </div>
                     </div>
                     {/* linha 2: email + cpf */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</span>
-                      <span style={{ fontSize: '12px', color: '#475569' }}>CPF: {user.cpf}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--texto-mudo)' }}>{user.email}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--texto-apagado)' }}>CPF: {user.cpf}</span>
                     </div>
                   </div>
                 ))}
@@ -137,9 +137,9 @@ function PaginaUsuarios() {
             )}
           </div>
         ) : (
-          <section style={{ backgroundColor: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', padding: '1rem' }}>
+          <section style={{ backgroundColor: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', padding: '1rem' }}>
             {loading ? <SkeletonTable rows={5} cols={5} /> : users.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Nenhum usuário encontrado.</div>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)' }}>Nenhum usuário encontrado.</div>
             ) : (
               <GridDados
                 coluna={colunasUsuarios} data={users} itemsPerPage={10}
@@ -151,7 +151,7 @@ function PaginaUsuarios() {
                 usaReativar={activeTab === 'inativos'} acaoReativar={(user) => handleOpenModal(user, 'reactivate')}
               />
             )}
-            <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#475569' }}>
+            <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--texto-apagado)' }}>
               Exibindo usuários {activeTab === 'ativos' ? 'ativos' : 'inativos'}.
             </div>
           </section>

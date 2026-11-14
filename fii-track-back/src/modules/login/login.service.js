@@ -35,45 +35,50 @@ function gerarRefreshToken(usuarioId) {
     );
 }
 
+// mensagem única para e-mail inexistente e senha errada: não revela quais e-mails têm conta
+const MENSAGEM_CREDENCIAIS_INVALIDAS = 'E-mail ou senha incorretos. Confira e tente de novo.';
+
+//#region => erro previsto do login
+// monta um erro com o status http e o motivo técnico (só vai para o log, nunca para a tela)
+function _erroLogin(mensagem, status, motivo) {
+    const erro = new Error(mensagem);
+    erro.status = status;
+    erro.motivo = motivo || mensagem;
+    return erro;
+}
+//#endregion
+
 //#region => Logica  para login
-async function autenticarUsuario(email, password) {
+async function autenticarUsuario(emailRecebido, password) {
+    //tira espaços que vêm de copiar e colar
+    const email = typeof emailRecebido === 'string' ? emailRecebido.trim() : emailRecebido;
 
     //valida campos obrigatórios
     if (!email || !password) {
-        throw new Error('E-mail e senha são obrigatórios.');
+        throw _erroLogin('Informe o e-mail e a senha.', 400);
     }
 
     // 1. Buscar user no BD (chama repository)
     const usuario = await findUserByEmail(email);
-    if (!usuario) throw new Error('Email Não Cadastrado ou Incorreto.');
+    if (!usuario) {
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `e-mail não cadastrado: ${email}`);
+    }
 
-    // 2. Buscar credenciais
-    const credenciais = await findUserCredentials(usuario.id);
-
-    // 2.5 Validar se usuário está ativo
+    // 2. Validar se usuário está ativo
     if (usuario.ativo === false) {
-        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+        throw _erroLogin('Seu usuário está inativo. Fale com o administrador.', 403, `usuário inativo: ${email}`);
     }
 
-    // 3. Validar senha com bcrypt
-    if (!credenciais) {
-        throw new Error('Senha não encontrada.');
+    // 3. Buscar credenciais (sem elas não há senha para comparar)
+    const credenciais = await findUserCredentials(usuario.id);
+    if (!credenciais || !credenciais.password) {
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `usuário sem senha cadastrada: ${email}`);
     }
 
-    // [DIAGNÓSTICO TEMPORÁRIO] Remover depois de identificar a causa.
-    // Não imprime a senha em claro — só o formato do hash e tamanhos.
-    const hashArmazenado = credenciais.password;
-    console.log('[LOGIN DEBUG]', {
-        emailRecebido: email,
-        tamanhoSenhaRecebida: typeof password === 'string' ? password.length : null,
-        hashPrefixo: typeof hashArmazenado === 'string' ? hashArmazenado.slice(0, 7) : null,
-        tamanhoHash: typeof hashArmazenado === 'string' ? hashArmazenado.length : null,
-        pareceBcrypt: typeof hashArmazenado === 'string' && /^\$2[aby]\$\d{2}\$/.test(hashArmazenado),
-    });
-
+    // 4. Validar senha com bcrypt
     const senhaValida = await bcrypt.compare(password, credenciais.password);
     if (!senhaValida) {
-        throw new Error('E-mail ou senha inválidos.');
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `senha incorreta: ${email}`);
     }
 
     let defaultPassword = false;
@@ -114,40 +119,68 @@ async function autenticarUsuario(email, password) {
     };
 }
 
-async function autenticarUsuarioCom2fa(email, password, codigo) {
+async function autenticarUsuarioCom2fa(emailRecebido, password, codigoRecebido) {
+    //tira espaços do e-mail e qualquer coisa que não seja número do código ("123 456" vira "123456")
+    const email = typeof emailRecebido === 'string' ? emailRecebido.trim() : emailRecebido;
+    const codigo = String(codigoRecebido ?? '').replace(/\D/g, '');
+
     //valida campos obrigatórios
-    if (!email || !password || !codigo) {
-        throw new Error('E-mail, senha e código 2FA são obrigatórios.');
+    if (!email || !password) {
+        throw _erroLogin('Informe o e-mail e a senha.', 400);
+    }
+    if (!codigo) {
+        throw _erroLogin('Informe o código de 6 dígitos do app autenticador.', 400);
+    }
+
+    //o código do app autenticador tem sempre 6 números
+    if (codigo.length !== 6) {
+        throw _erroLogin('O código 2FA tem 6 números. Confira e tente de novo.', 400);
     }
 
     // 1. Buscar user no BD (chama repository)
     const usuario = await findUserByEmail(email);
-    if (!usuario) throw new Error('Email Não Cadastrado ou Incorreto.');
+    if (!usuario) {
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `e-mail não cadastrado: ${email}`);
+    }
 
-    // 1.5 Validar se usuário está ativo
+    // 2. Validar se usuário está ativo
     if (usuario.ativo === false) {
-        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+        throw _erroLogin('Seu usuário está inativo. Fale com o administrador.', 403, `usuário inativo: ${email}`);
     }
 
-    // 2. Buscar credenciais
+    // 3. Buscar credenciais (sem elas não há senha para comparar)
     const credenciais = await findUserCredentials(usuario.id);
-    if (!credenciais) {
-        throw new Error('Senha não encontrada.');
+    if (!credenciais || !credenciais.password) {
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `usuário sem senha cadastrada: ${email}`);
     }
 
-    // 3. Validar senha com bcrypt
+    // 4. Validar senha com bcrypt
     const senhaValida = await bcrypt.compare(password, credenciais.password);
     if (!senhaValida) {
-        throw new Error('E-mail ou senha inválidos.');
+        throw _erroLogin(MENSAGEM_CREDENCIAIS_INVALIDAS, 401, `senha incorreta: ${email}`);
     }
 
-    // 4. Validar se o 2FA está mesmo ativado para este usuário
+    // 5. Validar se o 2FA está mesmo ativado para este usuário
     if (!credenciais.auth2faTotp || !credenciais.secretAuth2fa) {
-        throw new Error('2FA não está ativado para este usuário.');
+        throw _erroLogin('Seu usuário não usa verificação em duas etapas. Entre só com e-mail e senha.', 400, `2FA desativado: ${email}`);
     }
 
-    // 5. Descriptografar o segredo e validar o código TOTP informado
-    const secret = decryptText(credenciais.secretAuth2fa);
+    // 6. Descriptografar o segredo (falha aqui = chave TOTP_ENCRYPTION_KEY/JWT_SECRET do servidor mudou)
+    let secret;
+    try {
+        secret = decryptText(credenciais.secretAuth2fa);
+    } catch {
+        secret = null;
+    }
+    if (!secret) {
+        throw _erroLogin(
+            'Não foi possível validar o código 2FA no servidor. Fale com o administrador.',
+            500,
+            `segredo 2FA não descriptografa (TOTP_ENCRYPTION_KEY ou JWT_SECRET mudou?): ${email}`
+        );
+    }
+
+    // 7. Validar o código TOTP (aceita o código anterior e o próximo, 30s para cada lado)
     const valid = speakeasy.totp.verify({
         secret,
         encoding: 'base32',
@@ -156,7 +189,11 @@ async function autenticarUsuarioCom2fa(email, password, codigo) {
     });
 
     if (!valid) {
-        throw new Error('Código 2FA inválido.');
+        throw _erroLogin(
+            'Código 2FA incorreto ou expirado. Digite o código que aparece agora no app autenticador.',
+            401,
+            `código 2FA recusado (código errado ou relógio do servidor/celular fora de hora): ${email}`
+        );
     }
 
     let defaultPassword = false;
@@ -164,7 +201,7 @@ async function autenticarUsuarioCom2fa(email, password, codigo) {
         defaultPassword = true;
     }
 
-    // 6. Gera o access token JWT já com o 2FA validado + o refresh token
+    // 8. Gera o access token JWT já com o 2FA validado + o refresh token
     const token = gerarAccessToken({
         id: usuario.id,
         nome: usuario.nome,
@@ -220,8 +257,9 @@ async function obterUsuarioLogado(usuarioId) {
 // Reconsulta o usuário no banco para que o novo access token reflita o estado
 // atual (ex.: usuário rebaixado de admin ou desativado deixa de ter acesso).
 async function renovarAccessToken(refreshToken) {
+    // todos os erros abaixo são previstos (sessão vencida, cookie ausente...): status 401 e motivo só para o log
     if (!refreshToken) {
-        throw new Error('Refresh token ausente.');
+        throw _erroLogin('Sessão expirada. Faça login novamente.', 401, 'refresh token ausente (sem cookie)');
     }
 
     // 1. Verifica assinatura e expiração; jwt.verify lança se for inválido/expirado
@@ -229,21 +267,21 @@ async function renovarAccessToken(refreshToken) {
     try {
         payload = jwt.verify(refreshToken, process.env.JWT_SECRET);
     } catch {
-        throw new Error('Sessão expirada. Faça login novamente.');
+        throw _erroLogin('Sessão expirada. Faça login novamente.', 401, 'refresh token expirado ou com assinatura inválida');
     }
 
     // 2. Garante que é mesmo um refresh token (e não um access token reaproveitado)
     if (payload.type !== 'refresh' || !payload.id) {
-        throw new Error('Refresh token inválido.');
+        throw _erroLogin('Sessão inválida. Faça login novamente.', 401, 'token apresentado não é um refresh token');
     }
 
     // 3. Reconsulta o usuário para refletir o estado atual
     const usuario = await findUserById(payload.id);
     if (!usuario) {
-        throw new Error('Usuário não encontrado.');
+        throw _erroLogin('Sessão inválida. Faça login novamente.', 401, `usuário do refresh token não existe mais: ${payload.id}`);
     }
     if (usuario.ativo === false) {
-        throw new Error('Usuário inativo. Entre em contato com o administrador.');
+        throw _erroLogin('Seu usuário está inativo. Fale com o administrador.', 401, `usuário inativo tentou renovar sessão: ${payload.id}`);
     }
 
     const credenciais = await findUserCredentials(payload.id);

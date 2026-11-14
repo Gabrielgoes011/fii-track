@@ -1,9 +1,8 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaWallet, FaChartLine, FaExchangeAlt } from 'react-icons/fa';
 
-// Altura da barra inferior (exportada para o Layout reservar o espaço do conteúdo).
+// Altura da barra inferior, sem a área segura do aparelho (mesmo valor de --bottomnav-h no global.css).
 export const BOTTOM_NAV_HEIGHT = 58;
 
 // Telas fixas da barra inferior no mobile (padrão app da B3/HUB3).
@@ -16,30 +15,28 @@ const itens = [
   { path: '/operacoes', label: 'Operações', icon: FaExchangeAlt },
 ];
 
+// A barra faz parte do layout (fica no fluxo, abaixo da área que rola), por isso não se mexe com a rolagem.
+// Quem a renderiza é o Layout, dentro do .app-shell-mobile.
 function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  return createPortal(
+  return (
     <nav
       style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
+        flexShrink: 0,
         width: '100%',
-        height: `${BOTTOM_NAV_HEIGHT}px`,
+        // a área segura (notch/barra de gestos do iPhone) soma à altura da barra
+        height: `calc(var(--bottomnav-h) + env(safe-area-inset-bottom))`,
+        paddingBottom: 'env(safe-area-inset-bottom)',
         background: 'rgba(10,15,30,0.98)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderTop: '1px solid #1e293b',
+        borderTop: '1px solid var(--borda)',
         display: 'flex',
         alignItems: 'stretch',
         justifyContent: 'space-around',
-        zIndex: 996,
-        // respeita a safe area (notch/barra de gestos) em iPhones
-        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
       {itens.map((item) => {
@@ -61,7 +58,7 @@ function BottomNav() {
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: isActive ? '#10b981' : '#64748b',
+              color: isActive ? 'var(--accent)' : 'var(--texto-mudo)',
               transition: 'color 0.2s ease',
               padding: '6px 2px',
               minWidth: 0,
@@ -84,8 +81,7 @@ function BottomNav() {
           </button>
         );
       })}
-    </nav>,
-    document.body,
+    </nav>
   );
 }
 

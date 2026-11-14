@@ -1,5 +1,54 @@
-/* Importar fontes modernas do Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* As fontes (Inter, Poppins, JetBrains Mono) são carregadas pelo <link> do index.html, com preconnect.
+   Não use @import de fonte aqui: o navegador baixaria duas vezes e atrasaria a primeira tela. */
+
+/* ─── Tokens de design (tema escuro, único do app) ───
+   Use var(--nome) nas páginas e componentes no lugar de hex solto.
+   Mapa hex -> token em PADROES.md ("Tokens de design"). */
+:root {
+  color-scheme: dark;
+
+  /* Fundos */
+  --bg-app: #0a0f1e;          /* fundo geral do app (Layout, theme-color) */
+  --bg-pagina: #0b1120;       /* fundo das páginas */
+  --surface: #0f172a;         /* cards, tabelas, painéis */
+  --surface-2: #1e293b;       /* cabeçalhos, modais, hover */
+
+  /* Bordas */
+  --borda: #1e293b;
+  --borda-forte: #334155;
+
+  /* Texto */
+  --texto: #f8fafc;           /* títulos e valores */
+  --texto-2: #cbd5e1;         /* texto corrido */
+  --texto-suave: #94a3b8;     /* legendas */
+  --texto-mudo: #7283a0;      /* rótulos e dicas (contraste 4,65:1 sobre os cards, passa no AA) */
+  --texto-apagado: #5b6b84;   /* SÓ desabilitado ou decorativo (3,3:1), nunca texto que precisa ser lido */
+
+  /* Marca (verde) */
+  --accent: #10b981;
+  --accent-forte: #059669;
+  --accent-claro: #34d399;
+  --accent-gradiente: linear-gradient(135deg, #10b981, #059669);
+  --accent-sombra: 0 4px 16px rgba(16, 185, 129, 0.3);
+
+  /* Semânticas (status) */
+  --sucesso: #4ade80;
+  --perigo: #f87171;
+  --perigo-forte: #dc2626;      /* fundo de botão destrutivo */
+  --aviso: #fbbf24;
+  --info: #60a5fa;
+  --destaque: #a78bfa;
+
+  /* Forma */
+  --raio-sm: 8px;
+  --raio-md: 12px;
+  --raio-lg: 16px;
+  --sombra-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+
+  /* Layout */
+  --topbar-h: 60px;
+  --bottomnav-h: 58px;
+}
 
 /* ─── Reset ─── */
 * {
@@ -10,19 +59,50 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  background-color: var(--bg-app);        /* o "elástico" e o fundo antes do app carregar já são escuros */
+}
+
+/* ─── Acessibilidade ─── */
+
+/* Foco visível para quem navega pelo teclado (e para o iPad com teclado). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Campos: várias telas escondem o contorno com outline: none inline, então precisa de !important.
+   Contorno suave para não pesar com a borda verde que os campos já têm no foco. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.45) !important;
+  outline-offset: 0;
+}
+
+/* Quem pede menos movimento no sistema (enjoo, vestibular) não recebe animações nem rolagem suave. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ─── Base ─── */
 body {
   margin: 0;
   padding: 0;
-  background-color: #0a0f1e;
+  background-color: var(--bg-app);
   font-family: 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #cbd5e1;
+  color: var(--texto-2);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;            /* sem "elástico" que mostra fundo claro no celular */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── Headings ─── */
@@ -31,7 +111,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.3;
   margin-bottom: 0.5rem;
-  color: #f8fafc;
+  color: var(--texto);
 }
 
 h1 { font-size: 2rem;   font-weight: 700; }
@@ -45,16 +125,16 @@ h6 { font-size: 0.9rem; }
 p {
   margin-bottom: 1rem;
   line-height: 1.6;
-  color: #94a3b8;
+  color: var(--texto-suave);
 }
 
 a {
-  color: #10b981;
+  color: var(--accent);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 a:hover {
-  color: #34d399;
+  color: var(--accent-claro);
   text-decoration: underline;
 }
 
@@ -73,6 +153,14 @@ input, textarea, select {
   line-height: 1.6;
 }
 
+/* iOS dá zoom automático em campo com fonte menor que 16px. No celular força 16px
+   (!important porque várias telas definem o tamanho inline). */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* ─── Código ─── */
 code, pre {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
@@ -80,17 +168,17 @@ code, pre {
 }
 
 pre {
-  background-color: #1e293b;
+  background-color: var(--surface-2);
   color: #e2e8f0;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: var(--raio-sm);
   overflow-x: auto;
   line-height: 1.5;
-  border: 1px solid #334155;
+  border: 1px solid var(--borda-forte);
 }
 
 /* ─── Misc ─── */
-small  { font-size: 0.85rem; color: #64748b; }
+small  { font-size: 0.85rem; color: var(--texto-mudo); }
 strong, b { font-weight: 600; }
 em, i  { font-style: italic; }
 
@@ -107,8 +195,8 @@ table {
 th {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
-  background-color: #1e293b;
-  color: #94a3b8;
+  background-color: var(--surface-2);
+  color: var(--texto-suave);
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.5px;
@@ -117,8 +205,8 @@ th {
 td, th {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #1e293b;
-  color: #cbd5e1;
+  border-bottom: 1px solid var(--borda);
+  color: var(--texto-2);
 }
 
 tr:hover td {
@@ -127,9 +215,30 @@ tr:hover td {
 
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--borda-forte); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--texto-apagado); }
+
+/* ─── Layout travado no celular ───
+   A tela tem altura fixa e SÓ o conteúdo rola. A barra inferior fica no fluxo (não é mais
+   position: fixed), então não sobe junto quando a barra de endereço do navegador recolhe.
+   dvh = altura que respeita a barra do navegador (vh primeiro, como reserva para aparelho antigo). */
+.app-shell-mobile {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-scroll-mobile {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* altura útil para páginas que querem ocupar a tela toda: usar minHeight: 'var(--altura-util, 100vh)' */
+  --altura-util: calc(100dvh - var(--topbar-h) - var(--bottomnav-h) - env(safe-area-inset-bottom) - 32px);
+}
 
 /* ─── Modo Privacidade (blur em valores financeiros) ─── */
 .privacidade-ativa .vp {

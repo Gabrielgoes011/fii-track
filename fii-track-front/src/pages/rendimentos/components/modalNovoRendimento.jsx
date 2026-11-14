@@ -26,8 +26,8 @@ const S = {
   },
 
   modal: {
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--borda-forte)',
     borderRadius: '16px',
     width: 'calc(100% - 24px)',
     maxWidth: '420px',
@@ -38,7 +38,7 @@ const S = {
 
   header: {
     padding: '1rem 1.5rem',
-    borderBottom: '1px solid #334155',
+    borderBottom: '1px solid var(--borda-forte)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -49,15 +49,15 @@ const S = {
     margin: 0,
     fontSize: '16px',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
   },
 
   btnFechar: {
     background: 'rgba(255,255,255,0.05)',
-    border: '1px solid #334155',
+    border: '1px solid var(--borda-forte)',
     borderRadius: '8px',
     cursor: 'pointer',
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
     display: 'flex',
     alignItems: 'center',
     padding: '5px',
@@ -80,7 +80,7 @@ const S = {
     display: 'block',
     fontSize: '12px',
     fontWeight: 600,
-    color: '#94a3b8',
+    color: 'var(--texto-suave)',
     marginBottom: '4px',
   },
 
@@ -88,11 +88,11 @@ const S = {
     width: '100%',
     padding: '0.5rem 0.75rem',
     borderRadius: '8px',
-    border: '1px solid #334155',
-    background: '#0f172a',
+    border: '1px solid var(--borda-forte)',
+    background: 'var(--surface)',
     boxSizing: 'border-box',
     fontSize: '14px',
-    color: '#f8fafc',
+    color: 'var(--texto)',
     outline: 'none',
     transition: 'border-color 0.2s',
   },
@@ -104,10 +104,10 @@ const S = {
   segmentoValor: {
     padding: '0.5rem 0.75rem',
     backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid #334155',
+    border: '1px solid var(--borda-forte)',
     borderRadius: '8px',
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--texto-suave)',
     fontWeight: 500,
   },
 
@@ -129,13 +129,13 @@ const S = {
   previewLabel: {
     fontSize: '13px',
     fontWeight: 600,
-    color: '#94a3b8',
+    color: 'var(--texto-suave)',
   },
 
   previewNumero: {
     fontSize: '1.2rem',
     fontWeight: 700,
-    color: '#34d399',
+    color: 'var(--accent-claro)',
   },
 
   rodapeBotoes: {
@@ -147,8 +147,8 @@ const S = {
   btnCancelar: {
     padding: '0.5rem 1rem',
     background: 'transparent',
-    border: '1px solid #334155',
-    color: '#94a3b8',
+    border: '1px solid var(--borda-forte)',
+    color: 'var(--texto-suave)',
     borderRadius: '8px',
     fontWeight: 600,
     transition: 'all 0.15s',
@@ -156,7 +156,7 @@ const S = {
 
   btnSalvar: {
     padding: '0.5rem 1rem',
-    background: 'linear-gradient(135deg, #10b981, #059669)',
+    background: 'var(--accent-gradiente)',
     border: 'none',
     color: '#ffffff',
     borderRadius: '8px',
@@ -170,9 +170,9 @@ const S = {
     padding: '0.65rem 0.75rem',
     textAlign: 'left',
     borderRadius: '8px',
-    border: '1px solid #334155',
-    background: '#0f172a',
-    color: '#f8fafc',
+    border: '1px solid var(--borda-forte)',
+    background: 'var(--surface)',
+    color: 'var(--texto)',
     cursor: 'pointer',
     fontWeight: 600,
   },
@@ -270,8 +270,8 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
     ...S.btnCancelar,
     cursor: salvando ? 'not-allowed' : 'pointer',
     opacity: salvando ? 0.6 : 1,
-    borderColor: hovered ? '#475569' : '#334155',
-    color: hovered ? '#f8fafc' : '#94a3b8',
+    borderColor: hovered ? 'var(--texto-apagado)' : 'var(--borda-forte)',
+    color: hovered ? 'var(--texto)' : 'var(--texto-suave)',
   });
 
   const estiloBtnSalvar = (hovered) => ({
@@ -359,7 +359,7 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
                   <button
                     type="button"
                     onClick={() => setData(formatarDataLocal(new Date()))}
-                    style={{ background: 'transparent', border: 'none', color: '#34d399', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--accent-claro)', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
                   >
                     Hoje
                   </button>
@@ -370,7 +370,7 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
                       ontem.setDate(ontem.getDate() - 1);
                       setData(formatarDataLocal(ontem));
                     }}
-                    style={{ background: 'transparent', border: 'none', color: '#94a3b8', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--texto-suave)', padding: 0, fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
                   >
                     Ontem
                   </button>
@@ -382,8 +382,8 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
                 onChange={e => setData(e.target.value)}
                 required
                 style={S.input}
-                onFocus={e => (e.target.style.borderColor = '#10b981')}
-                onBlur={e => (e.target.style.borderColor = '#334155')}
+                onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--borda-forte)')}
               />
             </div>
             <div>
@@ -411,15 +411,15 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
                       }}
                       style={{
                         ...S.ativoOpcao,
-                        borderColor: String(a.idAtivo) === String(ativoId) ? '#10b981' : '#334155',
+                        borderColor: String(a.idAtivo) === String(ativoId) ? 'var(--accent)' : 'var(--borda-forte)',
                         animation: 'abrirOpcaoAtivo 180ms ease-out both',
                         animationDelay: `${Math.min(index * 35, 210)}ms`,
                       }}
                     >
-                      {a.ticker} <span style={{ color: '#94a3b8', fontWeight: 400 }}>— {a.nomeSeguimento}</span>
+                      {a.ticker} <span style={{ color: 'var(--texto-suave)', fontWeight: 400 }}>— {a.nomeSeguimento}</span>
                     </button>
                   )) : (
-                    <span style={{ fontSize: '12px', color: '#94a3b8', padding: '4px 0' }}>Nenhum ativo encontrado.</span>
+                    <span style={{ fontSize: '12px', color: 'var(--texto-suave)', padding: '4px 0' }}>Nenhum ativo encontrado.</span>
                   )}
                 </div>
               )}
@@ -446,15 +446,15 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
               required
               placeholder="Ex: 52.40"
               style={S.input}
-              onFocus={e => (e.target.style.borderColor = '#10b981')}
-              onBlur={e => (e.target.style.borderColor = '#334155')}
+              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--borda-forte)')}
             />
           </div>
 
           <div style={{
             marginBottom: '1rem',
             padding: '0.75rem',
-            border: '1px solid #334155',
+            border: '1px solid var(--borda-forte)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -462,8 +462,8 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
             gap: '1rem',
           }}>
             <div>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#f8fafc' }}>Reinvestido</p>
-              <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#94a3b8' }}>Este provento foi usado para comprar ativos.</p>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--texto)' }}>Reinvestido</p>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--texto-suave)' }}>Este provento foi usado para comprar ativos.</p>
             </div>
             <button
               type="button"
@@ -473,7 +473,7 @@ export default function NovoRendimentoModal({ isOpen, onClose, onSuccess }) {
               onClick={() => setReinvestido(atual => !atual)}
               style={{
                 ...S.toggle,
-                background: reinvestido ? '#10b981' : '#475569',
+                background: reinvestido ? 'var(--accent)' : 'var(--texto-apagado)',
                 flexShrink: 0,
               }}
             >

@@ -26,7 +26,7 @@ Cada subprojeto tem seu próprio README com detalhes:
 - **Autenticação JWT com 2FA (TOTP)** — login com segunda etapa opcional via app autenticador (QR Code).
 - **Refresh token** — access token de vida curta (15 min) renovado por um refresh token (8h), sem logout no meio da sessão.
 - **Controle de Ativos** — posição consolidada da carteira, percentual ideal, preço teto e rebalanceamento.
-- **Cotações via Brapi** — atualização sob demanda com cache de 15 min para economizar requisições.
+- **Cotações via Brapi** — atualização sob demanda; a Brapi só traz preço novo no fechamento do pregão, então o cache vale até o próximo fechamento (economiza requisições).
 - **Histórico da Carteira** — séries de preço por ticker e evolução do patrimônio ao longo do tempo.
 - **Operações e Rendimentos** — lançamento de compras/vendas, proventos, KPIs (YoC, Efeito Bola de Neve) e importação de rendimentos da B3.
 - **Row-Level Security (RLS)** — cada usuário só enxerga seus próprios dados, garantido no banco.
@@ -248,7 +248,7 @@ Tabelas principais:
 - **Autenticação 2FA (TOTP)** com QR Code (speakeasy + qrcode).
 - **Refresh token** — access token de 15 min renovado por refresh de 8h (`POST /auth/refresh`), sem logout no meio da sessão.
 - **Controle de Ativos** completo no backend (posição, percentual ideal, preço teto) integrado ao frontend.
-- **Cotações via Brapi** com cache de 15 min; a resposta informa a origem (`brapi` / `cache` / `cache-fallback`) e o front exibe mensagens contextuais ("cotações já atualizadas / próximo pregão").
+- **Cotações via Brapi** com cache até o próximo fechamento do pregão; a resposta informa a origem (`brapi` / `cache` / `cache-fallback`) e o front exibe mensagens contextuais ("cotações já atualizadas / próximo pregão").
 - **Histórico da Carteira** — séries de preço por ticker e evolução do patrimônio, com gravação de snapshot a cada atualização.
 - **Importação de rendimentos da B3** em lote (`POST /rendimentos/importar-b3`).
 - **Rate limiting** nas rotas de login e 2FA (express-rate-limit).

@@ -36,7 +36,7 @@ const BADGE = {
 function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld, isMobile }) {
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px',
       padding: isMobile ? '0.65rem 0.75rem' : '1rem 1.25rem',
       display: 'flex', flexDirection: isMobile ? 'column' : 'row',
       alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '6px' : '14px',
@@ -52,19 +52,19 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, loading: ld, isMobile }) 
         </div>
       )}
       <div style={{ minWidth: 0, width: isMobile ? '100%' : undefined, flex: isMobile ? undefined : 1 }}>
-        <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+        <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: 'var(--texto-mudo)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
         <p className="vp" style={{
           margin: '2px 0 0',
           // no mobile, o valor ocupa a largura inteira do card e só quebra se necessário
           fontSize: isMobile ? 'clamp(0.75rem, 4vw, 1.05rem)' : '1.15rem',
-          fontWeight: 700, color: cor ?? '#f8fafc',
+          fontWeight: 700, color: cor ?? 'var(--texto)',
           fontVariantNumeric: 'tabular-nums',
           lineHeight: 1.2, whiteSpace: isMobile ? 'normal' : 'nowrap',
           overflowWrap: isMobile ? 'anywhere' : undefined,
         }}>
           {ld ? '···' : valor}
         </p>
-        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? '#64748b', overflowWrap: isMobile ? 'anywhere' : undefined }}>{ld ? '' : sub.txt}</p>}
+        {sub && <p className="vp" style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? 'var(--texto-mudo)', overflowWrap: isMobile ? 'anywhere' : undefined }}>{ld ? '' : sub.txt}</p>}
       </div>
     </div>
   );
@@ -82,32 +82,32 @@ function OportunidadeItem({ a, tipo, vsPM, fmtVar, rotuloPM }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '10px',
-      padding: '10px 12px', background: '#111c33', borderRadius: '10px', border: '1px solid #1e293b',
+      padding: '10px 12px', background: '#111c33', borderRadius: '10px', border: '1px solid var(--borda)',
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>{a.ticker}</p>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--texto)' }}>{a.ticker}</p>
           {tipo === 'oportunidade' && abaixoPM && (
             <span title="Cotação abaixo do seu preço médio" style={{
-              fontSize: '10px', fontWeight: 700, color: '#4ade80',
+              fontSize: '10px', fontWeight: 700, color: 'var(--sucesso)',
               background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)',
               borderRadius: '6px', padding: '1px 6px',
             }}>★ abaixo do PM</span>
           )}
         </div>
-        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: abaixoPM ? '#4ade80' : '#64748b' }}>
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: abaixoPM ? 'var(--sucesso)' : 'var(--texto-mudo)' }}>
           {rotuloPM(a) ?? '—'}
         </p>
       </div>
       <div style={{ textAlign: 'right' }}>
         <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corVar }}>{fmtVar(a.variacaoDia)}</p>
-        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8' }}>
-          {fmt(a.cotacao)} <span style={{ color: '#475569' }}>/ cota</span>
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-suave)' }}>
+          {fmt(a.cotacao)} <span style={{ color: 'var(--texto-apagado)' }}>/ cota</span>
         </p>
         {/* Valor atual estimado da posição na última consulta (qtd × cotação) */}
-        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', fontWeight: 600, color: '#cbd5e1' }}>
+        <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', fontWeight: 600, color: 'var(--texto-2)' }}>
           {fmt(a.valorAtual)}
-          <span style={{ color: '#475569', fontWeight: 400 }}> · {a.quantidade} cotas</span>
+          <span style={{ color: 'var(--texto-apagado)', fontWeight: 400 }}> · {a.quantidade} cotas</span>
         </p>
       </div>
     </div>
@@ -131,10 +131,10 @@ function OportunidadeGrupo({ titulo, subtitulo, cor, icone: Icone, itens, tipo, 
         <Icone size={16} color={cor} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--texto)' }}>
           {titulo} <span style={{ color: cor }}>({itens.length})</span>
         </p>
-        <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>
+        <p style={{ margin: '1px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>{subtitulo}</p>
       </div>
       {isMobile && (
         <FiChevronDown
@@ -148,7 +148,7 @@ function OportunidadeGrupo({ titulo, subtitulo, cor, icone: Icone, itens, tipo, 
   return (
     <div style={{
       flex: 1, minWidth: 0,
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '1.1rem',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '16px', padding: '1.1rem',
     }}>
       {isMobile ? (
         <button
@@ -163,7 +163,7 @@ function OportunidadeGrupo({ titulo, subtitulo, cor, icone: Icone, itens, tipo, 
       {aberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
           {itens.length === 0
-            ? <p style={{ margin: 0, fontSize: '12px', color: '#475569', padding: '8px 0' }}>{vazio}</p>
+            ? <p style={{ margin: 0, fontSize: '12px', color: 'var(--texto-apagado)', padding: '8px 0' }}>{vazio}</p>
             : itens.map((a) => <OportunidadeItem key={a.idAtivo} a={a} tipo={tipo} {...itemProps} />)}
         </div>
       )}
@@ -212,7 +212,7 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
       {dataConsulta && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
           <AiOutlineInfoCircle size={12} color="#475569" />
-          <span style={{ fontSize: '11px', color: '#475569' }}>
+          <span style={{ fontSize: '11px', color: 'var(--texto-apagado)' }}>
             Valores estimados na última consulta de cotações · {dataConsulta}
           </span>
         </div>
@@ -234,7 +234,7 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
           vsPM={vsPM} fmtVar={fmtVar} rotuloPM={rotuloPM} isMobile={isMobile}
         />
       </div>
-      <p style={{ margin: '12px 2px 0', fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
+      <p style={{ margin: '12px 2px 0', fontSize: '11px', color: 'var(--texto-apagado)', lineHeight: 1.5 }}>
         {neutros.length > 0 && `${neutros.length} ativo${neutros.length > 1 ? 's' : ''} sem variação no dia. `}
         ★ indica cotação abaixo do seu preço médio (PM). Este painel mostra apenas o movimento do pregão de hoje — não indica se o ativo está barato ou caro, nem é recomendação de investimento.
       </p>
@@ -246,19 +246,19 @@ function OportunidadesPanel({ ativos, isMobile, dataConsulta }) {
 function EmptyState({ onAdd }) {
   return (
     <div style={{
-      background: '#0f172a', border: '2px dashed #1e293b', borderRadius: '16px',
+      background: 'var(--surface)', border: '2px dashed var(--borda)', borderRadius: '16px',
       padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', textAlign: 'center', gap: '12px',
     }}>
       <div style={{
         width: '56px', height: '56px', borderRadius: '14px',
-        background: 'rgba(100,116,139,0.1)', border: '1px solid #334155',
+        background: 'rgba(100,116,139,0.1)', border: '1px solid var(--borda-forte)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <FiBriefcase size={24} color="#64748b" />
       </div>
-      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>Sua carteira está vazia</h3>
-      <p style={{ margin: 0, fontSize: '13px', color: '#64748b', maxWidth: '360px', lineHeight: 1.5 }}>
+      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--texto)' }}>Sua carteira está vazia</h3>
+      <p style={{ margin: 0, fontSize: '13px', color: 'var(--texto-mudo)', maxWidth: '360px', lineHeight: 1.5 }}>
         Defina sua estratégia! Adicione o primeiro Fundo Imobiliário informando seu objetivo, segmento e percentual alvo ideal para começar a monitorar.
       </p>
       <button onClick={onAdd} style={{
@@ -313,7 +313,7 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           <button onClick={() => onExcluir(inicial.idAtivo)} aria-label="Excluir ativo" title="Excluir ativo" style={{
             minWidth: isMobile ? '44px' : undefined, minHeight: isMobile ? '44px' : undefined,
             background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-            borderRadius: '7px', padding: isMobile ? '8px' : '5px 8px', cursor: 'pointer', color: '#f87171',
+            borderRadius: '7px', padding: isMobile ? '8px' : '5px 8px', cursor: 'pointer', color: 'var(--perigo)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <FiTrash2 size={14} />
@@ -324,10 +324,10 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
       {/* Campos do formulário */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '14px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Objetivo</label>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--texto-suave)', textTransform: 'uppercase', marginBottom: '4px' }}>Objetivo</label>
           <select value={objetivo} onChange={e => setObjetivo(e.target.value)} style={{
-            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
-            borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', cursor: 'pointer',
+            width: '100%', padding: '8px 10px', background: 'var(--surface)', border: '1px solid var(--borda-forte)',
+            borderRadius: '8px', color: 'var(--texto)', fontSize: '13px', outline: 'none', cursor: 'pointer',
           }}>
             <option value="Renda">Renda</option>
             <option value="Ganho de Capital">Ganho de Capital</option>
@@ -335,15 +335,15 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           </select>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Segmento</label>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--texto-suave)', textTransform: 'uppercase', marginBottom: '4px' }}>Segmento</label>
           <select value={segmentoId} onChange={e => {
               const value = e.target.value;
               setSegmentoId(value);
               setTicker('');
               onSegmentoChange?.(value);
             }} style={{
-            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
-            borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', cursor: 'pointer',
+            width: '100%', padding: '8px 10px', background: 'var(--surface)', border: '1px solid var(--borda-forte)',
+            borderRadius: '8px', color: 'var(--texto)', fontSize: '13px', outline: 'none', cursor: 'pointer',
           }}>
             <option value="">Selecione...</option>
             {segmentos.map(s => (
@@ -352,10 +352,10 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           </select>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Ativo (Ticker)</label>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--texto-suave)', textTransform: 'uppercase', marginBottom: '4px' }}>Ativo (Ticker)</label>
           <select value={ticker} onChange={e => setTicker(e.target.value)} disabled={!segmentoId || loadingAtivos} style={{
-            width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #334155',
-            borderRadius: '8px', color: segmentoId ? '#f1f5f9' : '#475569', fontSize: '13px', outline: 'none',
+            width: '100%', padding: '8px 10px', background: 'var(--surface)', border: '1px solid var(--borda-forte)',
+            borderRadius: '8px', color: segmentoId ? 'var(--texto)' : 'var(--texto-apagado)', fontSize: '13px', outline: 'none',
             cursor: segmentoId && !loadingAtivos ? 'pointer' : 'not-allowed', opacity: segmentoId && !loadingAtivos ? 1 : 0.6,
           }}>
             <option value="">{loadingAtivos ? 'Carregando ativos...' : 'Selecione...'}</option>
@@ -363,11 +363,11 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           </select>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>% Ideal na Carteira</label>
+          <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--texto-suave)', textTransform: 'uppercase', marginBottom: '4px' }}>% Ideal na Carteira</label>
           <div style={{ position: 'relative' }}>
             <input type="number" min="0" max="100" step="0.1" value={percIdeal} onChange={e => setPercIdeal(e.target.value)} style={{
-              width: '100%', padding: '8px 30px 8px 10px', background: '#0f172a', border: '1px solid #334155',
-              borderRadius: '8px', color: '#f1f5f9', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+              width: '100%', padding: '8px 30px 8px 10px', background: 'var(--surface)', border: '1px solid var(--borda-forte)',
+              borderRadius: '8px', color: 'var(--texto)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
             }} placeholder="0" />
             <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#fb923c', fontWeight: 700, fontSize: '13px' }}>%</span>
           </div>
@@ -380,8 +380,8 @@ function FormularioInline({ onCancelar, onSalvar, onExcluir, inicial, segmentos,
           minHeight: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined,
           justifyContent: 'center',
           display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px',
-          background: 'transparent', border: '1px solid #334155', borderRadius: '8px',
-          color: '#94a3b8', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+          background: 'transparent', border: '1px solid var(--borda-forte)', borderRadius: '8px',
+          color: 'var(--texto-suave)', fontWeight: 600, fontSize: '12px', cursor: 'pointer',
         }}>
           <FiX size={13} /> Cancelar
         </button>
@@ -409,11 +409,11 @@ function BarraProgresso({ atual, ideal }) {
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b', marginBottom: '3px' }}>
-        <span style={{ fontWeight: 600, color: '#cbd5e1' }}>{percAtual.toFixed(2)}%</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--texto-mudo)', marginBottom: '3px' }}>
+        <span style={{ fontWeight: 600, color: 'var(--texto-2)' }}>{percAtual.toFixed(2)}%</span>
         <span>/ {percIdeal.toFixed(2)}%</span>
       </div>
-      <div style={{ height: '5px', background: '#1e293b', borderRadius: '9999px', overflow: 'hidden' }}>
+      <div style={{ height: '5px', background: 'var(--surface-2)', borderRadius: '9999px', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${ratio}%`, background: corBarra, borderRadius: '9999px', transition: 'width 0.4s ease' }} />
       </div>
     </div>
@@ -450,7 +450,7 @@ function PrecoTetoEditor({ row, onSalvar, isMobile }) {
 
   if (editando) {
     return (
-      <div onClick={stop} style={{ background: '#0b1120', border: '1px solid rgba(251,146,60,0.35)', borderRadius: '10px', padding: '10px 12px' }}>
+      <div onClick={stop} style={{ background: 'var(--bg-pagina)', border: '1px solid rgba(251,146,60,0.35)', borderRadius: '10px', padding: '10px 12px' }}>
         <p style={{ margin: 0, fontSize: '10px', color: '#fb923c', textTransform: 'uppercase', fontWeight: 700 }}>
           {usaPvp ? 'VP da cota (R$)' : 'Preço Teto (R$)'}
         </p>
@@ -458,31 +458,31 @@ function PrecoTetoEditor({ row, onSalvar, isMobile }) {
           type="number" min="0" step="0.01" value={valor} autoFocus
           onChange={(e) => setValor(e.target.value)} onClick={stop}
           style={{
-            width: '100%', marginTop: '6px', padding: '6px 8px', background: '#0f172a',
-            border: '1px solid #334155', borderRadius: '7px', color: '#f1f5f9', fontSize: '13px',
+            width: '100%', marginTop: '6px', padding: '6px 8px', background: 'var(--surface)',
+            border: '1px solid var(--borda-forte)', borderRadius: '7px', color: 'var(--texto)', fontSize: '13px',
             outline: 'none', boxSizing: 'border-box',
           }}
           placeholder="0,00"
         />
         {pvpDisponivel && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11px', color: 'var(--texto-suave)', cursor: 'pointer' }}>
             <input type="checkbox" checked={usaPvp} onChange={(e) => setUsaPvp(e.target.checked)} onClick={stop} />
             Usa P/VP (valor patrimonial da cota)
           </label>
         )}
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '6px', marginTop: '8px' }}>
           <button onClick={salvar} style={{ flex: 1, minHeight: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px', background: 'linear-gradient(135deg,#f97316,#ea580c)', border: 'none', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
-          <button onClick={limpar} style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>Limpar</button>
-          <button onClick={(e) => { stop(e); setEditando(false); }} aria-label="Fechar editor de preço teto" style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid #334155', borderRadius: '7px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer' }}>X</button>
+          <button onClick={limpar} style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid var(--borda-forte)', borderRadius: '7px', color: 'var(--texto-suave)', fontSize: '11px', cursor: 'pointer' }}>Limpar</button>
+          <button onClick={(e) => { stop(e); setEditando(false); }} aria-label="Fechar editor de preço teto" style={{ minHeight: isMobile ? '44px' : undefined, minWidth: isMobile ? '44px' : undefined, width: isMobile ? '100%' : undefined, padding: '6px 10px', background: 'transparent', border: '1px solid var(--borda-forte)', borderRadius: '7px', color: 'var(--texto-suave)', fontSize: '11px', cursor: 'pointer' }}>X</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px', position: 'relative' }}>
-      <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
-      <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+    <div style={{ background: 'var(--bg-pagina)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 12px', position: 'relative' }}>
+      <p style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)', textTransform: 'uppercase' }}>Preço Teto & Desconto</p>
+      <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: 'var(--texto)' }}>
         {row.precoTeto ? fmt(row.precoTeto) : '—'}
         {row.modoPrecoTeto === 'pvp' && <span style={{ fontSize: '10px', color: '#fb923c', marginLeft: '5px' }}>P/VP</span>}
       </p>
@@ -509,7 +509,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
 
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px',
       overflow: 'hidden', transition: 'box-shadow 0.2s',
       boxShadow: expandido ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
       borderLeft: isMobile ? `3px solid ${cfg.cor}` : undefined,
@@ -530,8 +530,8 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
             {/* Linha 1: Ticker + Badge + Ações */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', flexShrink: 0 }}>{row.ticker}</span>
-                <span style={{ fontSize: '11px', color: '#64748b', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--texto)', flexShrink: 0 }}>{row.ticker}</span>
+                <span style={{ fontSize: '11px', color: 'var(--texto-mudo)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                 <span style={{
@@ -546,7 +546,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
                   style={{
                   width: '44px', height: '44px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
-                    borderRadius: '8px', color: '#a78bfa', cursor: 'pointer',
+                    borderRadius: '8px', color: 'var(--destaque)', cursor: 'pointer',
                   }}
                   title="Editar metas"
                 >
@@ -572,12 +572,12 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
             {/* Linha 2: Saldo + Rentabilidade (lado a lado) */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', marginBottom: '8px', minWidth: 0 }}>
               <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Saldo</span>
-                <p className="vp" style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
-                <p className="vp" style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>{row.quantidade} cotas</p>
+                <span style={{ fontSize: '9px', color: 'var(--texto-apagado)', textTransform: 'uppercase', fontWeight: 600 }}>Saldo</span>
+                <p className="vp" style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--texto)' }}>{fmt(row.valorAtual)}</p>
+                <p className="vp" style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)' }}>{row.quantidade} cotas</p>
               </div>
               <div style={{ minWidth: 0, flex: 1, overflow: 'hidden', textAlign: 'right' }}>
-                <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', fontWeight: 600 }}>Rent.</span>
+                <span style={{ fontSize: '9px', color: 'var(--texto-apagado)', textTransform: 'uppercase', fontWeight: 600 }}>Rent.</span>
                 <p className="vp" style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: corRent(row.rentabilidadePerc) }}>
                   {isNeg ? '↓' : '↑'} {fmtPerc(row.rentabilidadePerc)}
                 </p>
@@ -594,22 +594,22 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
             {/* Bloco 1: Ativo + Segmento */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1.2' }}>
               <div style={{
-                width: '34px', height: '34px', borderRadius: '8px', background: '#1e293b',
+                width: '34px', height: '34px', borderRadius: '8px', background: 'var(--surface-2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '10px', fontWeight: 800, color: '#94a3b8', flexShrink: 0,
+                fontSize: '10px', fontWeight: 800, color: 'var(--texto-suave)', flexShrink: 0,
               }}>
                 {row.ticker?.substring(0, 2)}
               </div>
               <div>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{row.ticker}</span>
-                <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)' }}>{row.ticker}</span>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--texto-mudo)' }}>{row.segmento}{row.objetivo ? ` · ${row.objetivo}` : ''}</span>
               </div>
             </div>
 
             {/* Bloco 2: Saldo Atual */}
             <div style={{ flex: '1', minWidth: 0 }}>
-              <p className="vp" style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.valorAtual)}</p>
-              <p className="vp" style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>{row.quantidade} cotas a {fmt(row.cotacao)}</p>
+              <p className="vp" style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--texto)' }}>{fmt(row.valorAtual)}</p>
+              <p className="vp" style={{ margin: 0, fontSize: '11px', color: 'var(--texto-mudo)' }}>{row.quantidade} cotas a {fmt(row.cotacao)}</p>
             </div>
 
             {/* Bloco 3: Rentabilidade */}
@@ -642,7 +642,7 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
                 style={{
                   width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
-                  borderRadius: '7px', color: '#a78bfa', cursor: 'pointer',
+                  borderRadius: '7px', color: 'var(--destaque)', cursor: 'pointer',
                 }}
                 title="Editar metas"
               >
@@ -659,42 +659,42 @@ function LinhaAtivo({ row, expandido, onToggle, onEditar, onSalvarPrecoTeto, isM
       {/* ── Painel expandido (detalhes financeiros) ── */}
       {expandido && (
         <div style={{
-          padding: '14px 16px', borderTop: '1px solid #1e293b',
+          padding: '14px 16px', borderTop: '1px solid var(--borda)',
           background: 'rgba(255,255,255,0.015)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
             <AiOutlineInfoCircle size={12} color="#475569" />
-            <span style={{ fontSize: '11px', color: '#475569', fontWeight: 600 }}>Detalhes Financeiros</span>
+            <span style={{ fontSize: '11px', color: 'var(--texto-apagado)', fontWeight: 600 }}>Detalhes Financeiros</span>
           </div>
           <div style={{
             display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(160px, 1fr))',
             gap: '10px',
           }}>
             {/* Preço Médio vs Atual */}
-            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Preço Médio vs Atual</p>
-              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>{fmt(row.precoMedio)}</p>
-              <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Atual: {fmt(row.cotacao)}</p>
+            <div style={{ background: 'var(--bg-pagina)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)', textTransform: 'uppercase' }}>Preço Médio vs Atual</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: 'var(--texto)' }}>{fmt(row.precoMedio)}</p>
+              <p className="vp" style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>Atual: {fmt(row.cotacao)}</p>
             </div>
             {/* Preço Teto & Desconto (editável) */}
             <PrecoTetoEditor row={row} onSalvar={onSalvarPrecoTeto} isMobile={isMobile} />
             {/* Proventos Recebidos */}
-            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Proventos Recebidos</p>
-              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#a78bfa' }}>{fmt(row.totalProventos)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Total acumulado</p>
+            <div style={{ background: 'var(--bg-pagina)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)', textTransform: 'uppercase' }}>Proventos Recebidos</p>
+              <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: 'var(--destaque)' }}>{fmt(row.totalProventos)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>Total acumulado</p>
             </div>
             {/* Rent. + Proventos */}
-            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Rent. + Proventos</p>
+            <div style={{ background: 'var(--bg-pagina)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)', textTransform: 'uppercase' }}>Rent. + Proventos</p>
               <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.rentabilidadeTotalPerc) }}>{fmtPerc(row.rentabilidadeTotalPerc)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Considerando dividendos</p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>Considerando dividendos</p>
             </div>
             {/* Valor para Equilíbrio */}
-            <div style={{ background: '#0b1120', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Valor para Equilíbrio</p>
+            <div style={{ background: 'var(--bg-pagina)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: 'var(--texto-mudo)', textTransform: 'uppercase' }}>Valor para Equilíbrio</p>
               <p className="vp" style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: corRent(row.valorEquilibrio) }}>{fmtSinal(row.valorEquilibrio)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>
                 {row.valorEquilibrio > 0 ? 'Falta aportar' : 'Acima do ideal'}
               </p>
             </div>
@@ -718,14 +718,14 @@ function BarraFiltros({
   useEffect(() => { if (temFiltro) setAberto(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selStyle = {
-    padding: '0.5rem 0.75rem', background: '#1e293b', border: '1px solid #334155',
-    borderRadius: '8px', color: '#f8fafc', fontSize: '13px', outline: 'none', cursor: 'pointer',
+    padding: '0.5rem 0.75rem', background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
+    borderRadius: '8px', color: 'var(--texto)', fontSize: '13px', outline: 'none', cursor: 'pointer',
     flex: '1 1 150px', minWidth: 0,
   };
 
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '10px',
       marginBottom: '10px', overflow: 'hidden',
     }}>
       {/* Cabeçalho clicável (colapso) */}
@@ -742,7 +742,7 @@ function BarraFiltros({
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Buscar e filtrar</span>
           {qtdFiltros > 0 && (
             <span style={{
-              fontSize: '10px', fontWeight: 700, color: '#10b981',
+              fontSize: '10px', fontWeight: 700, color: 'var(--accent)',
               background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
               borderRadius: '999px', padding: '1px 7px',
             }}>{qtdFiltros}</span>
@@ -752,12 +752,12 @@ function BarraFiltros({
             style={{ marginLeft: 'auto', transition: 'transform 0.2s', transform: aberto ? 'rotate(180deg)' : 'none' }}
           />
         </button>
-        <span style={{ fontSize: '11px', color: '#475569', whiteSpace: 'nowrap' }}>{exibidos} de {total}</span>
+        <span style={{ fontSize: '11px', color: 'var(--texto-apagado)', whiteSpace: 'nowrap' }}>{exibidos} de {total}</span>
       </div>
 
       {/* Corpo (busca em linha própria + filtros abaixo) */}
       {aberto && (
-        <div style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid var(--borda)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Busca — largura total para o placeholder nunca cortar */}
           <div style={{ position: 'relative', marginTop: '10px' }}>
             <FiSearch size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -766,12 +766,12 @@ function BarraFiltros({
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por ticker, setor ou objetivo..."
               style={{
-                width: '100%', padding: '0.5rem 0.75rem 0.5rem 30px', background: '#1e293b',
-                border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc',
+                width: '100%', padding: '0.5rem 0.75rem 0.5rem 30px', background: 'var(--surface-2)',
+                border: '1px solid var(--borda-forte)', borderRadius: '8px', color: 'var(--texto)',
                 fontSize: '13px', outline: 'none', boxSizing: 'border-box',
               }}
-              onFocus={(e) => (e.target.style.borderColor = '#10b981')}
-              onBlur={(e) => (e.target.style.borderColor = '#334155')}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={(e) => (e.target.style.borderColor = 'var(--borda-forte)')}
             />
           </div>
 
@@ -796,8 +796,8 @@ function BarraFiltros({
               <button
                 onClick={() => { setBusca(''); setSegmento(''); setObjetivo(''); setStatus(''); }}
                 style={{
-                  padding: '0.5rem 0.75rem', background: 'transparent', border: '1px solid #334155',
-                  borderRadius: '8px', color: '#94a3b8', fontSize: '12px', cursor: 'pointer',
+                  padding: '0.5rem 0.75rem', background: 'transparent', border: '1px solid var(--borda-forte)',
+                  borderRadius: '8px', color: 'var(--texto-suave)', fontSize: '12px', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
                 }}
               >
@@ -844,7 +844,7 @@ function TabsNav({ abaAtiva, onSelecionar, isMobile }) {
       className="tabs-nav-scroll"
       style={{
         display: 'flex', gap: '4px', marginBottom: '1.25rem',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid var(--borda)',
         // Permite rolar as abas na horizontal quando não cabem (ex.: mobile),
         // mantendo cada aba clicável sem quebrar linha.
         overflowX: 'auto',
@@ -866,7 +866,7 @@ function TabsNav({ abaAtiva, onSelecionar, isMobile }) {
             style={{
               padding: '0.75rem 1.1rem',
               background: ativa ? 'rgba(139,92,246,0.1)' : 'transparent',
-              color: ativa ? '#a78bfa' : '#64748b',
+              color: ativa ? 'var(--destaque)' : 'var(--texto-mudo)',
               border: 'none',
               borderBottom: ativa ? '3px solid #8b5cf6' : '3px solid transparent',
               fontWeight: 600, fontSize: '14px', cursor: 'pointer',
@@ -934,7 +934,7 @@ function IndicadorDirecao({ direcao, size = 12 }) {
   // Primeiro ponto (sem anterior comparável) não tem direção — Req 4.7.
   const info = DIRECAO_INFO[direcao];
   if (!info) {
-    return <span style={{ color: '#475569', fontSize: `${size}px` }} aria-label="Sem variação">—</span>;
+    return <span style={{ color: 'var(--texto-apagado)', fontSize: `${size}px` }} aria-label="Sem variação">—</span>;
   }
   return (
     <span
@@ -976,7 +976,7 @@ function LegendaDirecao({ pontos, extrairValor, rotulo }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px', alignItems: 'center' }}>
       {ocultos > 0 && (
-        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+        <span style={{ fontSize: '11px', color: 'var(--texto-mudo)', fontWeight: 600 }}>
           +{ocultos} anterior{ocultos > 1 ? 'es' : ''}
         </span>
       )}
@@ -998,7 +998,7 @@ function LegendaDirecao({ pontos, extrairValor, rotulo }) {
               padding: '4px 8px',
             }}
           >
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
+            <span style={{ fontSize: '11px', color: 'var(--texto-suave)', fontWeight: 600 }}>
               {rotuloData}
             </span>
             <IndicadorDirecao direcao={g.direcao} size={11} />
@@ -1017,7 +1017,7 @@ function CardGrafico({ titulo, subtitulo, direita, children, colapsavel = false,
   // Cabeçalho: quando colapsável, o título vira botão com chevron.
   const cabecalhoTexto = (
     <div style={{ minWidth: 0 }}>
-      <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--texto)', display: 'flex', alignItems: 'center', gap: '8px' }}>
         {titulo}
         {colapsavel && (
           <FiChevronDown
@@ -1026,13 +1026,13 @@ function CardGrafico({ titulo, subtitulo, direita, children, colapsavel = false,
           />
         )}
       </h3>
-      {subtitulo && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>{subtitulo}</p>}
+      {subtitulo && <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--texto-mudo)' }}>{subtitulo}</p>}
     </div>
   );
 
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '16px',
       padding: '1.25rem', marginBottom: '1rem',
     }}>
       <div style={{
@@ -1064,11 +1064,11 @@ function HistoricoVazio({ mensagem = 'Sem dados históricos' }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      textAlign: 'center', gap: '10px', padding: '2.5rem 1rem', color: '#64748b',
+      textAlign: 'center', gap: '10px', padding: '2.5rem 1rem', color: 'var(--texto-mudo)',
     }}>
       <div style={{
         width: '48px', height: '48px', borderRadius: '12px',
-        background: 'rgba(100,116,139,0.1)', border: '1px solid #334155',
+        background: 'rgba(100,116,139,0.1)', border: '1px solid var(--borda-forte)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <FiLayers size={20} color="#64748b" />
@@ -1092,7 +1092,7 @@ function HistoricoErro({ mensagem = 'Não foi possível carregar o histórico.',
       }}>
         <FiX size={22} color="#f87171" />
       </div>
-      <p style={{ margin: 0, fontSize: '13px', color: '#f87171', maxWidth: '320px', lineHeight: 1.5 }}>{mensagem}</p>
+      <p style={{ margin: 0, fontSize: '13px', color: 'var(--perigo)', maxWidth: '320px', lineHeight: 1.5 }}>{mensagem}</p>
       {onRetry && (
         <button
           onClick={onRetry}
@@ -1166,8 +1166,8 @@ function HistoricoTickerChart({
       onChange={(e) => onSelecionarTicker(e.target.value)}
       aria-label="Selecionar ativo"
       style={{
-        padding: '0.5rem 0.75rem', background: '#1e293b', border: '1px solid #334155',
-        borderRadius: '8px', color: '#f8fafc', fontSize: '13px', outline: 'none', cursor: 'pointer',
+        padding: '0.5rem 0.75rem', background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
+        borderRadius: '8px', color: 'var(--texto)', fontSize: '13px', outline: 'none', cursor: 'pointer',
         minWidth: '140px',
       }}
     >
@@ -1182,7 +1182,7 @@ function HistoricoTickerChart({
     conteudo = (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '2.5rem 1rem', color: '#64748b', fontSize: '13px',
+        padding: '2.5rem 1rem', color: 'var(--texto-mudo)', fontSize: '13px',
       }}>
         Selecione um ativo acima para visualizar a evolução do preço.
       </div>
@@ -1191,7 +1191,7 @@ function HistoricoTickerChart({
     conteudo = (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: '10px', padding: '2.5rem 1rem', color: '#64748b', fontSize: '13px',
+        gap: '10px', padding: '2.5rem 1rem', color: 'var(--texto-mudo)', fontSize: '13px',
       }}>
         <FiRefreshCw size={20} color="#475569" style={{ animation: 'spin 1s linear infinite' }} />
         Carregando histórico de {tickerAtual}...
@@ -1242,9 +1242,9 @@ function HistoricoTickerChart({
 function HistoricoWrapper({ children }) {
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '16px',
       padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', textAlign: 'center', gap: '10px', color: '#64748b',
+      justifyContent: 'center', textAlign: 'center', gap: '10px', color: 'var(--texto-mudo)',
     }}>
       {children}
     </div>
@@ -1324,7 +1324,7 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
       display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
       padding: '6px 12px', background: 'rgba(139,92,246,0.1)',
       border: '1px solid rgba(139,92,246,0.25)', borderRadius: '8px',
-      color: '#a78bfa', fontSize: '11px', fontWeight: 600,
+      color: 'var(--destaque)', fontSize: '11px', fontWeight: 600,
       cursor: loadingCotacoes || loading ? 'not-allowed' : 'pointer',
       opacity: loadingCotacoes || loading ? 0.6 : 1,
     }}>
@@ -1338,7 +1338,7 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
       <div style={{
         display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1rem',
         padding: '9px 10px', background: 'rgba(15,23,42,0.7)',
-        border: '1px solid #1e293b', borderRadius: '10px',
+        border: '1px solid var(--borda)', borderRadius: '10px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
           <div style={{ minWidth: 0 }}>
@@ -1360,7 +1360,7 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
               aria-expanded={mostrarTickers}
               style={{
                 display: 'flex', alignItems: 'center', gap: '4px', padding: 0,
-                background: 'transparent', border: 'none', color: '#94a3b8',
+                background: 'transparent', border: 'none', color: 'var(--texto-suave)',
                 fontSize: '11px', cursor: 'pointer',
               }}
             >
@@ -1368,7 +1368,7 @@ function StatusCotacoes({ resumo, isMobile, onAtualizar, loadingCotacoes, loadin
               {mostrarTickers ? 'Ocultar tickers' : 'Ver tickers sem preço novo'}
             </button>
             {mostrarTickers && (
-              <p style={{ margin: '5px 0 0 17px', fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+              <p style={{ margin: '5px 0 0 17px', fontSize: '11px', color: 'var(--texto-suave)', lineHeight: 1.4 }}>
                 {tickersDesatualizados.join(', ')}
               </p>
             )}
@@ -1590,7 +1590,7 @@ export default function PaginaControleAtivos() {
   const corRentResumo = resumo ? corRent(resumo.rentabilidadeReais) : '#94a3b8';
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: 'var(--altura-util, 100vh)', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto)', fontFamily: 'sans-serif' }}>
       <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0.75rem' : '1rem 0.5rem', overflowX: 'hidden' }}>
 
         {/* ── Header ── */}
@@ -1611,9 +1611,9 @@ export default function PaginaControleAtivos() {
             <div style={{ minWidth: 0 }}>
               <h1 style={{
                 fontSize: isMobile ? '1rem' : '1.5rem', fontWeight: 800,
-                color: '#f8fafc', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                color: 'var(--texto)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>Carteira de FIIs</h1>
-              <p style={{ display: isMobile ? 'none' : 'block', fontSize: '12px', color: '#64748b', margin: 0 }}>
+              <p style={{ display: isMobile ? 'none' : 'block', fontSize: '12px', color: 'var(--texto-mudo)', margin: 0 }}>
                 Gestão de ativos e rebalanceamento inteligente
               </p>
             </div>
@@ -1644,10 +1644,10 @@ export default function PaginaControleAtivos() {
           display: isMobile ? 'flex' : 'none', alignItems: 'center', justifyContent: 'space-between',
           marginBottom: kpisAbertos ? '8px' : '1.25rem',
         }}>
-          <h2 style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <h2 style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--texto-suave)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Indicadores da carteira
           </h2>
-          <button
+          <button aria-label={kpisAbertos ? 'Recolher indicadores' : 'Mostrar indicadores'} title={kpisAbertos ? 'Recolher indicadores' : 'Mostrar indicadores'}
             type="button"
             onClick={() => setKpisAbertos((v) => !v)}
             aria-expanded={kpisAbertos}
@@ -1655,8 +1655,8 @@ export default function PaginaControleAtivos() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '28px', height: '28px', padding: 0,
-              background: 'transparent', border: '1px solid #334155', borderRadius: '7px',
-              color: '#94a3b8', cursor: 'pointer',
+              background: 'transparent', border: '1px solid var(--borda-forte)', borderRadius: '7px',
+              color: 'var(--texto-suave)', cursor: 'pointer',
             }}
           >
             {kpisAbertos ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
@@ -1717,7 +1717,7 @@ export default function PaginaControleAtivos() {
         {!isMobile && ativosFiltrados.length > 0 && (
           <div style={{
             display: 'flex', padding: '10px 16px', marginBottom: '6px',
-            fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px',
+            fontSize: '10px', fontWeight: 700, color: 'var(--texto-apagado)', textTransform: 'uppercase', letterSpacing: '0.5px',
           }}>
             <span style={{ flex: '1.2' }}>Ativo / Setor</span>
             <span style={{ flex: '1' }}>Posição Atual</span>
@@ -1754,7 +1754,7 @@ export default function PaginaControleAtivos() {
 
             {/* Lista de ativos (filtrada) */}
             {ativosFiltrados.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--texto-mudo)', fontSize: '13px' }}>
                 Nenhum ativo encontrado com os filtros atuais.
               </div>
             ) : ativosFiltrados.map(row => (
@@ -1773,20 +1773,20 @@ export default function PaginaControleAtivos() {
 
         {/* Rodapé com soma % ideal */}
         {ativos.length > 0 && (
-          <div style={{ marginTop: '12px', padding: '10px 16px', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#475569' }}>
+          <div style={{ marginTop: '12px', padding: '10px 16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--borda)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--texto-apagado)' }}>
               {ativosFiltrados.length === ativos.length
                 ? `${ativos.length} ativos na carteira`
                 : `${ativosFiltrados.length} de ${ativos.length} ativos`}
             </span>
             {resumo?.totalParaAportar > 0 && (
-              <span className="vp" style={{ fontSize: '12px', fontWeight: 600, color: '#60a5fa' }}>
+              <span className="vp" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--info)' }}>
                 Total a Aportar p/ equilíbrio: {fmt(resumo.totalParaAportar)}
               </span>
             )}
             <span style={{ fontSize: '12px', fontWeight: 600 }}>
               Soma % Ideal:{' '}
-              <span style={{ color: Math.abs(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0) - 1) < 0.001 ? '#4ade80' : '#f87171' }}>
+              <span style={{ color: Math.abs(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0) - 1) < 0.001 ? 'var(--sucesso)' : 'var(--perigo)' }}>
                 {fmtPercSemSinal(ativos.reduce((s, a) => s + (a.percIdeal ?? 0), 0))} de 100,00%
               </span>
             </span>

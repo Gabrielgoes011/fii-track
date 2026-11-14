@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Sidebar/Sidebar';
 import TopBar from '../TopBar/TopBar';
-import BottomNav, { BOTTOM_NAV_HEIGHT } from '../BottomNav/BottomNav';
+import BottomNav from '../BottomNav/BottomNav';
 import ModalTrocarSenha from '../ModalTrocarSenha/ModalTrocarSenha';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { MOBILE_BP } from '../../hooks/useIsMobile';
@@ -35,7 +35,12 @@ function Layout({ children, onLogout, user }) {
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <div className={valoresOcultos ? 'privacidade-ativa' : ''} style={{ display: 'flex', minHeight: '100vh', background: '#0a0f1e' }}>
+    <div
+      className={[isMobile ? 'app-shell-mobile' : '', valoresOcultos ? 'privacidade-ativa' : ''].filter(Boolean).join(' ')}
+      style={isMobile
+        ? { background: 'var(--bg-app)' }
+        : { display: 'flex', minHeight: '100vh', background: 'var(--bg-app)' }}
+    >
 
       {/* Overlay escuro no mobile quando sidebar aberta */}
       {isMobile && sidebarOpen && (
@@ -81,23 +86,22 @@ function Layout({ children, onLogout, user }) {
       />
 
       {/* Conteúdo principal */}
-      <div style={{
-        marginLeft: (!isMobile && sidebarOpen) ? '250px' : '0px',
-        flex: 1,
-        minWidth: 0,
-        background: '#0a0f1e',
-        minHeight: '100vh',
-        position: 'relative',
-        transition: 'margin-left 0.3s ease',
-        paddingTop: '60px',
-      }}>
+      <div
+        className={isMobile ? 'app-scroll-mobile' : undefined}
+        style={{
+          marginLeft: (!isMobile && sidebarOpen) ? '250px' : '0px',
+          flex: 1,
+          minWidth: 0,
+          background: 'var(--bg-app)',
+          minHeight: isMobile ? undefined : '100vh',
+          position: 'relative',
+          transition: 'margin-left 0.3s ease',
+          paddingTop: 'var(--topbar-h)',
+        }}
+      >
         <div style={{
-          // no mobile reserva espaço extra embaixo para a barra de navegação
-          // (altura da barra + safe area do aparelho) e não cobrir o conteúdo
+          // a barra inferior não cobre mais o conteúdo (ela fica fora da área que rola)
           padding: isMobile ? '16px 12px' : '24px',
-          paddingBottom: isMobile
-            ? `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom) + 16px)`
-            : '24px',
           maxWidth: '1400px',
           margin: '0 auto',
         }}>
@@ -105,7 +109,7 @@ function Layout({ children, onLogout, user }) {
         </div>
       </div>
 
-      {/* Barra de navegação inferior — só no mobile (padrão app da B3/HUB3) */}
+      {/* Barra de navegação inferior — só no mobile (padrão app da B3/HUB3). Fica no fluxo, abaixo da área que rola. */}
       {isMobile && <BottomNav />}
 
     </div>

@@ -100,30 +100,30 @@ function PaginaPerfil({ usuario }) {
   };
 
   // ── estilos reutilizados ──
-  const cardStyle = { padding: '24px', borderRadius: '20px', background: '#0f172a', border: '1px solid #1e293b' };
-  const labelStyle = { color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 };
+  const cardStyle = { padding: '24px', borderRadius: '20px', background: 'var(--surface)', border: '1px solid var(--borda)' };
+  const labelStyle = { color: 'var(--texto-mudo)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', color: '#f8fafc' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', color: 'var(--texto)' }}>
       <button
         type="button"
         onClick={() => navigate(-1)}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '10px',
-          background: 'transparent', border: '1px solid #334155',
-          borderRadius: '10px', color: '#94a3b8', padding: '10px 14px',
+          background: 'transparent', border: '1px solid var(--borda-forte)',
+          borderRadius: '10px', color: 'var(--texto-suave)', padding: '10px 14px',
           cursor: 'pointer', width: 'fit-content', transition: 'all 0.2s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = '#0f172a'; e.currentTarget.style.color = '#f8fafc'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--texto)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
       >
         <FaArrowLeft size={12} /> Voltar
       </button>
 
       {/* ── Header ── */}
       <div>
-        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>Meu Perfil</h1>
-        <p style={{ margin: '8px 0 0', color: '#94a3b8', maxWidth: '680px', lineHeight: 1.6 }}>
+        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: 'var(--texto)' }}>Meu Perfil</h1>
+        <p style={{ margin: '8px 0 0', color: 'var(--texto-suave)', maxWidth: '680px', lineHeight: 1.6 }}>
           Gerencie a foto, os dados e a segurança da sua conta.
         </p>
       </div>
@@ -135,7 +135,7 @@ function PaginaPerfil({ usuario }) {
           {/* Avatar com iniciais */}
           <div style={{
             width: '96px', height: '96px', borderRadius: '28px',
-            background: 'linear-gradient(135deg, #10b981, #059669)',
+            background: 'var(--accent-gradiente)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 800, fontSize: '2rem', letterSpacing: '1px',
             boxShadow: '0 0 24px rgba(16,185,129,0.35)',
@@ -144,8 +144,8 @@ function PaginaPerfil({ usuario }) {
           </div>
 
           <div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>{nome}</div>
-            <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '2px' }}>{email}</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--texto)' }}>{nome}</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--texto-suave)', marginTop: '2px' }}>{email}</div>
           </div>
 
           {/* Upload de foto (visual) */}
@@ -154,16 +154,16 @@ function PaginaPerfil({ usuario }) {
               htmlFor="photo-upload"
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                cursor: 'pointer', borderRadius: '12px', border: '1px solid #334155',
-                padding: '11px 14px', color: '#f8fafc', background: '#111827', transition: 'all 0.2s',
+                cursor: 'pointer', borderRadius: '12px', border: '1px solid var(--borda-forte)',
+                padding: '11px 14px', color: 'var(--texto)', background: '#111827', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#10b981'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--borda-forte)'; }}
             >
               <FaCamera size={14} /> Alterar foto
             </label>
             <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+            <span style={{ color: 'var(--texto-mudo)', fontSize: '0.8rem' }}>
               {foto ? `Selecionado: ${foto}` : 'JPG ou PNG.'}
             </span>
           </div>
@@ -175,20 +175,20 @@ function PaginaPerfil({ usuario }) {
           {/* ── Segurança ── */}
           <div style={cardStyle}>
             <div style={{ marginBottom: '18px' }}>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc' }}>Segurança</div>
-              <div style={{ color: '#94a3b8', marginTop: '6px', fontSize: '0.9rem' }}>Controle de login e autenticação da conta.</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--texto)' }}>Segurança</div>
+              <div style={{ color: 'var(--texto-suave)', marginTop: '6px', fontSize: '0.9rem' }}>Controle de login e autenticação da conta.</div>
             </div>
 
             <div style={{ display: 'grid', gap: '12px' }}>
               {/* 2FA */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid #1e293b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid var(--borda)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #334155' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--borda-forte)' }}>
                     <FaShieldAlt size={18} color="#10b981" />
                   </div>
                   <div>
-                    <div style={{ color: '#f8fafc', fontWeight: 600 }}>Verificação em duas etapas (2FA)</div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: twoFaAtivo ? '#34d399' : '#94a3b8', fontSize: '0.85rem', marginTop: '2px' }}>
+                    <div style={{ color: 'var(--texto)', fontWeight: 600 }}>Verificação em duas etapas (2FA)</div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: twoFaAtivo ? 'var(--accent-claro)' : 'var(--texto-suave)', fontSize: '0.85rem', marginTop: '2px' }}>
                       {twoFaAtivo ? <FaCheckCircle size={11} /> : <FaTimesCircle size={11} />}
                       {twoFaAtivo ? 'Ativado' : 'Desativado'}
                     </div>
@@ -198,7 +198,7 @@ function PaginaPerfil({ usuario }) {
                   {!twoFaAtivo && twoFaMode === 'view' && (
                     <button
                       type="button" onClick={handleStartTwoFa} disabled={twoFaLoading}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#10b981', color: '#0f172a', border: '1px solid transparent', borderRadius: '10px', padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent)', color: 'var(--surface)', border: '1px solid transparent', borderRadius: '10px', padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
                     >
                       <FaLock size={14} /> Ativar 2FA
                     </button>
@@ -216,28 +216,28 @@ function PaginaPerfil({ usuario }) {
 
               {/* Fluxo de confirmação do 2FA */}
               {twoFaMode === 'confirm' && (
-                <div style={{ display: 'grid', gap: '16px', padding: '18px', borderRadius: '16px', background: '#111827', border: '1px solid #334155' }}>
+                <div style={{ display: 'grid', gap: '16px', padding: '18px', borderRadius: '16px', background: '#111827', border: '1px solid var(--borda-forte)' }}>
                   <div style={{ display: 'grid', gap: '10px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>1. Escaneie o QR code com o app do autenticador.</span>
+                    <span style={{ color: 'var(--texto-suave)', fontSize: '0.9rem' }}>1. Escaneie o QR code com o app do autenticador.</span>
                     {qrCodeDataUrl && (
-                      <img src={qrCodeDataUrl} alt="QR code 2FA" style={{ width: '160px', height: '160px', borderRadius: '16px', background: '#0f172a', padding: '16px', border: '1px solid #334155' }} />
+                      <img src={qrCodeDataUrl} alt="QR code 2FA" style={{ width: '160px', height: '160px', borderRadius: '16px', background: 'var(--surface)', padding: '16px', border: '1px solid var(--borda-forte)' }} />
                     )}
-                    <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Ou use este segredo manualmente:</span>
-                    <div style={{ padding: '12px 14px', background: '#0f172a', borderRadius: '14px', border: '1px solid #334155', color: '#f8fafc', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                    <span style={{ color: 'var(--texto-suave)', fontSize: '0.9rem' }}>Ou use este segredo manualmente:</span>
+                    <div style={{ padding: '12px 14px', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--borda-forte)', color: 'var(--texto)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                       {manualSecret || 'Gerando...'}
                     </div>
                   </div>
                   <div style={{ display: 'grid', gap: '10px' }}>
-                    <label htmlFor="confirmacao2fa" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>2. Digite o código do app</label>
+                    <label htmlFor="confirmacao2fa" style={{ color: 'var(--texto-suave)', fontSize: '0.85rem' }}>2. Digite o código do app</label>
                     <input
                       id="confirmacao2fa" type="text" value={verificationCode}
                       onChange={e => setVerificationCode(e.target.value)} placeholder="123456"
-                      style={{ width: '100%', borderRadius: '12px', border: '1px solid #334155', background: '#0f172a', color: '#f8fafc', padding: '14px 16px', boxSizing: 'border-box' }}
+                      style={{ width: '100%', borderRadius: '12px', border: '1px solid var(--borda-forte)', background: 'var(--surface)', color: 'var(--texto)', padding: '14px 16px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <button
                     type="button" onClick={handleConfirmTwoFa} disabled={twoFaLoading || !verificationCode}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: 'none', background: '#10b981', color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: 'none', background: 'var(--accent)', color: 'var(--surface)', fontWeight: 700, cursor: 'pointer' }}
                   >
                     {twoFaLoading ? 'Confirmando...' : 'Confirmar 2FA'}
                   </button>
@@ -245,21 +245,21 @@ function PaginaPerfil({ usuario }) {
               )}
 
               {/* Senha */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid #1e293b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid var(--borda)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #334155' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--borda-forte)' }}>
                     <FaKey size={16} color="#60a5fa" />
                   </div>
                   <div>
-                    <div style={{ color: '#f8fafc', fontWeight: 600 }}>Senha de acesso</div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '2px' }}>Altere sua senha periodicamente.</div>
+                    <div style={{ color: 'var(--texto)', fontWeight: 600 }}>Senha de acesso</div>
+                    <div style={{ color: 'var(--texto-suave)', fontSize: '0.85rem', marginTop: '2px' }}>Altere sua senha periodicamente.</div>
                   </div>
                 </div>
                 <button
                   type="button" onClick={abrirTrocarSenha}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.35)', borderRadius: '10px', padding: '10px 14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--surface)', color: 'var(--info)', border: '1px solid rgba(96,165,250,0.35)', borderRadius: '10px', padding: '10px 14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.1)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#0f172a'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; }}
                 >
                   <FaKey size={13} /> Alterar senha
                 </button>
@@ -270,20 +270,20 @@ function PaginaPerfil({ usuario }) {
           {/* ── Informações da conta (desktop apenas — no mobile os dados já aparecem no card de foto) ── */}
           {!isMobile && (
             <div style={cardStyle}>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc', marginBottom: '16px' }}>Informações da conta</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--texto)', marginBottom: '16px' }}>Informações da conta</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid #1e293b' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid var(--borda)' }}>
                   <FaUser size={15} color="#64748b" />
                   <div style={{ minWidth: 0 }}>
                     <div style={labelStyle}>Nome</div>
-                    <div style={{ color: '#f8fafc', fontWeight: 600, marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</div>
+                    <div style={{ color: 'var(--texto)', fontWeight: 600, marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid #1e293b' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', background: '#111827', border: '1px solid var(--borda)' }}>
                   <FaEnvelope size={15} color="#64748b" />
                   <div style={{ minWidth: 0 }}>
                     <div style={labelStyle}>Email</div>
-                    <div style={{ color: '#f8fafc', fontWeight: 600, marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
+                    <div style={{ color: 'var(--texto)', fontWeight: 600, marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
                   </div>
                 </div>
               </div>

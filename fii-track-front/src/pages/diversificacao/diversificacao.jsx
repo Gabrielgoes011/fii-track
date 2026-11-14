@@ -29,7 +29,7 @@ const corDoNivel = (nivel) => COR_NIVEL[nivel] || '#94a3b8';
 function KpiCard({ icon: Icon, label, valor, sub, cor, isMobile }) {
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px',
       padding: isMobile ? '0.75rem 0.85rem' : '1rem 1.25rem',
       display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '14px', minWidth: 0,
     }}>
@@ -43,11 +43,11 @@ function KpiCard({ icon: Icon, label, valor, sub, cor, isMobile }) {
         </div>
       )}
       <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-        <p style={{ margin: '2px 0 0', fontSize: isMobile ? 'clamp(0.95rem, 4.5vw, 1.15rem)' : '1.15rem', fontWeight: 700, color: cor ?? '#f8fafc', lineHeight: 1.2 }}>
+        <p style={{ margin: 0, fontSize: isMobile ? '10px' : '11px', color: 'var(--texto-mudo)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+        <p style={{ margin: '2px 0 0', fontSize: isMobile ? 'clamp(0.95rem, 4.5vw, 1.15rem)' : '1.15rem', fontWeight: 700, color: cor ?? 'var(--texto)', lineHeight: 1.2 }}>
           {valor}
         </p>
-        {sub && <p style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? '#64748b' }}>{sub.txt}</p>}
+        {sub && <p style={{ margin: '1px 0 0', fontSize: isMobile ? '10px' : '11px', color: sub.cor ?? 'var(--texto-mudo)' }}>{sub.txt}</p>}
       </div>
     </div>
   );
@@ -63,17 +63,17 @@ function SegmentoRow({ s, cor, isMobile }) {
 
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+      background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px',
       padding: isMobile ? '12px' : '14px 16px', marginBottom: '10px',
     }}>
       {/* Cabeçalho da linha: nome + selo de desvio */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: cor, flexShrink: 0 }} />
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {s.segmento}
           </span>
-          <span style={{ fontSize: '11px', color: '#475569', flexShrink: 0 }}>
+          <span style={{ fontSize: '11px', color: 'var(--texto-apagado)', flexShrink: 0 }}>
             · {s.qtdAtivos} ativo{s.qtdAtivos > 1 ? 's' : ''}
           </span>
         </div>
@@ -87,14 +87,14 @@ function SegmentoRow({ s, cor, isMobile }) {
       </div>
 
       {/* Barra de exposição atual */}
-      <div style={{ position: 'relative', height: '10px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: '10px', background: 'var(--surface-2)', borderRadius: '6px', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${atualPct}%`, background: cor, borderRadius: '6px', transition: 'width 0.4s' }} />
       </div>
       {/* Marcador da meta (linha vertical sobre a trilha) */}
       <div style={{ position: 'relative', height: 0 }}>
         <div title="Meta do segmento" style={{
           position: 'absolute', top: '-13px', left: `calc(${metaPct}% - 1px)`,
-          width: '2px', height: '16px', background: '#f8fafc', opacity: 0.7,
+          width: '2px', height: '16px', background: 'var(--texto)', opacity: 0.7,
         }} />
       </div>
 
@@ -102,8 +102,8 @@ function SegmentoRow({ s, cor, isMobile }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '13px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>
           <strong style={{ color: cor }}>{fmtPerc(s.atualFrac)}</strong>
-          <span style={{ color: '#475569' }}> atual · meta </span>
-          <strong style={{ color: '#cbd5e1' }}>{fmtPerc(s.metaFrac)}</strong>
+          <span style={{ color: 'var(--texto-apagado)' }}> atual · meta </span>
+          <strong style={{ color: 'var(--texto-2)' }}>{fmtPerc(s.metaFrac)}</strong>
         </span>
         <span style={{ fontSize: '12px', fontWeight: 600, color: corNivel, fontVariantNumeric: 'tabular-nums' }}>
           {fmtPP(s.desvioFrac)}
@@ -139,7 +139,7 @@ export default function PaginaDiversificacao() {
   const segmentos = dados?.segmentos || [];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: 'var(--altura-util, 100vh)', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto)', fontFamily: 'sans-serif' }}>
       <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0.75rem' : '1rem 0.5rem', overflowX: 'hidden' }}>
 
         {/* ── Header ── */}
@@ -148,8 +148,8 @@ export default function PaginaDiversificacao() {
             <FiPieChart size={20} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Diversificação</h1>
-            <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Exposição da carteira por segmento</p>
+            <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: 'var(--texto)', margin: 0 }}>Diversificação</h1>
+            <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: 0 }}>Exposição da carteira por segmento</p>
           </div>
         </header>
 
@@ -157,12 +157,12 @@ export default function PaginaDiversificacao() {
           <SkeletonTable />
         ) : segmentos.length === 0 ? (
           <div style={{
-            background: '#0f172a', border: '2px dashed #1e293b', borderRadius: '16px',
+            background: 'var(--surface)', border: '2px dashed var(--borda)', borderRadius: '16px',
             padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', textAlign: 'center', gap: '12px',
           }}>
             <FiLayers size={24} color="#64748b" />
-            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--texto-suave)' }}>
               Nenhum ativo com posição na carteira. Adicione ativos e atualize as cotações em <strong>Controle de Ativos</strong>.
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function PaginaDiversificacao() {
             {/* ── Rodapé explicativo ── */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '12px' }}>
               <AiOutlineInfoCircle size={13} color="#475569" style={{ marginTop: '2px', flexShrink: 0 }} />
-              <p style={{ margin: 0, fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '11px', color: 'var(--texto-apagado)', lineHeight: 1.5 }}>
                 A exposição atual usa o valor de mercado de cada ativo na última consulta de cotações.
                 A meta de cada segmento é a soma das metas (% ideal) que você definiu para os ativos daquele segmento em Controle de Ativos.
                 O marcador claro na barra indica a meta.

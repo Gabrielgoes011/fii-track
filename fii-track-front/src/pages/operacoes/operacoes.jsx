@@ -88,27 +88,27 @@ export default function PaginaOperacoes() {
           display: 'inline-flex', alignItems: 'center', padding: '3px 12px',
           borderRadius: '9999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
           backgroundColor: val?.toUpperCase() === 'COMPRA' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-          color: val?.toUpperCase() === 'COMPRA' ? '#10b981' : '#f87171',
+          color: val?.toUpperCase() === 'COMPRA' ? 'var(--accent)' : 'var(--perigo)',
           border: `1px solid ${val?.toUpperCase() === 'COMPRA' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
         }}>{val}</span>
       ),
     },
-    { titulo: 'Ativo',       acesso: 'ativo',      width: '10%', render: (val) => <span style={{ fontWeight: 700, color: '#f8fafc' }}>{val}</span> },
+    { titulo: 'Ativo',       acesso: 'ativo',      width: '10%', render: (val) => <span style={{ fontWeight: 700, color: 'var(--texto)' }}>{val}</span> },
     {
       titulo: 'Seguimento', acesso: 'seguimento', width: '15%', align: 'center',
       render: (val) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500, backgroundColor: 'rgba(96,165,250,0.12)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.25)' }}>{val}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500, backgroundColor: 'rgba(96,165,250,0.12)', color: 'var(--info)', border: '1px solid rgba(96,165,250,0.25)' }}>{val}</span>
         </div>
       ),
     },
     { titulo: 'Qtde',        acesso: 'qtde',       width: '8%',  align: 'center' },
     { titulo: 'Preço',       acesso: 'preco',      width: '12%', align: 'right', render: (val) => <span className="vp">{fmt(val)}</span> },
-    { titulo: 'Valor Total', acesso: 'valorTotal', width: '14%', align: 'right', render: (val) => <span className="vp" style={{ fontWeight: 600, color: '#f8fafc' }}>{fmt(val)}</span> },
+    { titulo: 'Valor Total', acesso: 'valorTotal', width: '14%', align: 'right', render: (val) => <span className="vp" style={{ fontWeight: 600, color: 'var(--texto)' }}>{fmt(val)}</span> },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: 'var(--altura-util, 100vh)', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto)', fontFamily: 'sans-serif' }}>
       <main style={{ maxWidth: '100%', margin: '0 auto', padding: isMobile ? '0.5rem 0' : '1rem 0.5rem' }}>
 
         {/* ── Header ── */}
@@ -117,20 +117,20 @@ export default function PaginaOperacoes() {
             <FiRepeat size={20} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Operações</h1>
-            <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Histórico de compras e vendas dos seus ativos</p>
+            <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: 'var(--texto)', margin: 0 }}>Operações</h1>
+            <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: 0 }}>Histórico de compras e vendas dos seus ativos</p>
           </div>
         </header>
 
         {/* ── Seção do Gráfico ── */}
         <div style={{
-          backgroundColor: '#0f172a', borderRadius: '0.75rem',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)', border: '1px solid #1e293b',
+          backgroundColor: 'var(--surface)', borderRadius: '0.75rem',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)', border: '1px solid var(--borda)',
           padding: isMobile ? '1rem' : '1.5rem', marginBottom: '1.5rem',
         }}>
           {/* Header do gráfico */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: (!isMobile || graficoAberto) ? '1.5rem' : '0', flexWrap: 'wrap', gap: '10px' }}>
-            <h2 style={{ fontSize: isMobile ? '15px' : '18px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+            <h2 style={{ fontSize: isMobile ? '15px' : '18px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
               Compras por Mês
             </h2>
 
@@ -140,13 +140,13 @@ export default function PaginaOperacoes() {
               {(!isMobile || graficoAberto) && (
                 <>
                   {/* Toggle gráfico */}
-                  <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '4px', borderRadius: '0.5rem' }}>
+                  <div style={{ display: 'flex', backgroundColor: 'var(--surface-2)', padding: '4px', borderRadius: '0.5rem' }}>
                     {[['barras', AiOutlineBarChart], ['area', AiOutlineAreaChart]].map(([tipo, Icon]) => (
-                      <button key={tipo} onClick={() => setTipoGrafico(tipo)} style={{
+                      <button aria-label={`Gráfico ${tipo}`} title={`Gráfico ${tipo}`} key={tipo} onClick={() => setTipoGrafico(tipo)} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         padding: '6px 10px',
-                        backgroundColor: tipoGrafico === tipo ? '#0f172a' : 'transparent',
-                        color: tipoGrafico === tipo ? '#10b981' : '#64748b',
+                        backgroundColor: tipoGrafico === tipo ? 'var(--surface)' : 'transparent',
+                        color: tipoGrafico === tipo ? 'var(--accent)' : 'var(--texto-mudo)',
                         borderRadius: '0.375rem', border: 'none', cursor: 'pointer',
                         transition: 'all 0.2s',
                       }}>
@@ -155,15 +155,15 @@ export default function PaginaOperacoes() {
                     ))}
                   </div>
 
-                  <div style={{ width: '1px', height: '24px', backgroundColor: '#334155' }} />
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--borda-forte)' }} />
 
-                  <label style={{ fontSize: '13px', fontWeight: 500, color: '#94a3b8' }}>ANO</label>
+                  <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--texto-suave)' }}>ANO</label>
                   <select
                     value={anoSelecionado}
                     onChange={(e) => setAnoSelecionado(e.target.value)}
                     style={{
-                      appearance: 'none', backgroundColor: '#1e293b', border: '1px solid #334155',
-                      color: '#f1f5f9', fontWeight: 600, padding: '0.4rem 0.75rem',
+                      appearance: 'none', backgroundColor: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
+                      color: 'var(--texto)', fontWeight: 600, padding: '0.4rem 0.75rem',
                       borderRadius: '0.375rem', outline: 'none', cursor: 'pointer',
                       fontSize: '13px',
                     }}
@@ -183,12 +183,12 @@ export default function PaginaOperacoes() {
                   title={graficoAberto ? 'Ocultar gráfico' : 'Mostrar gráfico'}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'transparent', border: '1px solid #334155',
-                    borderRadius: '8px', color: '#94a3b8', cursor: 'pointer',
+                    background: 'transparent', border: '1px solid var(--borda-forte)',
+                    borderRadius: '8px', color: 'var(--texto-suave)', cursor: 'pointer',
                     padding: '6px', transition: 'all 0.2s',
                   }}
-                  onMouseOver={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--texto)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
                 >
                   {graficoAberto ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
                 </button>
@@ -205,7 +205,7 @@ export default function PaginaOperacoes() {
               }
 
               {/* Legenda */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1.25rem', fontSize: '13px', flexWrap: 'wrap', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1.25rem', fontSize: '13px', flexWrap: 'wrap', color: 'var(--texto-suave)' }}>
                 {[['Compra','#4ade80','#16a34a'],['Venda','#f87171','#dc2626'],['Líquido','#60a5fa','#2563eb']].map(([label, c1, c2]) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ width: '14px', height: '14px', background: `linear-gradient(180deg, ${c1} 0%, ${c2} 100%)`, borderRadius: '3px' }} />
@@ -223,15 +223,15 @@ export default function PaginaOperacoes() {
           <div>
             {/* Header mobile */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>Operações</h2>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>Operações</h2>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button
+              <button aria-label="Importar operações" title="Importar operações"
                 onClick={() => setModalImportAberto(true)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
                   padding: '8px 12px', borderRadius: '8px',
                   background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)',
-                  color: '#60a5fa', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                  color: 'var(--info)', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                 }}
               >
                 <FiUpload size={14} />
@@ -241,7 +241,7 @@ export default function PaginaOperacoes() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '8px 14px', borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  background: 'var(--accent-gradiente)',
                   color: '#fff', border: 'none', cursor: 'pointer',
                   fontSize: '13px', fontWeight: 600,
                   boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
@@ -260,8 +260,8 @@ export default function PaginaOperacoes() {
                 onChange={e => setMesSelecionado(e.target.value)}
                 style={{
                   flex: 1,
-                  backgroundColor: '#0f172a', border: '1px solid #1e293b',
-                  color: '#f1f5f9', fontSize: '14px', padding: '10px 12px',
+                  backgroundColor: 'var(--surface)', border: '1px solid var(--borda)',
+                  color: 'var(--texto)', fontSize: '14px', padding: '10px 12px',
                   borderRadius: '8px', outline: 'none', cursor: 'pointer',
                 }}
               >
@@ -271,8 +271,8 @@ export default function PaginaOperacoes() {
                 value={anoSelecionado}
                 onChange={e => setAnoSelecionado(e.target.value)}
                 style={{
-                  backgroundColor: '#0f172a', border: '1px solid #1e293b',
-                  color: '#f1f5f9', fontSize: '14px', padding: '10px 12px',
+                  backgroundColor: 'var(--surface)', border: '1px solid var(--borda)',
+                  color: 'var(--texto)', fontSize: '14px', padding: '10px 12px',
                   borderRadius: '8px', outline: 'none', cursor: 'pointer',
                   fontWeight: 600,
                 }}
@@ -285,9 +285,9 @@ export default function PaginaOperacoes() {
 
             {/* Lista de cards */}
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Carregando...</div>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)' }}>Carregando...</div>
             ) : operacoesComTotal.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b' }}>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--borda)' }}>
                 Nenhuma operação encontrada.
               </div>
             ) : (
@@ -296,24 +296,24 @@ export default function PaginaOperacoes() {
                   const isCompra = op.operacao?.toUpperCase() === 'COMPRA';
                   return (
                     <div key={op.id ?? i} style={{
-                      background: '#0f172a', border: '1px solid #1e293b',
+                      background: 'var(--surface)', border: '1px solid var(--borda)',
                       borderRadius: '12px', padding: '14px 16px',
                       borderLeft: `3px solid ${isCompra ? '#10b981' : '#f87171'}`,
                     }}>
                       {/* linha 1: ativo + tipo + lixeira */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc' }}>{op.ativo}</span>
+                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--texto)' }}>{op.ativo}</span>
                           <span style={{
                             fontSize: '11px', fontWeight: 600, padding: '2px 10px', borderRadius: '9999px',
                             backgroundColor: isCompra ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                            color: isCompra ? '#10b981' : '#f87171',
+                            color: isCompra ? 'var(--accent)' : 'var(--perigo)',
                             border: `1px solid ${isCompra ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
                           }}>{op.operacao}</span>
                         </div>
-                        <button
+                        <button aria-label="Excluir operação" title="Excluir operação"
                           onClick={() => abrirModalExclusao(op)}
-                          style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--perigo)', display: 'flex', alignItems: 'center' }}
                         >
                           <FiTrash2 size={14} />
                         </button>
@@ -328,16 +328,16 @@ export default function PaginaOperacoes() {
                           ['Preço Unit.', <span className="vp">{fmt(op.preco)}</span>],
                         ].map(([k, v]) => (
                           <div key={k}>
-                            <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '1px' }}>{k}</div>
-                            <div style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 500 }}>{v}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--texto-mudo)', marginBottom: '1px' }}>{k}</div>
+                            <div style={{ fontSize: '13px', color: 'var(--texto-2)', fontWeight: 500 }}>{v}</div>
                           </div>
                         ))}
                       </div>
 
                       {/* linha 3: total */}
-                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: '#64748b' }}>Valor Total</span>
-                        <span className="vp" style={{ fontSize: '15px', fontWeight: 700, color: isCompra ? '#10b981' : '#f87171' }}>
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--borda)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--texto-mudo)' }}>Valor Total</span>
+                        <span className="vp" style={{ fontSize: '15px', fontWeight: 700, color: isCompra ? 'var(--accent)' : 'var(--perigo)' }}>
                           {isCompra ? '+ ' : '− '}{fmt(op.valorTotal)}
                         </span>
                       </div>
@@ -367,7 +367,7 @@ export default function PaginaOperacoes() {
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '0.5rem 1rem', borderRadius: '8px',
                   background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)',
-                  color: '#60a5fa', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                  color: 'var(--info)', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                   transition: 'all 0.2s',
                 }}
                 onMouseOver={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.2)'; }}
@@ -381,7 +381,7 @@ export default function PaginaOperacoes() {
               <select
                 value={mesSelecionado}
                 onChange={e => setMesSelecionado(e.target.value)}
-                style={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f1f5f9', fontSize: '14px', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', outline: 'none', cursor: 'pointer' }}
+                style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--borda-forte)', color: 'var(--texto)', fontSize: '14px', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', outline: 'none', cursor: 'pointer' }}
               >
                 {MESES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
@@ -416,7 +416,7 @@ export default function PaginaOperacoes() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#1e293b', border: '1px solid #334155',
+              background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
               borderRadius: '16px', padding: '2rem',
               width: '100%', maxWidth: '480px',
               boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
@@ -425,16 +425,16 @@ export default function PaginaOperacoes() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <div>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                   Importar Operações
                 </h2>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0' }}>
                   Escolha o formato do arquivo
                 </p>
               </div>
-              <button
+              <button aria-label="Fechar importação" title="Fechar importação"
                 onClick={() => setModalImportAberto(false)}
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--borda-forte)', borderRadius: '8px', color: 'var(--texto-mudo)', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
               >
                 ✕
               </button>
@@ -459,10 +459,10 @@ export default function PaginaOperacoes() {
                   <FiDownload size={18} color="#10b981" />
                 </div>
                 <div>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                     Modelo FIITrack
                   </p>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0', lineHeight: 1.5 }}>
                     Baixe e preencha nossa planilha padrão. Importação simples e sem erros.
                   </p>
                 </div>
@@ -484,10 +484,10 @@ export default function PaginaOperacoes() {
                   <FiFileText size={18} color="#60a5fa" />
                 </div>
                 <div>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                     Nota de Corretagem B3
                   </p>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0', lineHeight: 1.5 }}>
                     Importe diretamente o arquivo exportado pela B3. Detectamos as operações automaticamente.
                   </p>
                 </div>
@@ -507,23 +507,23 @@ export default function PaginaOperacoes() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', paddingTop: '4px' }}>
           <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FiAlertTriangle size={22} color="#e74c3c" />
+            <FiAlertTriangle size={22} color="var(--perigo)" />
           </div>
 
-          <p style={{ fontSize: '13px', color: '#8a9bb5', textAlign: 'center', lineHeight: 1.65, margin: 0 }}>
+          <p style={{ fontSize: '13px', color: 'var(--texto-suave)', textAlign: 'center', lineHeight: 1.65, margin: 0 }}>
             Tem certeza que deseja excluir essa operação? Esta ação não pode ser desfeita.
           </p>
 
           {operacaoParaExcluir && (
-            <div style={{ width: '100%', padding: '12px 16px', background: '#0d1520', border: '1px solid #1e2d3d', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ width: '100%', padding: '12px 16px', background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
                 ['Ativo',      operacaoParaExcluir.ativo],
                 ['Quantidade', operacaoParaExcluir.qtde],
                 ['Total',      fmt(operacaoParaExcluir.qtde * operacaoParaExcluir.preco)],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#4e6480' }}>{k}</span>
-                  <span style={{ color: '#cdd8e8', fontWeight: 600 }}>{v}</span>
+                  <span style={{ color: 'var(--texto-mudo)' }}>{k}</span>
+                  <span style={{ color: 'var(--texto)', fontWeight: 600 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -532,13 +532,13 @@ export default function PaginaOperacoes() {
           <div style={{ display: 'flex', gap: '8px', width: '100%', paddingTop: '4px' }}>
             <button
               onClick={() => { setModalExclusaoAberto(false); setOperacaoParaExcluir(null); }}
-              style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #243040', color: '#7a8fa8', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+              style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid var(--borda-forte)', color: 'var(--texto-suave)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
             >
               Cancelar
             </button>
             <button
               onClick={confirmarExclusao}
-              style={{ flex: 1, padding: '10px', background: '#c0392b', border: '1px solid #c0392b', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(192,57,43,0.35)' }}
+              style={{ flex: 1, padding: '10px', background: 'var(--perigo-forte)', border: '1px solid var(--perigo-forte)', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(192,57,43,0.35)' }}
             >
               Excluir
             </button>

@@ -108,17 +108,17 @@ function PaginaDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <div style={{
             width: '40px', height: '40px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, #10b981, #059669)',
+            background: 'var(--accent-gradiente)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 20px rgba(16,185,129,0.3)',
           }}>
             <FiTrendingUp size={20} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--texto)', margin: 0 }}>
               Dashboard
             </h1>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+            <p style={{ fontSize: '13px', color: 'var(--texto-mudo)', margin: 0 }}>
               Visão geral da sua carteira de FIIs
             </p>
           </div>
@@ -139,8 +139,8 @@ function PaginaDashboard() {
             <div
               key={s.label}
               style={{
-                background: '#0f172a',
-                border: '1px solid #1e293b',
+                background: 'var(--surface)',
+                border: '1px solid var(--borda)',
                 borderRadius: '12px',
                 padding: '1.1rem',
                 display: 'flex',
@@ -154,7 +154,7 @@ function PaginaDashboard() {
                 e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#1e293b';
+                e.currentTarget.style.borderColor = 'var(--borda)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
@@ -167,7 +167,7 @@ function PaginaDashboard() {
                 <Icon size={20} color={s.color} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--texto-mudo)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   {s.label}
                 </div>
                 <div className="vp" style={{
@@ -213,8 +213,8 @@ function PaginaDashboard() {
               key={c.title}
               onClick={() => c.route && navigate(c.route)}
               style={{
-                background: '#0f172a',
-                border: '1px solid #1e293b',
+                background: 'var(--surface)',
+                border: '1px solid var(--borda)',
                 borderRadius: '14px',
                 padding: '1.5rem',
                 cursor: 'pointer',
@@ -228,7 +228,7 @@ function PaginaDashboard() {
                 e.currentTarget.style.boxShadow = `0 8px 30px rgba(0,0,0,0.3)`;
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#1e293b';
+                e.currentTarget.style.borderColor = 'var(--borda)';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
@@ -258,10 +258,10 @@ function PaginaDashboard() {
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', margin: '0 0 6px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--texto)', margin: '0 0 6px' }}>
                 {c.title}
               </h3>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: '13px', color: 'var(--texto-mudo)', margin: 0, lineHeight: 1.5 }}>
                 {loading ? 'Carregando...' : getSubtitleWithCount(c)}
               </p>
 

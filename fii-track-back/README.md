@@ -325,12 +325,12 @@ Posição consolidada da carteira, rebalanceamento (percentual ideal), preço te
   "cotacoes": { "MXRF11": { "preco": 9.85, "variacaoPerc": 0.5, "dtConsulta": "..." } },
   "atualizadoEm": "2026-09-14T09:57:13.000Z",
   "origem": "brapi",
-  "ttlMinutos": 15,
-  "proximaAtualizacaoEm": "2026-09-14T10:12:13.000Z"
+  "proximaAtualizacaoEm": "2026-09-14T21:30:00.000Z"
 }
 ```
-- `origem`: `brapi` (buscou preços novos), `cache` (dados ainda frescos dentro do TTL de 15 min) ou `cache-fallback` (Brapi indisponível, retornou o último cache).
-- Para economizar requisições do plano da Brapi, cotações consultadas há menos de **15 minutos** são servidas do cache (tabela `cotacoes`) e não geram nova chamada externa.
+- `origem`: `brapi` (buscou preços novos), `cache` (as cotações já são do último fechamento do pregão) ou `cache-fallback` (Brapi indisponível, retornou o último cache).
+- `proximaAtualizacaoEm`: próximo fechamento do pregão (18:30, horário de Brasília), quando a Brapi passa a ter preço novo.
+- A Brapi só traz preço novo **uma vez por dia, no fechamento do pregão**. Por isso uma cotação é considerada atual se foi consultada **depois do último fechamento** (dia útil, 18:30). Enquanto estiver atual, ela vem do cache (tabela `cotacoes`), não gera chamada externa e a tela **não** avisa "sem preço novo" (fim de semana, por exemplo, não tem preço novo). A regra fica em `src/utils/pregaoUtils.js` (espelhada no front).
 
 ### Histórico da Carteira
 

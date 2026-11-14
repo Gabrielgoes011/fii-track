@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toastSuccess, toastWarn, handleError } from '../../utils/responseUtils';
+import { toastSuccess, toastWarn, toastInfo, handleError } from '../../utils/responseUtils';
 import { authService } from '../../services/auth/authService';
 import {
   FiMail, FiLock, FiEye, FiEyeOff,
@@ -48,7 +48,7 @@ function Login({ onLogin }) {
 
       if (response.requires2fa) {
         setRequires2fa(true);
-        toastWarn('2FA detectado. Informe o código do autenticador para continuar.');
+        toastInfo('Senha correta. Agora digite o código de 6 dígitos do seu app autenticador.');
         return;
       }
 
@@ -63,7 +63,23 @@ function Login({ onLogin }) {
       onLogin(true, usuario);
       setTimeout(() => navigate('/'), 800);
     } catch (error) {
-      handleError(error);
+      const status = error.response?.status;
+
+      // código 2FA recusado: limpa o campo para digitar o código novo do app
+      if (requires2fa && status === 401) {
+        setCodigo2fa('');
+      }
+
+      if (!error.response && error.code !== 'ECONNABORTED') {
+        // servidor não respondeu (desligado, sem internet ou endereço da API errado)
+        handleError(error, 'Não foi possível conectar ao servidor. Verifique sua internet ou se o servidor está ligado.');
+      } else if (status === 404) {
+        // a rota de login não existe nesse endereço (VITE_API_URL sem /api, por exemplo)
+        handleError(error, 'O serviço de login não foi encontrado no servidor. Confira o endereço da API.');
+      } else {
+        // demais casos: usa a mensagem que o back mandou
+        handleError(error);
+      }
     } finally {
       setLoading(false);
     }
@@ -628,9 +644,11 @@ function Login({ onLogin }) {
                     <input
                       id="codigo2fa"
                       type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
                       className="field-input"
                       value={codigo2fa}
-                      onChange={(e) => setCodigo2fa(e.target.value)}
+                      onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, ''))}
                       onFocus={() => setFocusedField('codigo2fa')}
                       onBlur={() => setFocusedField(null)}
                       placeholder="123456"

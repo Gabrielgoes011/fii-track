@@ -1,0 +1,198 @@
+/* ─── Kit de UI do FIITrack ───
+   Estilos dos componentes de src/components/ui. Só usa os tokens do global.css (var(--...)).
+   Estados de hover e foco ficam aqui (CSS), sem onMouseOver em cada botão. */
+
+/* ── Botao ── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--raio-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease, color 0.15s ease;
+}
+.ui-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ui-btn--sm { padding: 0.45rem 0.8rem; font-size: 12px; }
+.ui-btn--bloco { width: 100%; }
+
+.ui-btn--primario {
+  background: var(--accent-gradiente);
+  color: #fff;
+  box-shadow: var(--accent-sombra);
+}
+.ui-btn--primario:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+}
+
+.ui-btn--secundario {
+  background: transparent;
+  border-color: var(--borda-forte);
+  color: var(--texto-suave);
+}
+.ui-btn--secundario:hover:not(:disabled) {
+  border-color: var(--texto-apagado);
+  color: var(--texto);
+}
+
+.ui-btn--perigo {
+  background: var(--perigo-forte);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+.ui-btn--perigo:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.5);
+}
+
+.ui-btn--fantasma {
+  background: transparent;
+  color: var(--texto-suave);
+}
+.ui-btn--fantasma:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--texto);
+}
+
+/* ── BotaoIcone (editar, excluir...) ── */
+.ui-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ui-icone:disabled { opacity: 0.5; cursor: not-allowed; }
+.ui-icone--info    { color: var(--info);   background: rgba(96, 165, 250, 0.1);  border-color: rgba(96, 165, 250, 0.2); }
+.ui-icone--perigo  { color: var(--perigo); background: rgba(248, 113, 113, 0.1); border-color: rgba(248, 113, 113, 0.2); }
+.ui-icone--neutro  { color: var(--texto-suave); background: rgba(255, 255, 255, 0.04); border-color: var(--borda-forte); }
+.ui-icone--info:hover:not(:disabled)   { background: rgba(96, 165, 250, 0.18); }
+.ui-icone--perigo:hover:not(:disabled) { background: rgba(248, 113, 113, 0.18); }
+.ui-icone--neutro:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
+
+/* ── Card ── */
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+  overflow: hidden;
+}
+.ui-card--destaque { border-left: 3px solid var(--accent); }
+.ui-card__cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--borda);
+  background: rgba(255, 255, 255, 0.02);
+}
+.ui-card__titulo { margin: 0; font-size: 16px; font-weight: 700; color: var(--texto); }
+.ui-card__subtitulo { font-size: 12px; color: var(--texto-mudo); margin-left: 0.5rem; }
+.ui-card__corpo { padding: 1rem 1.25rem; }
+.ui-card__corpo--compacto { padding: 14px 16px; }
+
+/* ── CardMetrica ── */
+.ui-metrica {
+  display: inline-block;
+  min-width: 150px;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+  padding: 1rem 1.5rem;
+}
+.ui-metrica__rotulo { margin: 0; font-size: 0.85rem; color: var(--texto-mudo); }
+.ui-metrica__valor { margin: 0.4rem 0 0; font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+.ui-metrica__valor--texto { color: var(--texto); }
+.ui-metrica__valor--perigo { color: var(--perigo); }
+.ui-metrica__valor--aviso { color: var(--aviso); }
+
+/* ── CabecalhoPagina ── */
+.ui-pagina-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.ui-pagina-cab h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
+  font-weight: 700;
+  color: var(--texto);
+}
+.ui-pagina-cab p { margin: 0; font-size: 13px; color: var(--texto-mudo); }
+
+/* ── Campo ── */
+.ui-campo { display: flex; flex-direction: column; gap: 5px; }
+.ui-campo label { font-size: 12px; font-weight: 600; color: var(--texto-suave); }
+.ui-campo input,
+.ui-campo select,
+.ui-campo textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 14px;
+  color: var(--texto);
+  background: var(--surface);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ui-campo input:focus,
+.ui-campo select:focus,
+.ui-campo textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+.ui-campo input::placeholder,
+.ui-campo textarea::placeholder { color: var(--texto-mudo); }
+.ui-campo--erro input,
+.ui-campo--erro select,
+.ui-campo--erro textarea { border-color: var(--perigo); }
+.ui-campo__erro { font-size: 12px; color: var(--perigo); }
+
+/* ── Selo (chip de status) ── */
+.ui-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  border: 1px solid transparent;
+}
+.ui-selo--sucesso { color: var(--sucesso); background: rgba(74, 222, 128, 0.12);  border-color: rgba(74, 222, 128, 0.25); }
+.ui-selo--aviso   { color: var(--aviso);   background: rgba(251, 191, 36, 0.12);  border-color: rgba(251, 191, 36, 0.25); }
+.ui-selo--perigo  { color: var(--perigo);  background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.25); }
+.ui-selo--info    { color: var(--info);    background: rgba(96, 165, 250, 0.12);  border-color: rgba(96, 165, 250, 0.25); }
+.ui-selo--neutro  { color: var(--texto-suave); background: rgba(148, 163, 184, 0.1); border-color: rgba(148, 163, 184, 0.2); }
+
+/* ── EstadoVazio ── */
+.ui-vazio {
+  text-align: center;
+  padding: 2rem;
+  color: var(--texto-mudo);
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+}

@@ -86,7 +86,7 @@ O `seguimentos.controller.js` não acessa mais o banco diretamente: valida a ent
 
 - [ ] **Cards de Operações** — `totalAportado`, `totalVendido` e `capitalLiquido` na tela de Operações (spec na seção 6). **Pendente de verdade** — não há `cardsOperacoes` no backend ainda.
 - [x] ~~**Corrigir `atualizarUser`**~~ — migrado para `usuarios.services.js`/`usuarios.repositories.js`, apontando para `usuarios`
-- [x] ~~**Backend de Controle de Ativos**~~ — concluído: `controlAtivos` com `controller/service/repository` + `brapi.service.js` (cotações com cache de 15 min); o frontend já consome os endpoints reais
+- [x] ~~**Backend de Controle de Ativos**~~ — concluído: `controlAtivos` com `controller/service/repository` + `brapi.service.js` (cotações com cache até o próximo fechamento do pregão); o frontend já consome os endpoints reais
 - [x] ~~**Middleware `verificaAdmin`**~~ — criado usando o `adm` boolean que já existe em `credenciaisUsuario` (dispensou a coluna `perfil`)
 - [ ] **Ocultar menu "Usuários" para não-admins** no frontend + guard de rota — *verificar no `fii-track-front` (possivelmente já implementado); fora deste repositório backend*
 
@@ -106,7 +106,7 @@ O `seguimentos.controller.js` não acessa mais o banco diretamente: valida a ent
 - [ ] Upload de extrato em lote (multer + S3 já configurados, mas não conectados a nenhuma rota)
 - [x] ~~Rota de refresh de token JWT~~ — `POST /auth/refresh` (access 15 min + refresh 8h)
 - [ ] Endpoint de relatório consolidado por período
-- [x] ~~Integração com API externa (Brapi) para cotação em tempo real~~ — `brapi.service.js` com cache de 15 min; busca em lotes com retry para respeitar o limite do plano gratuito
+- [x] ~~Integração com API externa (Brapi) para cotação em tempo real~~ — `brapi.service.js` com cache até o próximo fechamento do pregão; busca em lotes com retry para respeitar o limite do plano gratuito
 - [ ] Testes automatizados
 - [ ] Dockerização
 - [ ] Documentação Swagger / OpenAPI

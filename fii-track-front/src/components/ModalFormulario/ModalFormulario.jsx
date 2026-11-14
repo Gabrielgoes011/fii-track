@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { FaUser, FaCamera } from 'react-icons/fa';
 import { toastInfo } from '../../utils/responseUtils';
 import SlideModal from '../SlideModal/SlideModal';
+import { Botao } from '../ui';
 
 const inputStyle = {
   padding: '8px 12px',
@@ -9,15 +10,15 @@ const inputStyle = {
   width: '100%',
   boxSizing: 'border-box',
   borderRadius: '8px',
-  border: '1px solid #243040',
-  background: '#0d1520',
-  color: '#cdd8e8',
+  border: '1px solid var(--borda-forte)',
+  background: 'var(--surface)',
+  color: 'var(--texto)',
   outline: 'none',
   transition: 'border-color 0.15s, box-shadow 0.15s',
 };
-const focusIn  = (e) => { e.target.style.borderColor = '#0972d3'; e.target.style.boxShadow = '0 0 0 2px rgba(9,114,211,0.15)'; };
-const focusOut = (e) => { e.target.style.borderColor = '#243040'; e.target.style.boxShadow = 'none'; };
-const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 600, color: '#7a8fa8', marginBottom: '5px' };
+const focusIn  = (e) => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 2px rgba(16,185,129,0.15)'; };
+const focusOut = (e) => { e.target.style.borderColor = 'var(--borda-forte)'; e.target.style.boxShadow = 'none'; };
+const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--texto-suave)', marginBottom: '5px' };
 
 function ModalFormulario({ isOpen = true, onClose, onSubmit, isEditing, formData, setFormData }) {
   const [fotoPreview] = useState(formData.foto || null);
@@ -38,13 +39,13 @@ function ModalFormulario({ isOpen = true, onClose, onSubmit, isEditing, formData
             htmlFor="fotoPerfil"
             style={{
               position: 'relative', width: '80px', height: '80px',
-              borderRadius: '50%', background: '#0d1520',
+              borderRadius: '50%', background: 'var(--surface)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', border: '2px solid #243040', overflow: 'hidden',
+              cursor: 'pointer', border: '2px solid var(--borda-forte)', overflow: 'hidden',
               transition: 'border-color 0.2s',
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = '#0972d3'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = '#243040'}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--borda-forte)'}
             onClick={e => {
               e.preventDefault();
               toastInfo('Função de upload de foto em desenvolvimento. Em breve disponível!');
@@ -53,11 +54,11 @@ function ModalFormulario({ isOpen = true, onClose, onSubmit, isEditing, formData
           >
             {fotoPreview
               ? <img src={fotoPreview} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <FaUser size={30} color="#334d66" />
+              : <FaUser size={30} color="var(--texto-apagado)" />
             }
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'rgba(9,114,211,0.65)',
+              background: 'rgba(16,185,129,0.65)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               opacity: 0, transition: 'opacity 0.2s',
             }}
@@ -107,23 +108,9 @@ function ModalFormulario({ isOpen = true, onClose, onSubmit, isEditing, formData
         </div>
 
         {/* Botão */}
-        <button
-          type="submit"
-          style={{
-            padding: '10px',
-            background: '#0972d3',
-            border: '1px solid #0972d3',
-            color: '#fff', borderRadius: '8px',
-            cursor: 'pointer', fontSize: '13px', fontWeight: 700,
-            width: '100%', marginTop: '4px',
-            boxShadow: '0 2px 8px rgba(9,114,211,0.3)',
-            transition: 'all 0.15s',
-          }}
-          onMouseOver={e => { e.currentTarget.style.background = '#1a84e8'; e.currentTarget.style.borderColor = '#1a84e8'; }}
-          onMouseOut={e => { e.currentTarget.style.background = '#0972d3'; e.currentTarget.style.borderColor = '#0972d3'; }}
-        >
+        <Botao type="submit" bloco style={{ marginTop: '4px' }}>
           {isEditing ? 'Salvar Alterações' : 'Cadastrar'}
-        </button>
+        </Botao>
       </form>
     </SlideModal>
   );

@@ -7,7 +7,6 @@ import ModalConfirmacao from '../../components/ModalDeConfirmacao/ModalConfirmac
 import PaginacaoMobile from '../../components/PaginacaoMobile/PaginacaoMobile';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { FiPlus, FiTrash2, FiUpload, FiRepeat, FiMinusCircle, FiDollarSign, FiFileText, FiCheckCircle, FiChevronDown, FiChevronUp } from 'react-icons/fi';
-import * as XLSX from 'xlsx';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MESES = [
@@ -47,17 +46,17 @@ function BadgeReinvestido({ valor }) {
 const S = {
   // layout raiz
   paginaRaiz: {
-    minHeight: '100vh',
-    backgroundColor: '#0b1120',
-    color: '#f1f5f9',
+    minHeight: 'var(--altura-util, 100vh)',
+    backgroundColor: 'var(--bg-pagina)',
+    color: 'var(--texto)',
     fontFamily: 'sans-serif',
   },
 
   // navegação de abas
   nav: {
     display: 'flex',
-    backgroundColor: '#0f172a',
-    border: '1px solid #1e293b',
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--borda)',
     borderRadius: '0.75rem',
     overflow: 'hidden',
     marginBottom: '1.5rem',
@@ -65,9 +64,9 @@ const S = {
 
   // select padrão
   select: {
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
-    color: '#f1f5f9',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--borda-forte)',
+    color: 'var(--texto)',
     fontSize: '14px',
     padding: '0.375rem 0.75rem',
     borderRadius: '0.375rem',
@@ -79,9 +78,9 @@ const S = {
   // select mobile (filtros)
   selectMobile: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    border: '1px solid #1e293b',
-    color: '#f1f5f9',
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--borda)',
+    color: 'var(--texto)',
     fontSize: '13px',
     padding: '10px',
     borderRadius: '8px',
@@ -101,7 +100,7 @@ const S = {
   mobileTitulo: {
     fontSize: '15px',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
     margin: 0,
   },
 
@@ -112,7 +111,7 @@ const S = {
     gap: '6px',
     padding: '8px 14px',
     borderRadius: '8px',
-    background: 'linear-gradient(135deg, #10b981, #059669)',
+    background: 'var(--accent-gradiente)',
     color: '#fff',
     border: 'none',
     cursor: 'pointer',
@@ -132,10 +131,10 @@ const S = {
   estadoVazioMobile: {
     textAlign: 'center',
     padding: '2rem',
-    color: '#64748b',
-    background: '#0f172a',
+    color: 'var(--texto-mudo)',
+    background: 'var(--surface)',
     borderRadius: '10px',
-    border: '1px solid #1e293b',
+    border: '1px solid var(--borda)',
   },
 
   // lista de cards mobile
@@ -147,11 +146,11 @@ const S = {
 
   // card individual de rendimento (mobile)
   cardRendimento: {
-    background: '#0f172a',
-    border: '1px solid #1e293b',
+    background: 'var(--surface)',
+    border: '1px solid var(--borda)',
     borderRadius: '12px',
     padding: '14px 16px',
-    borderLeft: '3px solid #10b981',
+    borderLeft: '3px solid var(--accent)',
   },
 
   // linha 1 do card (ticker + badge + lixeira)
@@ -173,7 +172,7 @@ const S = {
   cardTicker: {
     fontSize: '16px',
     fontWeight: 800,
-    color: '#f8fafc',
+    color: 'var(--texto)',
   },
 
   // badge de segmento (mobile)
@@ -183,7 +182,7 @@ const S = {
     padding: '2px 10px',
     borderRadius: '9999px',
     backgroundColor: 'rgba(96,165,250,0.12)',
-    color: '#60a5fa',
+    color: 'var(--info)',
     border: '1px solid rgba(96,165,250,0.25)',
   },
 
@@ -194,7 +193,7 @@ const S = {
     borderRadius: '7px',
     padding: '6px 8px',
     cursor: 'pointer',
-    color: '#f87171',
+    color: 'var(--perigo)',
     display: 'flex',
     alignItems: 'center',
   },
@@ -209,14 +208,14 @@ const S = {
   // data no card mobile
   cardData: {
     fontSize: '13px',
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
   },
 
   // valor no card mobile
   cardValor: {
     fontSize: '16px',
     fontWeight: 700,
-    color: '#34d399',
+    color: 'var(--accent-claro)',
   },
 
   // badge segmento (desktop — coluna da tabela)
@@ -228,20 +227,20 @@ const S = {
     fontSize: '12px',
     fontWeight: 500,
     backgroundColor: 'rgba(96,165,250,0.12)',
-    color: '#60a5fa',
+    color: 'var(--info)',
     border: '1px solid rgba(96,165,250,0.25)',
   },
 
   // valor (desktop — coluna da tabela)
   valorDesk: {
     fontWeight: 700,
-    color: '#34d399',
+    color: 'var(--accent-claro)',
   },
 
   // ticker (desktop — coluna da tabela)
   tickerDesk: {
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
   },
 
   // cabeçalho do gráfico mensal
@@ -291,7 +290,7 @@ const S = {
     margin: '0 0 1.5rem',
     fontSize: '17px',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
   },
 
   // título sem margem (para cabeçalhos com botões ao lado)
@@ -299,7 +298,7 @@ const S = {
     margin: 0,
     fontSize: '17px',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
   },
 
   // ── Modal de exclusão ──────────────────────────────────────────────────────
@@ -317,8 +316,8 @@ const S = {
   },
 
   modalBox: {
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--borda-forte)',
     padding: '2rem',
     borderRadius: '16px',
     boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
@@ -328,7 +327,7 @@ const S = {
 
   modalTitulo: {
     margin: '0 0 12px',
-    color: '#f8fafc',
+    color: 'var(--texto)',
     fontSize: '1.1rem',
     textAlign: 'center',
     fontWeight: 700,
@@ -336,7 +335,7 @@ const S = {
 
   modalDescricao: {
     margin: '0 0 20px',
-    color: '#94a3b8',
+    color: 'var(--texto-suave)',
     fontSize: '14px',
     textAlign: 'center',
   },
@@ -346,17 +345,17 @@ const S = {
     padding: '15px',
     borderRadius: '8px',
     marginBottom: '25px',
-    border: '1px solid #334155',
+    border: '1px solid var(--borda-forte)',
   },
 
   modalDadosLinha: {
     margin: '0 0 6px',
-    color: '#cbd5e1',
+    color: 'var(--texto-2)',
   },
 
   modalDadosLinhaFinal: {
     margin: 0,
-    color: '#cbd5e1',
+    color: 'var(--texto-2)',
   },
 
   modalDadosLabel: {
@@ -372,8 +371,8 @@ const S = {
     flex: 1,
     padding: '10px',
     background: 'transparent',
-    color: '#94a3b8',
-    border: '1px solid #334155',
+    color: 'var(--texto-suave)',
+    border: '1px solid var(--borda-forte)',
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: 600,
@@ -387,28 +386,28 @@ const S = {
   // Todos os cards usam o mesmo fundo neutro — a cor fica só no label e valor
   kpiCard: {
     background: 'rgba(255,255,255,0.03)',
-    border: '1px solid #1e293b',
+    border: '1px solid var(--borda)',
     borderRadius: '0.75rem',
   },
 
   // Label título do card (ex: "TOTAL RECEBIDO")
-  kpiLabelVerde: { margin: 0, fontSize: '11px', fontWeight: 700, color: '#10b981', letterSpacing: '0.08em', textTransform: 'uppercase' },
-  kpiLabelAmarelo: { margin: 0, fontSize: '11px', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelVerde: { margin: 0, fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelAmarelo: { margin: 0, fontSize: '11px', fontWeight: 700, color: 'var(--aviso)', letterSpacing: '0.08em', textTransform: 'uppercase' },
   kpiLabelAzul: { margin: 0, fontSize: '11px', fontWeight: 700, color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase' },
-  kpiLabelRoxo: { margin: 0, fontSize: '11px', fontWeight: 700, color: '#a78bfa', letterSpacing: '0.08em', textTransform: 'uppercase' },
+  kpiLabelRoxo: { margin: 0, fontSize: '11px', fontWeight: 700, color: 'var(--destaque)', letterSpacing: '0.08em', textTransform: 'uppercase' },
 
   // Sub-texto descritivo abaixo do valor (ex: "desde o início")
   kpiSubInfo: {
     margin: '5px 0 0',
     fontSize: '12px',
     fontWeight: 500,
-    color: '#475569',
+    color: 'var(--texto-apagado)',
     lineHeight: 1.4,
   },
 
   // Valor em destaque dentro do sub-texto (ex: percentual YoC)
   kpiSubInfoDestaque: {
-    color: '#a78bfa',
+    color: 'var(--destaque)',
     fontWeight: 700,
   },
 
@@ -459,7 +458,7 @@ function EvolucaoAnualChart({ data }) {
   const estiloAnoLabel = {
     fontSize: '12px',
     fontWeight: 600,
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
     marginTop: '8px',
   };
 
@@ -546,7 +545,7 @@ function GraficoMensalBarras({ data }) {
   const estiloMesLabel = {
     fontSize: '11px',
     fontWeight: 600,
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
     marginTop: '6px',
   };
 
@@ -620,7 +619,7 @@ function BarChartHorizontal({ data, anos }) {
 
   const estiloLabelMes = {
     fontSize: '11px',
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
     width: '72px',
     textAlign: 'right',
     flexShrink: 0,
@@ -642,7 +641,7 @@ function BarChartHorizontal({ data, anos }) {
 
   const estiloValorMini = {
     fontSize: '9px',
-    color: '#64748b',
+    color: 'var(--texto-mudo)',
   };
 
   return (
@@ -670,7 +669,7 @@ function BarChartHorizontal({ data, anos }) {
                 const estiloValor = {
                   fontSize: isHovered ? '10px' : '9px',
                   fontWeight: isHovered ? 700 : 400,
-                  color: isHovered ? '#f1f5f9' : '#64748b',
+                  color: isHovered ? 'var(--texto)' : 'var(--texto-mudo)',
                   transition: 'all 0.2s',
                 };
 
@@ -712,9 +711,9 @@ function MobileGraficos({
   const maxAnual  = Math.max(...chartAnual.map(d => d.Valor || 0), 1);
 
   const selectAnoStyle = {
-    backgroundColor: '#1e293b',
-    border:          '1px solid #334155',
-    color:           '#f1f5f9',
+    backgroundColor: 'var(--surface-2)',
+    border:          '1px solid var(--borda-forte)',
+    color:           'var(--texto)',
     fontSize:        '12px',
     padding:         '4px 8px',
     borderRadius:    '6px',
@@ -724,9 +723,9 @@ function MobileGraficos({
   };
 
   const accordionWrap = {
-    backgroundColor: '#0f172a',
+    backgroundColor: 'var(--surface)',
     borderRadius:    '10px',
-    border:          '1px solid #1e293b',
+    border:          '1px solid var(--borda)',
     overflow:        'hidden',
   };
 
@@ -757,7 +756,7 @@ function MobileGraficos({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: cor, display: 'inline-block', flexShrink: 0 }} />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#cbd5e1' }}>{label}</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--texto-2)' }}>{label}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '14px', fontWeight: 800, color: cor, fontVariantNumeric: 'tabular-nums' }}>
@@ -765,7 +764,7 @@ function MobileGraficos({
           </span>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}
+            style={{ background: 'none', border: 'none', color: 'var(--texto-apagado)', cursor: 'pointer', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}
           >×</button>
         </div>
       </div>
@@ -781,10 +780,10 @@ function MobileGraficos({
           onClick={() => { setMensalAberto(v => !v); setTooltipMensal(null); }}
           style={accordionBtn}
         >
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Rendimentos {anoGrafico}</h3>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--texto)' }}>Rendimentos {anoGrafico}</h3>
           <span style={{
             fontSize:   '16px',
-            color:      '#64748b',
+            color:      'var(--texto-mudo)',
             transform:  mensalAberto ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s',
           }}>▾</span>
@@ -821,7 +820,7 @@ function MobileGraficos({
                       transition:   'height 0.5s ease, background 0.2s',
                       boxShadow:    ativo ? '0 0 10px rgba(6,182,212,0.6)' : 'none',
                     }} />
-                    <span style={{ fontSize: '9px', color: ativo ? '#7dd3fc' : '#475569', marginTop: '4px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '9px', color: ativo ? '#7dd3fc' : 'var(--texto-apagado)', marginTop: '4px', fontWeight: 700 }}>
                       {item.name.substring(0, 3)}
                     </span>
                   </div>
@@ -839,7 +838,7 @@ function MobileGraficos({
               />
             )}
             {!tooltipMensal && (
-              <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--borda-forte)', textAlign: 'center' }}>
                 Toque em uma barra para ver o valor
               </p>
             )}
@@ -853,10 +852,10 @@ function MobileGraficos({
           onClick={() => { setMobileAccordion(prev => prev === 'anual' ? null : 'anual'); setTooltipAnual(null); }}
           style={accordionBtn}
         >
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Evolução Anual</h3>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--texto)' }}>Evolução Anual</h3>
           <span style={{
             fontSize:   '16px',
-            color:      '#64748b',
+            color:      'var(--texto-mudo)',
             transform:  mobileAccordion === 'anual' ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s',
           }}>▾</span>
@@ -885,7 +884,7 @@ function MobileGraficos({
                       transition:   'height 0.5s ease, background 0.2s',
                       boxShadow:    ativo ? '0 0 12px rgba(6,182,212,0.6)' : 'none',
                     }} />
-                    <span style={{ fontSize: '11px', color: ativo ? '#7dd3fc' : '#64748b', marginTop: '5px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '11px', color: ativo ? '#7dd3fc' : 'var(--texto-mudo)', marginTop: '5px', fontWeight: 700 }}>
                       {item.name}
                     </span>
                   </div>
@@ -902,7 +901,7 @@ function MobileGraficos({
                 onClose={() => setTooltipAnual(null)}
               />
             ) : (
-              <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--borda-forte)', textAlign: 'center' }}>
                 Toque em um ano para ver o total
               </p>
             )}
@@ -916,10 +915,10 @@ function MobileGraficos({
           onClick={() => { setMobileAccordion(prev => prev === 'comparacao' ? null : 'comparacao'); setTooltipComp(null); }}
           style={accordionBtn}
         >
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>Comparação Anual</h3>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--texto)' }}>Comparação Anual</h3>
           <span style={{
             fontSize:   '16px',
-            color:      '#64748b',
+            color:      'var(--texto-mudo)',
             transform:  mobileAccordion === 'comparacao' ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s',
           }}>▾</span>
@@ -939,14 +938,14 @@ function MobileGraficos({
                     padding:         '3px 8px',
                     borderRadius:    '9999px',
                     border:          '1px solid',
-                    borderColor:     sel ? COR_ANOS[ano] : '#334155',
+                    borderColor:     sel ? COR_ANOS[ano] : 'var(--borda-forte)',
                     backgroundColor: sel ? COR_ANOS[ano] + '22' : 'transparent',
-                    color:           sel ? COR_ANOS[ano] : '#475569',
+                    color:           sel ? COR_ANOS[ano] : 'var(--texto-apagado)',
                     fontSize:        '10px',
                     fontWeight:      700,
                     cursor:          'pointer',
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '2px', backgroundColor: sel ? COR_ANOS[ano] : '#334155', display: 'inline-block' }} />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '2px', backgroundColor: sel ? COR_ANOS[ano] : 'var(--borda-forte)', display: 'inline-block' }} />
                     {ano}
                   </button>
                 );
@@ -987,7 +986,7 @@ function MobileGraficos({
                               );
                             })}
                           </div>
-                          <span style={{ fontSize: '8px', color: ativoMes ? '#f1f5f9' : '#475569', marginTop: '3px', fontWeight: 700 }}>
+                          <span style={{ fontSize: '8px', color: ativoMes ? 'var(--texto)' : 'var(--texto-apagado)', marginTop: '3px', fontWeight: 700 }}>
                             {MESES[mi].substring(0, 3)}
                           </span>
                         </div>
@@ -1004,7 +1003,7 @@ function MobileGraficos({
                       onClose={() => setTooltipComp(null)}
                     />
                   ) : (
-                    <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#334155', textAlign: 'center' }}>
+                    <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--borda-forte)', textAlign: 'center' }}>
                       Toque em uma barra para ver o valor
                     </p>
                   )}
@@ -1220,8 +1219,11 @@ export default function PaginaRendimentos() {
     e.target.value = '';
 
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
+        // a biblioteca de Excel é grande: só é baixada quando o usuário importa um arquivo
+        const modulo = await import('xlsx');
+        const XLSX = modulo.default ?? modulo;
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -1304,10 +1306,10 @@ export default function PaginaRendimentos() {
 
   // ─── Estilos dinâmicos (dependem de isMobile) ───────────────────────────────
   const cardBase = {
-    backgroundColor: '#0f172a',
+    backgroundColor: 'var(--surface)',
     borderRadius: '0.75rem',
     boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-    border: '1px solid #1e293b',
+    border: '1px solid var(--borda)',
     padding: isMobile ? '1rem' : '1.5rem',
     marginBottom: '1.5rem',
   };
@@ -1332,7 +1334,7 @@ export default function PaginaRendimentos() {
   const tituloGraficoMensal = {
     fontSize: isMobile ? '15px' : '18px',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--texto)',
     margin: 0,
   };
 
@@ -1393,8 +1395,8 @@ export default function PaginaRendimentos() {
               <FiDollarSign size={20} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Rendimentos</h1>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Proventos recebidos e histórico de reinvestimentos</p>
+              <h1 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 800, color: 'var(--texto)', margin: 0 }}>Rendimentos</h1>
+              <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: 0 }}>Proventos recebidos e histórico de reinvestimentos</p>
             </div>
           </header>
 
@@ -1402,7 +1404,7 @@ export default function PaginaRendimentos() {
           <div style={cardBase}>
             {/* Cabeçalho com setinha para fechar/abrir os 4 cards de uma vez */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: kpisAbertos ? '12px' : '0' }}>
-              <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+              <h2 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                 Indicadores
               </h2>
               <button
@@ -1411,12 +1413,12 @@ export default function PaginaRendimentos() {
                 title={kpisAbertos ? 'Ocultar indicadores' : 'Mostrar indicadores'}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'transparent', border: '1px solid #334155',
-                  borderRadius: '8px', color: '#94a3b8', cursor: 'pointer',
+                  background: 'transparent', border: '1px solid var(--borda-forte)',
+                  borderRadius: '8px', color: 'var(--texto-suave)', cursor: 'pointer',
                   padding: '6px', transition: 'all 0.2s',
                 }}
-                onMouseOver={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
-                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+                onMouseOver={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--texto)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
               >
                 {kpisAbertos ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
               </button>
@@ -1445,10 +1447,10 @@ export default function PaginaRendimentos() {
                   </p>
                 </div>
                 <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 700 }}>
+                  <span style={{ color: 'var(--aviso)', fontSize: '11px', fontWeight: 700 }}>
                     Retorno:
                   </span>
-                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
+                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: 'var(--texto-suave)' }}>
                     {loadingCards ? '...' : `${Number(cards.retornoAcumulado).toFixed(2)}%`}
                   </span>
                 </div>
@@ -1466,7 +1468,7 @@ export default function PaginaRendimentos() {
                   <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 700 }}>
                     YoC (12m)
                   </span>
-                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: '#94a3b8' }}>
+                  <span className="vp" style={{ fontSize: '12px', fontWeight: 500, color: 'var(--texto-suave)' }}>
                     {loadingCards ? '...' : `${Number(cards.yieldOnCost12Meses).toFixed(2)}% a.a.`}
                   </span>
                 </div>
@@ -1478,7 +1480,7 @@ export default function PaginaRendimentos() {
                   <p className="vp" style={S.kpiValor('#c4b5fd', isMobile)}>
                     {loadingCards ? '...' : fmt(cards.totalReinvestido)}
                   </p>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--texto-suave)' }}>
                     Proventos reinvestidos ({loadingCards ? '...' : `${Number(cards.percReinvestido).toFixed(1)}%`})
                   </p>
                 </div>
@@ -1486,14 +1488,14 @@ export default function PaginaRendimentos() {
                   <div style={{
                     height: '8px',
                     width: '100%',
-                    backgroundColor: '#1e293b',
+                    backgroundColor: 'var(--surface-2)',
                     borderRadius: '9999px',
                     overflow: 'hidden',
                     display: 'flex'
                   }}>
                     <div style={{
                       height: '100%',
-                      backgroundColor: '#64748b',
+                      backgroundColor: 'var(--texto-mudo)',
                       width: `${cards.percProprio}%`
                     }} title="Aporte do seu bolso" />
                     <div style={{
@@ -1502,7 +1504,7 @@ export default function PaginaRendimentos() {
                       width: `${cards.percReinvestido}%`
                     }} title="Dinheiro gerado pelos fundos" />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: '#64748b' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: 'var(--texto-mudo)' }}>
                     <span className="vp">Do seu bolso: {loadingCards ? '...' : fmt(cards.aporteProprio)}</span>
                   </div>
                 </div>
@@ -1523,9 +1525,9 @@ export default function PaginaRendimentos() {
                 flex: 1,
                 padding: '0.75rem 1rem',
                 backgroundColor: ativa ? 'rgba(16,185,129,0.1)' : 'transparent',
-                color: ativa ? '#10b981' : '#64748b',
+                color: ativa ? 'var(--accent)' : 'var(--texto-mudo)',
                 border: 'none',
-                borderBottom: ativa ? '3px solid #10b981' : '3px solid transparent',
+                borderBottom: ativa ? '3px solid var(--accent)' : '3px solid transparent',
                 fontWeight: 600,
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -1594,7 +1596,7 @@ export default function PaginaRendimentos() {
                 </div>
 
                 {loading ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)' }}>
                     Carregando...
                   </div>
                 ) : filtrados.length === 0 ? (
@@ -1620,7 +1622,7 @@ export default function PaginaRendimentos() {
                                 borderRadius: '7px',
                                 padding: '6px 8px',
                                 cursor: 'pointer',
-                                color: '#34d399',
+                                color: 'var(--accent-claro)',
                                 display: 'flex',
                                 alignItems: 'center',
                               }}
@@ -1628,7 +1630,7 @@ export default function PaginaRendimentos() {
                             >
                               <FiRepeat size={14} />
                             </button>
-                            <button onClick={() => abrirModalExclusao(r)} style={S.btnLixeiraMobile}>
+                            <button aria-label="Excluir rendimento" title="Excluir rendimento" onClick={() => abrirModalExclusao(r)} style={S.btnLixeiraMobile}>
                               <FiTrash2 size={14} />
                             </button>
                           </div>
@@ -1672,7 +1674,7 @@ export default function PaginaRendimentos() {
                       borderRadius: '8px',
                       background: 'rgba(59,130,246,0.1)',
                       border: '1px solid rgba(59,130,246,0.3)',
-                      color: '#60a5fa',
+                      color: 'var(--info)',
                       fontSize: '13px',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -1785,9 +1787,9 @@ export default function PaginaRendimentos() {
                             padding: '3px 8px',
                             borderRadius: '9999px',
                             border: '1px solid',
-                            borderColor: selecionado ? COR_ANOS[ano] : '#334155',
+                            borderColor: selecionado ? COR_ANOS[ano] : 'var(--borda-forte)',
                             backgroundColor: selecionado ? COR_ANOS[ano] + '22' : 'transparent',
-                            color: selecionado ? COR_ANOS[ano] : '#64748b',
+                            color: selecionado ? COR_ANOS[ano] : 'var(--texto-mudo)',
                             fontSize: '11px',
                             fontWeight: 700,
                             cursor: 'pointer',
@@ -1796,7 +1798,7 @@ export default function PaginaRendimentos() {
                             width: '8px',
                             height: '8px',
                             borderRadius: '2px',
-                            backgroundColor: selecionado ? COR_ANOS[ano] : '#334155',
+                            backgroundColor: selecionado ? COR_ANOS[ano] : 'var(--borda-forte)',
                             display: 'inline-block',
                           };
                           return (
@@ -1906,7 +1908,7 @@ export default function PaginaRendimentos() {
             <div
               onClick={e => e.stopPropagation()}
               style={{
-                background: '#1e293b', border: '1px solid #334155',
+                background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
                 borderRadius: '16px', padding: '2rem',
                 width: '100%', maxWidth: '480px',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
@@ -1915,16 +1917,16 @@ export default function PaginaRendimentos() {
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                     Importar Rendimentos
                   </h2>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0' }}>
                     Importe o Excel de proventos da B3
                   </p>
                 </div>
-                <button
+                <button aria-label="Fechar" title="Fechar"
                   onClick={fecharImportacao}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--borda-forte)', borderRadius: '8px', color: 'var(--texto-mudo)', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
                 >
                   ✕
                 </button>
@@ -1949,10 +1951,10 @@ export default function PaginaRendimentos() {
                     <FiFileText size={18} color="#60a5fa" />
                   </div>
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                       Excel B3 (Rendimentos)
                     </p>
-                    <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0', lineHeight: 1.5 }}>
                       Importe o arquivo de proventos exportado pela B3. Detectamos os rendimentos automaticamente.
                     </p>
                   </div>
@@ -1977,7 +1979,7 @@ export default function PaginaRendimentos() {
             <div
               onClick={e => e.stopPropagation()}
               style={{
-                background: '#1e293b', border: '1px solid #334155',
+                background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
                 borderRadius: '16px', padding: '2rem',
                 width: '100%', maxWidth: '600px', maxHeight: '80vh',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
@@ -1987,16 +1989,16 @@ export default function PaginaRendimentos() {
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                     Confirmar Importação
                   </h2>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--texto-mudo)', margin: '4px 0 0' }}>
                     {linhasImportPreview.length} rendimento{linhasImportPreview.length !== 1 ? 's' : ''} encontrado{linhasImportPreview.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <button
+                <button aria-label="Fechar" title="Fechar"
                   onClick={fecharImportacao}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--borda-forte)', borderRadius: '8px', color: 'var(--texto-mudo)', cursor: 'pointer', padding: '6px 9px', fontSize: '14px', lineHeight: 1 }}
                 >
                   ✕
                 </button>
@@ -2006,20 +2008,20 @@ export default function PaginaRendimentos() {
               <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #334155' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', color: '#94a3b8', fontWeight: 600 }}>Ticker</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', color: '#94a3b8', fontWeight: 600 }}>Data</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', color: '#94a3b8', fontWeight: 600 }}>Valor</th>
+                    <tr style={{ borderBottom: '1px solid var(--borda-forte)' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--texto-suave)', fontWeight: 600 }}>Ticker</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--texto-suave)', fontWeight: 600 }}>Data</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--texto-suave)', fontWeight: 600 }}>Valor</th>
                     </tr>
                   </thead>
                   <tbody>
                     {linhasImportPreview.map((linha, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(51,65,85,0.5)' }}>
-                        <td style={{ padding: '8px 12px', color: '#f8fafc', fontWeight: 700 }}>{linha.ticker}</td>
-                        <td style={{ padding: '8px 12px', color: '#cbd5e1' }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--texto)', fontWeight: 700 }}>{linha.ticker}</td>
+                        <td style={{ padding: '8px 12px', color: 'var(--texto-2)' }}>
                           {linha.dtRendimento.split('-').reverse().join('/')}
                         </td>
-                        <td style={{ padding: '8px 12px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--accent-claro)', fontWeight: 700 }}>
                           {fmt(linha.valorRecebido)}
                         </td>
                       </tr>
@@ -2030,8 +2032,8 @@ export default function PaginaRendimentos() {
 
               {/* Total */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(16,185,129,0.08)', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>Total</span>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: '#34d399' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--texto-suave)' }}>Total</span>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent-claro)' }}>
                   {fmt(linhasImportPreview.reduce((acc, l) => acc + l.valorRecebido, 0))}
                 </span>
               </div>
@@ -2042,7 +2044,7 @@ export default function PaginaRendimentos() {
                   onClick={fecharImportacao}
                   style={{
                     flex: 1, padding: '10px', background: 'transparent',
-                    color: '#94a3b8', border: '1px solid #334155',
+                    color: 'var(--texto-suave)', border: '1px solid var(--borda-forte)',
                     borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px',
                   }}
                 >
@@ -2053,7 +2055,7 @@ export default function PaginaRendimentos() {
                   disabled={loadingImport}
                   style={{
                     flex: 1, padding: '10px',
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    background: 'var(--accent-gradiente)',
                     color: '#fff', border: 'none', borderRadius: '8px',
                     cursor: loadingImport ? 'not-allowed' : 'pointer',
                     fontWeight: 600, fontSize: '14px',
@@ -2083,7 +2085,7 @@ export default function PaginaRendimentos() {
             <div
               onClick={e => e.stopPropagation()}
               style={{
-                background: '#1e293b', border: '1px solid #334155',
+                background: 'var(--surface-2)', border: '1px solid var(--borda-forte)',
                 borderRadius: '16px', padding: '2rem',
                 width: '100%', maxWidth: '440px',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
@@ -2092,7 +2094,7 @@ export default function PaginaRendimentos() {
             >
               <div style={{ marginBottom: '1.5rem' }}>
                 <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
                   Importação Concluída
                 </h2>
               </div>
@@ -2100,19 +2102,19 @@ export default function PaginaRendimentos() {
               {/* Resumo em cards */}
               <div style={{ display: 'flex', gap: '10px', marginBottom: '1.25rem' }}>
                 <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                  <p style={{ fontSize: '22px', fontWeight: 800, color: '#34d399', margin: 0 }}>{resultadoImport.totalImportados}</p>
-                  <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Importados</p>
+                  <p style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent-claro)', margin: 0 }}>{resultadoImport.totalImportados}</p>
+                  <p style={{ fontSize: '11px', color: 'var(--texto-mudo)', margin: '4px 0 0', fontWeight: 600 }}>Importados</p>
                 </div>
                 {resultadoImport.totalDuplicados > 0 && (
                   <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                    <p style={{ fontSize: '22px', fontWeight: 800, color: '#f59e0b', margin: 0 }}>{resultadoImport.totalDuplicados}</p>
-                    <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Duplicados</p>
+                    <p style={{ fontSize: '22px', fontWeight: 800, color: 'var(--aviso)', margin: 0 }}>{resultadoImport.totalDuplicados}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--texto-mudo)', margin: '4px 0 0', fontWeight: 600 }}>Duplicados</p>
                   </div>
                 )}
                 {resultadoImport.totalIgnorados > 0 && (
                   <div style={{ flex: 1, padding: '14px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                    <p style={{ fontSize: '22px', fontWeight: 800, color: '#f87171', margin: 0 }}>{resultadoImport.totalIgnorados}</p>
-                    <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Ignorados</p>
+                    <p style={{ fontSize: '22px', fontWeight: 800, color: 'var(--perigo)', margin: 0 }}>{resultadoImport.totalIgnorados}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--texto-mudo)', margin: '4px 0 0', fontWeight: 600 }}>Ignorados</p>
                   </div>
                 )}
               </div>
@@ -2120,10 +2122,10 @@ export default function PaginaRendimentos() {
               {/* Detalhes dos ignorados */}
               {resultadoImport.ignorados?.length > 0 && (
                 <div style={{ textAlign: 'left', marginBottom: '1rem', padding: '12px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#f87171', margin: '0 0 6px' }}>Ativos não encontrados:</p>
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--perigo)', margin: '0 0 6px' }}>Ativos não encontrados:</p>
                   {resultadoImport.ignorados.map((item, i) => (
-                    <p key={i} style={{ fontSize: '12px', color: '#94a3b8', margin: '2px 0' }}>
-                      <strong style={{ color: '#cbd5e1' }}>{item.ticker}</strong> — {item.motivo}
+                    <p key={i} style={{ fontSize: '12px', color: 'var(--texto-suave)', margin: '2px 0' }}>
+                      <strong style={{ color: 'var(--texto-2)' }}>{item.ticker}</strong> — {item.motivo}
                     </p>
                   ))}
                 </div>
@@ -2133,7 +2135,7 @@ export default function PaginaRendimentos() {
                 onClick={fecharImportacao}
                 style={{
                   width: '100%', padding: '10px',
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  background: 'var(--accent-gradiente)',
                   color: '#fff', border: 'none', borderRadius: '8px',
                   cursor: 'pointer', fontWeight: 600, fontSize: '14px',
                   boxShadow: '0 4px 16px rgba(16,185,129,0.3)',

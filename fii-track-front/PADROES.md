@@ -24,6 +24,99 @@ src/
 
 ---
 
+## Tokens de design
+
+O app é **só escuro**. As cores, raios e sombras ficam como variáveis CSS em `src/styles/global.css` (`:root`).
+Em código novo use `var(--nome)` no lugar de hex solto:
+
+```jsx
+<div style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--raio-md)' }} />
+```
+
+| Hex que aparece no código | Token | Uso |
+|---|---|---|
+| `#0a0f1e` | `--bg-app` | fundo geral do app |
+| `#0b1120` | `--bg-pagina` | fundo das páginas |
+| `#0f172a` | `--surface` | cards, tabelas, painéis |
+| `#1e293b` | `--surface-2` / `--borda` | cabeçalhos, modais, hover / bordas finas |
+| `#334155` | `--borda-forte` | bordas de campos e modais |
+| `#f8fafc`, `#f1f5f9` | `--texto` | títulos e valores |
+| `#cbd5e1` | `--texto-2` | texto corrido |
+| `#94a3b8` | `--texto-suave` | legendas |
+| `#64748b` | `--texto-mudo` | rótulos e dicas (o valor do token é `#7283a0`: contraste 4,65:1, passa no AA) |
+| `#475569` | `--texto-apagado` | SÓ desabilitado ou decorativo (3,3:1). Texto que precisa ser lido usa `--texto-mudo` ou mais claro |
+| `#10b981` | `--accent` | marca (verde) |
+| `#059669` | `--accent-forte` | marca, parte escura |
+| `#34d399` | `--accent-claro` | marca, hover |
+| `linear-gradient(135deg, #10b981, #059669)` | `--accent-gradiente` | botão principal |
+| `#4ade80` / `#f87171` / `#fbbf24` / `#60a5fa` / `#a78bfa` | `--sucesso` / `--perigo` / `--aviso` / `--info` / `--destaque` | status |
+
+Regras:
+- Tela nova **não** escreve hex: usa os tokens. Se faltar um token, crie em `global.css` em vez de espalhar o hex.
+- Tela antiga migra aos poucos (ao mexer nela). Não precisa trocar tudo de uma vez.
+- Não use `var()` onde o valor é manipulado em JS (ex.: `cor + '33'` para transparência) nem em atributos SVG (`fill="..."`): lá continua o hex.
+
+## Layout mobile (tela travada)
+
+No celular a tela tem altura fixa (`100dvh`) e **só o conteúdo rola**. A barra inferior (`BottomNav`) fica no fluxo, abaixo da área que rola,
+em vez de `position: fixed`. Assim ela não sobe junto quando a barra de endereço do navegador recolhe.
+
+- Quem monta isso é o `Layout.jsx`, com as classes `.app-shell-mobile` (raiz) e `.app-scroll-mobile` (área que rola), definidas no `global.css`.
+- Página que quer ocupar a tela inteira usa `minHeight: 'var(--altura-util, 100vh)'` (no PC cai em `100vh`). **Não use `minHeight: '100vh'` solto**: no celular ele cria rolagem sobrando.
+- Não crie elementos `position: fixed` colados embaixo no mobile. Se precisar de uma barra de ações, ponha-a no fluxo da página.
+- Campos de texto ficam com 16px no celular (regra no `global.css`), senão o Safari do iPhone dá zoom ao focar.
+
+---
+## Kit de UI (`src/components/ui`)
+
+Peças prontas, feitas só com os tokens. Importe sempre do índice: `import { Botao, Card } from '../../components/ui';`
+Hover e foco ficam no `ui.css` (nada de `onMouseOver` em cada botão).
+
+| Componente | Para quê | Props principais |
+|---|---|---|
+| `Botao` | botão padrão | `variante` (`primario` verde, `secundario`, `perigo`, `fantasma`), `tamanho` (`md`, `sm`), `icone`, `bloco` |
+| `BotaoIcone` | editar, excluir, visualizar | `icone`, `tom` (`info`, `perigo`, `neutro`), `rotulo` (obrigatório, vira `title` e `aria-label`) |
+| `Card` | container padrão | `titulo`, `subtitulo`, `acao`, `destaque` (faixa verde), `compacto`, `semPadding` |
+| `CardMetrica` | número de destaque | `rotulo`, `valor`, `tom`, `privado` (blur no modo privacidade) |
+| `CabecalhoPagina` | título + ação da página | `titulo`, `subtitulo`, `acao` (o título já se ajusta ao celular) |
+| `Campo` | rótulo + input com foco verde | `rotulo`, `erro` e as props do `<input>` |
+| `Selo` | etiqueta de status | `tom` (`neutro`, `sucesso`, `aviso`, `perigo`, `info`) |
+| `EstadoVazio` | lista vazia ou carregando | `children` |
+
+Modais: use `SlideModal` como base (título, largura, animação) e o kit dentro dele. `ModalConfirmacao` já usa o kit e aceita `entidade`
+("seguimento", "fundo"...) para a mensagem não dizer "usuário" quando é outra coisa.
+
+Página de exemplo já migrada: `pages/cadastros/seguimentos/seguimentos.jsx`. Ao mexer em uma tela antiga, troque os botões, cards e campos
+escritos à mão por estas peças e os hex por tokens. Validação de formulário usa `toastError` (não `alert`).
+
+Modais: `SlideModal`, `ModalFormulario`, `ModalTrocarSenha` e `modalNovaOperacao` já usam os tokens e o `Botao` (a paleta azulada antiga foi removida).
+Ainda com estilo escrito à mão: as telas grandes (`controleAtivos`, `rendimentos`, `operacoes`), `GridDados`, `Sidebar` e `TopBar`.
+## Acessibilidade e app instalado
+
+- **Contraste:** texto de leitura usa no mínimo `--texto-mudo` (4,65:1). `--texto-apagado` é só para desabilitado/decorativo. Ao criar um token de texto novo, calcule o contraste (mínimo 4,5:1 sobre `--surface`).
+- **Foco:** `global.css` define `:focus-visible` (anel verde). Não esconda o contorno com `outline: none` sem dar outro indicador de foco.
+- **Botão só com ícone:** sempre com `aria-label` e `title` (o `BotaoIcone` do kit já exige o `rotulo`).
+- **Movimento:** quem pede menos animação no sistema (`prefers-reduced-motion`) não recebe transições; não dependa de animação para o app funcionar.
+- **Fontes:** carregadas só pelo `<link>` do `index.html`. Não use `@import` de fonte no CSS (baixaria duas vezes).
+- **App instalado (PWA):** o `index.html` tem `viewport-fit=cover`, `color-scheme: dark` e as metas `apple-mobile-web-app-*` (barra de status preta). A barra inferior soma `env(safe-area-inset-bottom)`.
+## Carregamento sob demanda (lazy)
+
+Cada tela vira um arquivo separado, baixado só quando a rota abre. O pacote principal tem o Layout, o login do boot e as bibliotecas comuns.
+
+- **Tela nova:** registre em `App.jsx` com `const PaginaX = lazy(() => import('./pages/.../x'));` (nunca `import PaginaX from ...` direto). O `Suspense` já está no `App.jsx`.
+- **Biblioteca pesada:** importe só onde usa e, se for usada por uma ação do usuário, com `await import('...')` dentro da função. Exemplo: `xlsx` (425 KB) só é baixada quando se importa um arquivo B3 em Rendimentos.
+- **Conferir o efeito:** rode `npm run build` e olhe os tamanhos em `assets/`. O `index-*.js` deve ficar perto de 360 KB (era 952 KB antes do lazy).
+
+## Troca de hex por tokens (feita em lote)
+
+A maior parte dos hex em estilo inline (1.163 ocorrências) foi trocada por `var(--token)` com um script que só mexe em valores de estilo (objetos de `style`),
+sem tocar em comparações, somas de texto (`${cor}22`), atributos SVG nem gráficos. Sobraram ~280 hex de propósito:
+- cores que o JavaScript usa (`cor="#..."`, `cor: '#...'`, arrays de cores de gráficos, `${cor}15` para transparência);
+- gráficos (`components/Charts`) e a tela de login (CSS próprio em string);
+- `onMouseOver`/`onMouseEnter` que mudam `style.color` em JS (viram classes CSS quando a tela for para o kit);
+- cores de dados/gráficos (ex.: `COR_ANOS`) e `color=` de ícones que ainda não foram revisados.
+
+Uma 2ª passada trocou também atribuições de estilo em JS (`el.style.borderColor = '#...'` vira `var(--token)`), usadas nos hovers antigos.
 ## Criando uma Nova Página
 
 Toda feature segue o mesmo padrão: **service → hook → página**.

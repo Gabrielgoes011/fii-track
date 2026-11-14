@@ -10,8 +10,8 @@ function PaginacaoMobile({ paginaAtual, totalPaginas, onAnterior, onProxima }) {
   const btnBase = {
     display: 'flex', alignItems: 'center', gap: '6px',
     padding: '8px 14px', borderRadius: '8px',
-    border: '1px solid #334155', background: '#1e293b',
-    color: '#cbd5e1', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+    border: '1px solid var(--borda-forte)', background: 'var(--surface-2)',
+    color: 'var(--texto-2)', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
     transition: 'all 0.2s',
   };
 
@@ -38,7 +38,7 @@ function PaginacaoMobile({ paginaAtual, totalPaginas, onAnterior, onProxima }) {
         <FiChevronLeft size={15} /> Anterior
       </button>
 
-      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: '12px', color: 'var(--texto-mudo)', fontWeight: 600, whiteSpace: 'nowrap' }}>
         {paginaAtual} de {totalPaginas}
       </span>
 

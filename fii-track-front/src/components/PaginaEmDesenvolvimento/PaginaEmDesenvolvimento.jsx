@@ -22,13 +22,13 @@ export default function PaginaEmDesenvolvimento({ titulo, descricao, icon: Icon,
           <Icon size={20} color="#fff" />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>{titulo}</h1>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{descricao}</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--texto)', margin: 0 }}>{titulo}</h1>
+          <p style={{ fontSize: '13px', color: 'var(--texto-mudo)', margin: 0 }}>{descricao}</p>
         </div>
       </div>
 
       <div style={{
-        background: '#0f172a', border: '1px solid #1e293b', borderRadius: '14px',
+        background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '14px',
         padding: '3rem 2rem', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
       }}>
         <div style={{
@@ -39,8 +39,8 @@ export default function PaginaEmDesenvolvimento({ titulo, descricao, icon: Icon,
         }}>
           <Icon size={28} color={cor} />
         </div>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem' }}>Em desenvolvimento</h2>
-        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Esta seção estará disponível em breve!</p>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--texto)', marginBottom: '0.5rem' }}>Em desenvolvimento</h2>
+        <p style={{ color: 'var(--texto-mudo)', fontSize: '14px', margin: 0 }}>Esta seção estará disponível em breve!</p>
       </div>
     </div>
   );

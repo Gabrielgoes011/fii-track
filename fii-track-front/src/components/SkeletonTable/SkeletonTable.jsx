@@ -17,9 +17,9 @@ export default function SkeletonTable({ rows = 5, cols = 4 }) {
       `}</style>
       <div style={{
         borderRadius: '12px',
-        border: '1px solid #1e293b',
+        border: '1px solid var(--borda)',
         overflow: 'hidden',
-        background: '#0f172a',
+        background: 'var(--surface)',
       }}>
         {/* Header fake */}
         <div style={{
@@ -31,7 +31,7 @@ export default function SkeletonTable({ rows = 5, cols = 4 }) {
             <div key={i} style={{
               height: '10px',
               width: i === 0 ? '15%' : i === cols - 1 ? '10%' : '20%',
-              background: '#1e293b',
+              background: 'var(--surface-2)',
               borderRadius: '4px',
               animation: 'skeletonPulse 1.5s ease-in-out infinite',
             }} />
@@ -41,13 +41,13 @@ export default function SkeletonTable({ rows = 5, cols = 4 }) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
             {[...Array(rows)].map((_, ri) => (
-              <tr key={ri} style={{ borderBottom: '1px solid #1e293b' }}>
+              <tr key={ri} style={{ borderBottom: '1px solid var(--borda)' }}>
                 {[...Array(cols)].map((_, ci) => (
                   <td key={ci} style={{ padding: '0.875rem 1rem' }}>
                     <div style={{
                       height: '13px',
                       width: ci === 0 ? '55%' : ci === cols - 1 ? '35%' : '75%',
-                      background: '#1e293b',
+                      background: 'var(--surface-2)',
                       borderRadius: '4px',
                       animation: 'skeletonPulse 1.5s ease-in-out infinite',
                       animationDelay: `${ri * 0.07}s`,

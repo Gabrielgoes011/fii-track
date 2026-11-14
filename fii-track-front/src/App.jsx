@@ -1,25 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
-import PaginaDashboard from './pages/dashboard/dashboard';
-import PaginaUsuarios from './pages/cadastros/usuarios/usuarios';
-import PaginaConfiguracoes from './pages/configuracoes/configuracoes';
-import PaginaPerfil from './pages/perfil/perfil';
-import PaginaControleAtivos from './pages/controleAtivos/controleAtivos';
-import PaginaDiversificacao from './pages/diversificacao/diversificacao';
-import PaginaRendimentos from './pages/rendimentos/rendimentos';
-import PaginaPrecificacao from './pages/precificacao/precificacao';
-import PaginaOperacoes from './pages/operacoes/operacoes';
-import PaginaRelatorios from './pages/relatorios/relatorios';
-import PaginaSeguimentos from './pages/cadastros/seguimentos/seguimentos';
-import PaginaMeusFiis from './pages/cadastros/meusFundos/meusFiis';
-import Login from './pages/login/login';
 import { authService } from './services/auth/authService';
+
+// Cada tela vira um arquivo separado, baixado só quando a rota é aberta (code splitting).
+// O Layout (barra, menu) continua no pacote principal porque aparece em todas as telas.
+const PaginaDashboard = lazy(() => import('./pages/dashboard/dashboard'));
+const PaginaUsuarios = lazy(() => import('./pages/cadastros/usuarios/usuarios'));
+const PaginaPerfil = lazy(() => import('./pages/perfil/perfil'));
+const PaginaControleAtivos = lazy(() => import('./pages/controleAtivos/controleAtivos'));
+const PaginaDiversificacao = lazy(() => import('./pages/diversificacao/diversificacao'));
+const PaginaRendimentos = lazy(() => import('./pages/rendimentos/rendimentos'));
+const PaginaPrecificacao = lazy(() => import('./pages/precificacao/precificacao'));
+const PaginaOperacoes = lazy(() => import('./pages/operacoes/operacoes'));
+const PaginaRelatorios = lazy(() => import('./pages/relatorios/relatorios'));
+const PaginaSeguimentos = lazy(() => import('./pages/cadastros/seguimentos/seguimentos'));
+const PaginaMeusFiis = lazy(() => import('./pages/cadastros/meusFundos/meusFiis'));
+const Login = lazy(() => import('./pages/login/login'));
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { PrivacyProvider } from './context/PrivacyContext';
+
+// Aviso mostrado enquanto o arquivo da tela é baixado. `cheio` ocupa a tela toda (login);
+// sem ele fica só na área de conteúdo (o menu e a barra de cima continuam na tela).
+function CarregandoPagina({ cheio = false }) {
+  return (
+    <div style={{
+      minHeight: cheio ? '100vh' : '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: cheio ? 'var(--bg-pagina)' : 'transparent', color: 'var(--texto-mudo)',
+      fontFamily: 'sans-serif', fontSize: '14px',
+    }}>
+      Carregando...
+    </div>
+  );
+}
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -94,7 +110,9 @@ function App() {
   const ProtectedLayout = () => {
     return isLoggedIn ? (
       <Layout onLogout={handleLogout} user={usuarioLogado}>
-        <Outlet />
+        <Suspense fallback={<CarregandoPagina />}>
+          <Outlet />
+        </Suspense>
       </Layout>
     ) : (
       <Navigate to="/login" replace />
@@ -107,7 +125,7 @@ function App() {
     return (
       <div style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: '#0b1120', color: '#64748b', fontFamily: 'sans-serif', fontSize: '14px',
+        backgroundColor: 'var(--bg-pagina)', color: 'var(--texto-mudo)', fontFamily: 'sans-serif', fontSize: '14px',
       }}>
         Carregando...
       </div>
@@ -118,6 +136,7 @@ function App() {
     <PrivacyProvider>
       <SpeedInsights />
       <ToastContainer autoClose={3000} />
+      <Suspense fallback={<CarregandoPagina cheio />}>
       <Routes>
         {/* Rota de login */}
         <Route
@@ -151,6 +170,7 @@ function App() {
         {/* Rota padrão - redireciona para login se não encontrar */}
         <Route path="*" element={<Navigate to={isLoggedIn ? "/" : "/login"} replace />} />
       </Routes>
+      </Suspense>
     </PrivacyProvider>
   );
 }

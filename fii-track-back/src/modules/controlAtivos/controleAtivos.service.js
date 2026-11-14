@@ -13,11 +13,12 @@ import {
 } from './controleAtivos.repository.js';
 import { buscarCotacoes } from './brapi.service.js';
 import { registrarCaptura } from '../historico/historico.service.js';
+import { cotacaoEstaAtual, proximoFechamentoPregao } from '../../utils/pregaoUtils.js';
 
-// Tempo (em minutos) que uma cotação salva é considerada "fresca".
-// Dentro dessa janela, o botão "Atualizar Cotações" usa o cache e NÃO
-// consome requisição da brapi.dev.
-const COTACAO_TTL_MINUTOS = 15;
+// Regra de "cotação fresca": a brapi só traz preço novo uma vez por dia, no fechamento do pregão.
+// Uma cotação salva é considerada atual se foi buscada DEPOIS do último fechamento (ver pregaoUtils.js).
+// Enquanto estiver atual, o botão "Atualizar Cotações" usa o cache e NÃO consome requisição da brapi.dev,
+// e a tela não avisa "sem preço novo" (fim de semana, por exemplo, não tem preço novo).
 
 //#region função listar segmentos para o dropdown
 async function getSegmentosDropListService(idUser) {
@@ -130,7 +131,7 @@ function montarCotacao(linha) {
 
 //#region função atualizar as cotações da carteira (cache + brapi.dev)
 // Lê o cache (tabela cotacoes); só consulta a brapi para os tickers cuja
-// última consulta passou de COTACAO_TTL_MINUTOS. Grava o que buscou e
+// última consulta foi ANTES do último fechamento do pregão. Grava o que buscou e
 // devolve o mapa completo + a consulta mais antiga da carteira.
 async function getCotacoesCarteiraService(idUser) {
   try {
@@ -145,7 +146,7 @@ async function getCotacoesCarteiraService(idUser) {
       return {
         cotacoes: {}, atualizadoEm: null, consultaMaisAntiga: null,
         tickersDesatualizados: [], origem: 'cache',
-        ttlMinutos: COTACAO_TTL_MINUTOS, proximaAtualizacaoEm: null,
+        proximaAtualizacaoEm: null,
       };
     }
 
@@ -153,12 +154,10 @@ async function getCotacoesCarteiraService(idUser) {
     const salvas = await getCotacoesSalvasRepo(tickers);
     const cache = new Map(salvas.map((linha) => [linha.ticker.toUpperCase(), linha]));
 
-    // Quais estão sem cache ou com cache vencido?
-    const limite = Date.now() - COTACAO_TTL_MINUTOS * 60 * 1000;
+    // Quais estão sem cache ou com cache anterior ao último fechamento do pregão?
     const desatualizados = tickers.filter((ticker) => {
       const linha = cache.get(ticker.toUpperCase());
-      if (!linha || !linha.dtConsulta) return true;
-      return new Date(linha.dtConsulta).getTime() < limite;
+      return !linha || !cotacaoEstaAtual(linha.dtConsulta);
     });
 
     // Rastreia a origem dos dados para o frontend saber se buscou preços novos
@@ -196,14 +195,13 @@ async function getCotacoesCarteiraService(idUser) {
     }
 
     // Monta o mapa de retorno e descobre a consulta mais antiga e a mais recente.
-    // `tickersDesatualizados` lista os tickers cuja última consulta ainda está
-    // fora do TTL após esta tentativa (ex.: brapi indisponível / limite atingido),
+    // `tickersDesatualizados` lista os tickers cuja última consulta ainda é anterior ao
+    // último fechamento após esta tentativa (ex.: brapi indisponível / limite atingido),
     // permitindo ao frontend sinalizar a defasagem de forma precisa.
     const cotacoes = {};
     let maisAntiga = null;
     let maisRecente = null;
     const tickersDesatualizados = [];
-    const limiteAtual = Date.now() - COTACAO_TTL_MINUTOS * 60 * 1000;
     for (const ticker of tickers) {
       const linha = cache.get(ticker.toUpperCase());
       if (!linha) {
@@ -216,7 +214,7 @@ async function getCotacoesCarteiraService(idUser) {
         const t = new Date(linha.dtConsulta).getTime();
         if (maisAntiga === null || t < maisAntiga) maisAntiga = t;
         if (maisRecente === null || t > maisRecente) maisRecente = t;
-        if (t < limiteAtual) tickersDesatualizados.push(ticker.toUpperCase());
+        if (!cotacaoEstaAtual(linha.dtConsulta)) tickersDesatualizados.push(ticker.toUpperCase());
       } else {
         tickersDesatualizados.push(ticker.toUpperCase());
       }
@@ -229,10 +227,10 @@ async function getCotacoesCarteiraService(idUser) {
     // Não altera a resposta ao frontend, que segue sendo { cotacoes, atualizadoEm }.
     await registrarCaptura(idUser, cotacoes, dtCaptura);
 
-    // Momento em que o cache mais antigo expira: a partir daí um novo clique
-    // volta a consultar a brapi. Útil para a mensagem "disponível novamente às…".
+    // Próximo fechamento do pregão: é quando a brapi passa a ter preço novo e um novo clique
+    // volta a consultar. Útil para a mensagem "novos preços a partir de…".
     const proximaAtualizacaoEm = maisAntiga !== null
-      ? new Date(maisAntiga + COTACAO_TTL_MINUTOS * 60 * 1000).toISOString()
+      ? new Date(proximoFechamentoPregao()).toISOString()
       : null;
 
     return {
@@ -247,10 +245,9 @@ async function getCotacoesCarteiraService(idUser) {
       tickersDesatualizados,
       // Sinaliza ao frontend a natureza da resposta (Requirement: mensagem
       // "cotações já atualizadas / disponível no próximo pregão").
-      // 'brapi' = buscou preços novos | 'cache' = tudo fresco dentro do TTL
+      // 'brapi' = buscou preços novos | 'cache' = tudo já é do último fechamento
       // | 'cache-fallback' = tentou buscar mas a brapi falhou e usou cache.
       origem,
-      ttlMinutos: COTACAO_TTL_MINUTOS,
       proximaAtualizacaoEm,
     };
 

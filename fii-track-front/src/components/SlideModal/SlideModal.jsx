@@ -65,8 +65,8 @@ export default function SlideModal({ isOpen, onClose, title, width = '480px', ch
   };
 
   const cardStyle = {
-    background: '#141e2c',
-    border: '1px solid #243040',
+    background: 'var(--surface-2)',
+    border: '1px solid var(--borda-forte)',
     borderRadius: '18px',
     boxShadow: '0 32px 80px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.4)',
     overflow: 'hidden',
@@ -90,9 +90,9 @@ export default function SlideModal({ isOpen, onClose, title, width = '480px', ch
       <style>{`
         .sm-close {
           background: rgba(255,255,255,0.04);
-          border: 1px solid #243040;
+          border: 1px solid var(--borda-forte);
           border-radius: 8px;
-          color: #4e6480;
+          color: var(--texto-mudo);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -101,13 +101,13 @@ export default function SlideModal({ isOpen, onClose, title, width = '480px', ch
           line-height: 0;
         }
         .sm-close:hover {
-          color: #dce8f5;
+          color: var(--texto);
           background: rgba(255,255,255,0.09);
-          border-color: #334d66;
+          border-color: var(--texto-apagado);
         }
         .sm-body::-webkit-scrollbar { width: 5px; }
         .sm-body::-webkit-scrollbar-track { background: transparent; }
-        .sm-body::-webkit-scrollbar-thumb { background: #243040; border-radius: 4px; }
+        .sm-body::-webkit-scrollbar-thumb { background: var(--borda-forte); border-radius: 4px; }
       `}</style>
 
       <div ref={overlayRef} style={backdropStyle} onClick={handleOverlayClick}>
@@ -116,12 +116,12 @@ export default function SlideModal({ isOpen, onClose, title, width = '480px', ch
           {/* ── Header ── */}
           <div style={{
             padding: '14px 18px',
-            borderBottom: '1px solid #1e2d3d',
+            borderBottom: '1px solid var(--borda)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#111927',
+            background: 'var(--surface)',
             flexShrink: 0,
           }}>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: '#dce8f5', letterSpacing: '-0.1px' }}>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--texto)', letterSpacing: '-0.1px' }}>
               {title}
             </span>
             <button className="sm-close" onClick={onClose} title="Fechar">

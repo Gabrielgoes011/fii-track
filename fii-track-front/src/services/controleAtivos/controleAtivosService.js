@@ -11,7 +11,7 @@ export const controleAtivosService = {
   atualizarCotacoes: async () => {
     const res = await api.post('/controle-ativos/cotacoes');
     // { cotacoes: { TICKER: {...} }, atualizadoEm: ISO,
-    //   origem: 'brapi'|'cache'|'cache-fallback', ttlMinutos, proximaAtualizacaoEm: ISO }
+    //   origem: 'brapi'|'cache'|'cache-fallback', proximaAtualizacaoEm: ISO (próximo fechamento do pregão) }
     return res.data;
   },
 

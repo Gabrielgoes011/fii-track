@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { handleError, toastSuccess, toastInfo, toastWarn } from '../../utils/responseUtils';
 import { controleAtivosService } from '../../services/controleAtivos/controleAtivosService';
+import { cotacaoEstaAtual } from '../../utils/pregaoUtils';
 
 // ── Helpers de cálculo ────────────────────────────────────────────────────────
 
@@ -118,9 +119,8 @@ export const useControleAtivos = () => {
   const [loading, setLoading] = useState(false);
   const [loadingCotacoes, setLoadingCotacoes] = useState(false);
 
-  // TTL (em minutos) que uma cotação salva é considerada "fresca".
-  // Mantém-se alinhado ao COTACAO_TTL_MINUTOS do backend.
-  const TTL_MINUTOS = 15;
+  // Regra de "cotação atual": foi buscada depois do último fechamento do pregão
+  // (utils/pregaoUtils.js, igual à do backend). A brapi só tem preço novo uma vez por dia.
 
   // Guardam o estado "cru" para permitir recalcular sem nova ida à API:
   const rowsRef = useRef([]);   // linhas da carteira (backend)
@@ -135,7 +135,7 @@ export const useControleAtivos = () => {
     const calculados = rowsRef.current.map((r) => calcularAtivo(r, cotacoesRef.current));
     const comEquilibrio = recalcularEquilibrio(calculados);
 
-    // "Desatualizada" = existe ao menos um ticker fora do TTL (informado/derivado).
+    // "Desatualizada" = existe ao menos um ticker consultado antes do último fechamento (informado/derivado).
     const desatualizados = tickersDesatualizadosRef.current || [];
     const desatualizada = desatualizados.length > 0;
 
@@ -157,7 +157,6 @@ export const useControleAtivos = () => {
     const mapa = {};
     let maisRecente = null;
     const desatualizados = [];
-    const limite = Date.now() - TTL_MINUTOS * 60 * 1000;
     rows.forEach((r) => {
       const tk = String(r.ticker || '').toUpperCase();
       if (r.precoAtual == null) {
@@ -174,7 +173,8 @@ export const useControleAtivos = () => {
         const t = new Date(r.dtConsultaCotacao).getTime();
         // Carimbo exibido = consulta mais recente (não o mais antigo).
         if (maisRecente === null || t > maisRecente) maisRecente = t;
-        if (t < limite) desatualizados.push(tk);
+        // consulta anterior ao último fechamento: ainda dá para buscar preço novo
+        if (!cotacaoEstaAtual(r.dtConsultaCotacao)) desatualizados.push(tk);
       } else {
         desatualizados.push(tk);
       }
@@ -224,15 +224,16 @@ export const useControleAtivos = () => {
 
       // Mensagem contextual conforme a origem dos dados (informada pelo backend):
       //  • brapi          → buscou preços novos de fato
-      //  • cache          → tudo já estava fresco dentro do TTL; nada mudou
+      //  • cache          → tudo já é do último fechamento; nada mudou
       //  • cache-fallback → tentou buscar, a fonte falhou e usamos o cache
       if (origem === 'cache') {
-        const horaProx = proximaAtualizacaoEm
-          ? new Date(proximaAtualizacaoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        // próximo fechamento do pregão, ex.: "seg., 18:30" (a brapi só traz preço novo nesse horário)
+        const quandoProx = proximaAtualizacaoEm
+          ? new Date(proximaAtualizacaoEm).toLocaleString('pt-BR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
           : null;
         toastInfo(
-          horaProx
-            ? `Cotações já atualizadas. Novos preços a partir das ${horaProx} ou no próximo pregão.`
+          quandoProx
+            ? `Cotações já atualizadas. Novos preços após o fechamento do pregão (${quandoProx}).`
             : 'Cotações já atualizadas. Novos preços apenas no próximo pregão.'
         );
       } else if (origem === 'cache-fallback') {

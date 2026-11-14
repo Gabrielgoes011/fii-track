@@ -24,6 +24,12 @@ const pgErrorMessages = {
     '08000': 'Não foi possível estabelecer conexão com o banco de dados no momento.', // connection_exception
     '08003': 'A conexão com o banco de dados foi perdida.', // connection_does_not_exist
     '08006': 'Falha na comunicação com o servidor de dados. Tente novamente.', // connection_failure
+
+    // erros de rede do node ao falar com o banco (Neon fora do ar, DATABASE_URL errada, sem internet)
+    'ECONNREFUSED': 'Não foi possível conectar ao banco de dados. Tente de novo em instantes.',
+    'ETIMEDOUT': 'O banco de dados demorou demais para responder. Tente de novo em instantes.',
+    'ENOTFOUND': 'Não foi possível encontrar o servidor do banco de dados. Tente de novo em instantes.',
+    'ECONNRESET': 'A conexão com o banco de dados caiu. Tente de novo em instantes.',
     
     // ==========================================
     // CLASSE 40: ERROS DE TRANSAÇÃO (Concorrência)

@@ -50,7 +50,7 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
       background: 'rgba(10,15,30,0.95)',
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
-      borderBottom: '1px solid #1e293b',
+      borderBottom: '1px solid var(--borda)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -65,20 +65,20 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
         {/* Botão hamburguer — só no desktop com a sidebar fechada.
             No mobile, quem abre o menu lateral (drawer) é o avatar. */}
         {!isMobile && !sidebarOpen && (
-          <button
+          <button aria-label="Abrir ou recolher o menu lateral" title="Abrir ou recolher o menu lateral"
             onClick={onToggleSidebar}
             style={{
               background: 'transparent',
-              border: '1px solid #1e293b',
+              border: '1px solid var(--borda)',
               borderRadius: '8px',
-              color: '#94a3b8',
+              color: 'var(--texto-suave)',
               cursor: 'pointer',
               padding: '8px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f8fafc'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--texto)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
           >
             <FaBars size={16} />
           </button>
@@ -96,13 +96,13 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
           >
             <div style={{
               width: '28px', height: '28px', borderRadius: '8px',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
+              background: 'var(--accent-gradiente)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <FiTrendingUp size={14} color="#fff" />
             </div>
-            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>
-              FII<span style={{ color: '#10b981' }}>Track</span>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--texto)' }}>
+              FII<span style={{ color: 'var(--accent)' }}>Track</span>
             </span>
           </button>
         )}
@@ -118,21 +118,21 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
           style={{
             background: valoresOcultos ? 'rgba(16,185,129,0.12)' : 'transparent',
             border: '1px solid',
-            borderColor: valoresOcultos ? 'rgba(16,185,129,0.4)' : '#1e293b',
+            borderColor: valoresOcultos ? 'rgba(16,185,129,0.4)' : 'var(--borda)',
             borderRadius: '8px',
-            color: valoresOcultos ? '#10b981' : '#94a3b8',
+            color: valoresOcultos ? 'var(--accent)' : 'var(--texto-suave)',
             cursor: 'pointer',
             padding: '7px 9px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = valoresOcultos ? 'rgba(16,185,129,0.2)' : '#1e293b';
-            e.currentTarget.style.color = valoresOcultos ? '#34d399' : '#f8fafc';
+            e.currentTarget.style.background = valoresOcultos ? 'rgba(16,185,129,0.2)' : 'var(--surface-2)';
+            e.currentTarget.style.color = valoresOcultos ? 'var(--accent-claro)' : 'var(--texto)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = valoresOcultos ? 'rgba(16,185,129,0.12)' : 'transparent';
-            e.currentTarget.style.color = valoresOcultos ? '#10b981' : '#94a3b8';
+            e.currentTarget.style.color = valoresOcultos ? 'var(--accent)' : 'var(--texto-suave)';
           }}
         >
           {valoresOcultos ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
@@ -152,26 +152,26 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
               display: 'flex', alignItems: 'center', gap: '8px',
               background: menuAberto ? 'rgba(255,255,255,0.06)' : 'transparent',
               border: '1px solid',
-              borderColor: menuAberto ? '#334155' : 'transparent',
+              borderColor: menuAberto ? 'var(--borda-forte)' : 'transparent',
               cursor: 'pointer',
               padding: '6px 10px', borderRadius: '10px',
               transition: 'all 0.2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = '#334155'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--borda-forte)'; }}
             onMouseLeave={e => { if (!menuAberto) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; } }}
           >
             {/* Nome e email — oculta no mobile pra economizar espaço */}
             {!isMobile && (
               <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{nome}</div>
-                {email && <div style={{ fontSize: '11px', color: '#64748b' }}>{email}</div>}
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--texto)' }}>{nome}</div>
+                {email && <div style={{ fontSize: '11px', color: 'var(--texto-mudo)' }}>{email}</div>}
               </div>
             )}
 
             {/* Avatar */}
             <div style={{
               width: '34px', height: '34px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
+              background: 'var(--accent-gradiente)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
               border: '2px solid rgba(16,185,129,0.3)',
@@ -201,8 +201,8 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
           {menuAberto && !isMobile && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-              background: '#1e293b',
-              border: '1px solid #334155',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--borda-forte)',
               borderRadius: '12px',
               boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
               minWidth: '210px', overflow: 'hidden', zIndex: 1000,
@@ -210,11 +210,11 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
               {/* Cabeçalho */}
               <div style={{
                 padding: '14px 16px',
-                borderBottom: '1px solid #334155',
+                borderBottom: '1px solid var(--borda-forte)',
                 background: 'rgba(255,255,255,0.02)',
               }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{nome}</div>
-                {email && <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{email}</div>}
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--texto)' }}>{nome}</div>
+                {email && <div style={{ fontSize: '11px', color: 'var(--texto-mudo)', marginTop: '2px' }}>{email}</div>}
               </div>
 
               {/* Meu Perfil */}
@@ -224,11 +224,11 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
                   display: 'flex', alignItems: 'center', gap: '10px',
                   width: '100%', padding: '12px 16px',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '13px', color: '#94a3b8', textAlign: 'left',
+                  fontSize: '13px', color: 'var(--texto-suave)', textAlign: 'left',
                   transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#f8fafc'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--texto)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
               >
                 <FaUserCircle size={13} color="#64748b" />
                 Meu Perfil
@@ -242,17 +242,17 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
                   display: 'flex', alignItems: 'center', gap: '10px',
                   width: '100%', padding: '12px 16px',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '13px', color: '#94a3b8', textAlign: 'left',
+                  fontSize: '13px', color: 'var(--texto-suave)', textAlign: 'left',
                   transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#f8fafc'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--texto)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--texto-suave)'; }}
               >
                 <FaKey size={13} color="#64748b" />
                 Trocar Senha
               </button>
 
-              <div style={{ height: '1px', background: '#334155' }} />
+              <div style={{ height: '1px', background: 'var(--borda-forte)' }} />
 
               {/* Sair */}
               <button
@@ -261,7 +261,7 @@ function TopBar({ sidebarOpen = true, isMobile = false, fotoUrl = null, user = n
                   display: 'flex', alignItems: 'center', gap: '10px',
                   width: '100%', padding: '12px 16px',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '13px', color: '#f87171', textAlign: 'left',
+                  fontSize: '13px', color: 'var(--perigo)', textAlign: 'left',
                   transition: 'all 0.15s',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.08)'; }}

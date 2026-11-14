@@ -67,30 +67,30 @@ function PaginaMeusFiis() {
 
   const inputStyle = {
     padding: '0.75rem 1rem', fontSize: '14px', width: '100%', boxSizing: 'border-box',
-    borderRadius: '8px', border: '1px solid #334155', background: '#0f172a',
-    color: '#f8fafc', outline: 'none', transition: 'border-color 0.2s',
+    borderRadius: '8px', border: '1px solid var(--borda-forte)', background: 'var(--surface)',
+    color: 'var(--texto)', outline: 'none', transition: 'border-color 0.2s',
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b1120', color: '#f1f5f9', fontFamily: 'Inter, sans-serif', padding: isMobile ? '1rem 0.75rem' : '2rem 1rem' }}>
+    <div style={{ minHeight: 'var(--altura-util, 100vh)', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto)', fontFamily: 'Inter, sans-serif', padding: isMobile ? '1rem 0.75rem' : '2rem 1rem' }}>
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* Header */}
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 700, marginBottom: '0.25rem', color: '#f8fafc' }}>Meus FIIs</h1>
-            <p style={{ color: '#64748b', margin: 0, fontSize: '13px' }}>Gerencie seus Fundos Imobiliários</p>
+            <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--texto)' }}>Meus FIIs</h1>
+            <p style={{ color: 'var(--texto-mudo)', margin: 0, fontSize: '13px' }}>Gerencie seus Fundos Imobiliários</p>
           </div>
-          <button onClick={handleOpenCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.65rem 1.1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.3)', fontSize: '13px' }}>
+          <button onClick={handleOpenCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.65rem 1.1rem', background: 'var(--accent-gradiente)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.3)', fontSize: '13px' }}>
             <FiPlus size={15} /> {isMobile ? 'Novo' : 'Cadastrar Novo Fundo'}
           </button>
         </header>
 
         {/* Card métrica */}
         <section style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'inline-block', background: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', padding: '1rem 1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Total de FIIs Cadastrados</p>
-            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: '#10b981' }}>{dashboard?.total || 0}</h2>
+          <div style={{ display: 'inline-block', background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', padding: '1rem 1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--texto-mudo)' }}>Total de FIIs Cadastrados</p>
+            <h2 style={{ margin: '0.4rem 0', fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)' }}>{dashboard?.total || 0}</h2>
           </div>
         </section>
 
@@ -98,36 +98,36 @@ function PaginaMeusFiis() {
         {isMobile ? (
           <div>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Carregando...</div>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)' }}>Carregando...</div>
             ) : !fiis || fiis.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#0f172a', borderRadius: '10px', border: '1px solid #1e293b' }}>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-mudo)', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--borda)' }}>
                 Nenhum fundo encontrado.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {fiis.map((fii, i) => (
-                  <div key={fii.id ?? i} style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', padding: '14px 16px', borderLeft: '3px solid #10b981' }}>
+                  <div key={fii.id ?? i} style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px', padding: '14px 16px', borderLeft: '3px solid var(--accent)' }}>
                     {/* linha 1: ticker + seguimento + ações */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc' }}>{fii.ticker}</span>
-                        <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 10px', borderRadius: '9999px', backgroundColor: 'rgba(96,165,250,0.12)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.25)' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--texto)' }}>{fii.ticker}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 10px', borderRadius: '9999px', backgroundColor: 'rgba(96,165,250,0.12)', color: 'var(--info)', border: '1px solid rgba(96,165,250,0.25)' }}>
                           {fii.nomeSeguimento}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => handleEdit(fii)} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#60a5fa', display: 'flex', alignItems: 'center' }}>
+                        <button aria-label="Editar fundo" title="Editar fundo" onClick={() => handleEdit(fii)} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--info)', display: 'flex', alignItems: 'center' }}>
                           <FiEdit2 size={14} />
                         </button>
-                        <button onClick={() => handleOpenModal(fii, 'delete')} style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center' }}>
+                        <button aria-label="Excluir fundo" title="Excluir fundo" onClick={() => handleOpenModal(fii, 'delete')} style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer', color: 'var(--perigo)', display: 'flex', alignItems: 'center' }}>
                           <FiTrash2 size={14} />
                         </button>
                       </div>
                     </div>
                     {/* linha 2: nome + cnpj */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: '#cbd5e1' }}>{fii.nomeFundo}</span>
-                      <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace' }}>{fii.cnpj}</span>
+                      <span style={{ fontSize: '13px', color: 'var(--texto-2)' }}>{fii.nomeFundo}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--texto-apagado)', fontFamily: 'monospace' }}>{fii.cnpj}</span>
                     </div>
                   </div>
                 ))}
@@ -135,7 +135,7 @@ function PaginaMeusFiis() {
             )}
           </div>
         ) : (
-          <section style={{ backgroundColor: '#0f172a', borderRadius: '0.75rem', border: '1px solid #1e293b', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', padding: '1rem' }}>
+          <section style={{ backgroundColor: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--borda)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', padding: '1rem' }}>
             {loading ? <SkeletonTable rows={5} cols={5} /> : (
               <GridDados
                 coluna={colunasFiis} data={fiis || []} itemsPerPage={10}
@@ -149,10 +149,10 @@ function PaginaMeusFiis() {
         {/* Modal formulário */}
         {showFormModal && (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '16px' }}>
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '2rem', borderRadius: '16px', boxShadow: '0 24px 60px rgba(0,0,0,0.6)', width: '100%', maxWidth: '500px', position: 'relative' }}>
-              <button onClick={closeFormModal} style={{ position: 'absolute', top: '14px', right: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', padding: '5px 8px' }}>✖</button>
+            <div style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--borda-forte)', padding: '2rem', borderRadius: '16px', boxShadow: '0 24px 60px rgba(0,0,0,0.6)', width: '100%', maxWidth: '500px', position: 'relative' }}>
+              <button aria-label="Fechar" title="Fechar" onClick={closeFormModal} style={{ position: 'absolute', top: '14px', right: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--borda-forte)', borderRadius: '8px', color: 'var(--texto-mudo)', cursor: 'pointer', padding: '5px 8px' }}>✖</button>
 
-              <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700 }}>
+              <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--texto)', fontSize: '1.1rem', fontWeight: 700 }}>
                 {onEdit ? 'Editar Fundo' : 'Cadastrar Fundo'}
               </h2>
 
@@ -163,11 +163,11 @@ function PaginaMeusFiis() {
                       <input type="text" placeholder="Ticker (ex: MXRF11)" value={formData.ticker || ''}
                         onChange={(e) => setFormData({ ...formData, ticker: e.target.value.toUpperCase() })}
                         style={inputStyle} autoFocus
-                        onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
+                        onFocus={e => e.target.style.borderColor = 'var(--accent)'} onBlur={e => e.target.style.borderColor = 'var(--borda-forte)'} />
                       <input type="text" placeholder="CNPJ do fundo" value={maskCnpj(formData.cnpj || '')} maxLength={18}
                         onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, '').substring(0, 14) })}
                         style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
+                        onFocus={e => e.target.style.borderColor = 'var(--accent)'} onBlur={e => e.target.style.borderColor = 'var(--borda-forte)'} />
                     </div>
 
                     {/* Select com pesquisa */}
@@ -178,20 +178,20 @@ function PaginaMeusFiis() {
                         onChange={(e) => { setSegmentoSearch(e.target.value); setIsSelectOpen(true); setFormData({ ...formData, idSeguimento: null }); }}
                         onClick={() => setIsSelectOpen(true)}
                         style={{ ...inputStyle, cursor: 'pointer' }}
-                        onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
-                      <span style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.8rem', color: '#64748b' }}>▼</span>
+                        onFocus={e => e.target.style.borderColor = 'var(--accent)'} onBlur={e => e.target.style.borderColor = 'var(--borda-forte)'} />
+                      <span style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.8rem', color: 'var(--texto-mudo)' }}>▼</span>
                       {isSelectOpen && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', marginTop: '4px', zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'var(--surface-2)', border: '1px solid var(--borda-forte)', borderRadius: '8px', marginTop: '4px', zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
                           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                             {filteredSegmentos.length > 0 ? filteredSegmentos.map(seg => (
                               <div key={seg.id} onClick={() => { setFormData({ ...formData, idSeguimento: seg.id }); setIsSelectOpen(false); setSegmentoSearch(''); }}
-                                style={{ padding: '0.75rem 1rem', cursor: 'pointer', fontSize: '0.95rem', color: '#f1f5f9', backgroundColor: String(formData.idSeguimento) === String(seg.id) ? 'rgba(16,185,129,0.15)' : 'transparent' }}
+                                style={{ padding: '0.75rem 1rem', cursor: 'pointer', fontSize: '0.95rem', color: 'var(--texto)', backgroundColor: String(formData.idSeguimento) === String(seg.id) ? 'rgba(16,185,129,0.15)' : 'transparent' }}
                                 onMouseEnter={e => e.target.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                                 onMouseLeave={e => e.target.style.backgroundColor = String(formData.idSeguimento) === String(seg.id) ? 'rgba(16,185,129,0.15)' : 'transparent'}>
                                 {seg.nome || seg.nomeSeguimento}
                               </div>
                             )) : (
-                              <div style={{ padding: '0.75rem', color: '#64748b', textAlign: 'center' }}>Nenhum segmento encontrado.</div>
+                              <div style={{ padding: '0.75rem', color: 'var(--texto-mudo)', textAlign: 'center' }}>Nenhum segmento encontrado.</div>
                             )}
                           </div>
                         </div>
@@ -203,9 +203,9 @@ function PaginaMeusFiis() {
                 <input type="text" placeholder="Nome do Fundo" value={formData.nomeFundo || ''}
                   onChange={(e) => setFormData({ ...formData, nomeFundo: e.target.value.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substring(1).toLowerCase()) })}
                   style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#334155'} />
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'} onBlur={e => e.target.style.borderColor = 'var(--borda-forte)'} />
 
-                <button type="submit" style={{ padding: '0.875rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 700, boxShadow: '0 4px 16px rgba(16,185,129,0.3)' }}>
+                <button type="submit" style={{ padding: '0.875rem', background: 'var(--accent-gradiente)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 700, boxShadow: '0 4px 16px rgba(16,185,129,0.3)' }}>
                   {onEdit ? 'Salvar Alterações' : 'Cadastrar Fundo'}
                 </button>
               </form>

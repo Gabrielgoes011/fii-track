@@ -30,12 +30,17 @@ function setAccessCookie(res, token) {
   res.cookie('token', token, { ...baseCookieOptions(), maxAge: ACCESS_COOKIE_MAX_AGE });
 }
 
+// Caminho COMPLETO da rota de refresh. O router é montado em '/api' (app.js), então a URL real é
+// '/api/auth/refresh'. O navegador só envia o cookie quando o caminho dele é prefixo da URL: com
+// '/auth/refresh' o cookie nunca era enviado e toda renovação de sessão falhava com "Refresh token ausente".
+const REFRESH_COOKIE_PATH = '/api/auth/refresh';
+
 // Grava o refresh token (cookie 'refreshToken') restrito à rota de refresh.
 // O path mais estreito evita que o refresh token trafegue em toda requisição.
 function setRefreshCookie(res, refreshToken) {
   res.cookie('refreshToken', refreshToken, {
     ...baseCookieOptions(),
-    path: '/auth/refresh',
+    path: REFRESH_COOKIE_PATH,
     maxAge: REFRESH_COOKIE_MAX_AGE,
   });
 }
@@ -74,9 +79,15 @@ async function loginController(req, res) {
       true);
 
   } catch (error) {
+    //erro previsto (senha errada, usuário inativo...): uma linha no log e a mensagem do service na tela
+    if (error.status) {
+      console.warn(`Login recusado (${error.status}): ${error.motivo}`);
+      return apiResponse.error(res, error.message, error.status);
+    }
+    //erro inesperado (banco fora do ar, bug): log completo e mensagem genérica segura
     console.error('Erro no login na etapa do controller:', error);
-    const secureMessage = pgErrorHandler(error, 'Não foi possível realizar o login.');
-    return apiResponse.error(res, secureMessage, 401);
+    const secureMessage = pgErrorHandler(error, 'Erro inesperado no servidor ao fazer login. Tente de novo em instantes.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 
@@ -105,9 +116,15 @@ async function login2faController(req, res) {
       true);
 
   } catch (error) {
+    //erro previsto (código 2FA errado, senha errada...): uma linha no log e a mensagem do service na tela
+    if (error.status) {
+      console.warn(`Login 2FA recusado (${error.status}): ${error.motivo}`);
+      return apiResponse.error(res, error.message, error.status);
+    }
+    //erro inesperado (banco fora do ar, bug): log completo e mensagem genérica segura
     console.error('Erro no login 2FA na etapa do controller:', error);
-    const secureMessage = pgErrorHandler(error, 'Não foi possível concluir o login com 2FA.');
-    return apiResponse.error(res, secureMessage, 401);
+    const secureMessage = pgErrorHandler(error, 'Erro inesperado no servidor ao validar o código 2FA. Tente de novo em instantes.');
+    return apiResponse.error(res, secureMessage, 500);
   }
 }
 // Retorna os dados do usuário logado, derivados do token (fonte de verdade do "adm").
@@ -142,6 +159,12 @@ async function refreshController(req, res) {
       token: resultado.token,
     }, 200);
   } catch (error) {
+    //erro previsto (sem cookie, token expirado, usuário inativo...): uma linha no log e 401 para o front pedir login
+    if (error.status) {
+      console.warn(`Renovação de sessão recusada (${error.status}): ${error.motivo}`);
+      return apiResponse.error(res, error.message, error.status);
+    }
+    //erro inesperado (banco fora do ar, bug): log completo e mensagem genérica segura
     console.error('Erro ao renovar a sessão na etapa do controller:', error);
     const secureMessage = pgErrorHandler(error, 'Não foi possível renovar a sessão.');
     return apiResponse.error(res, secureMessage, 401);

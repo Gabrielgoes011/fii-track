@@ -31,9 +31,9 @@ export default function DataCard({
 }) {
   return (
     <div style={{
-      background: '#0f172a',
+      background: 'var(--surface)',
       borderRadius: '12px',
-      border: '1px solid #1e293b',
+      border: '1px solid var(--borda)',
       overflow: 'hidden',
       boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
     }}>
@@ -41,7 +41,7 @@ export default function DataCard({
       {/* ── Header ── */}
       <div style={{
         padding: '1rem 1.25rem',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid var(--borda)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -52,11 +52,11 @@ export default function DataCard({
         {/* Título + filtros */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--texto)', margin: 0 }}>
               {titulo}
             </h2>
             {subtitulo && (
-              <span style={{ fontSize: '12px', color: '#64748b' }}>{subtitulo}</span>
+              <span style={{ fontSize: '12px', color: 'var(--texto-mudo)' }}>{subtitulo}</span>
             )}
           </div>
           {filtros}
@@ -69,7 +69,7 @@ export default function DataCard({
             <button
               onClick={onBotaoClick}
               style={{
-                background: 'linear-gradient(135deg, #10b981, #059669)',
+                background: 'var(--accent-gradiente)',
                 color: '#fff',
                 fontWeight: 600,
                 padding: '0.5rem 1rem',
@@ -119,9 +119,9 @@ export default function DataCard({
       <div style={{
         padding: '0.75rem 1.25rem',
         background: 'rgba(255,255,255,0.02)',
-        borderTop: '1px solid #1e293b',
+        borderTop: '1px solid var(--borda)',
         fontSize: '11px',
-        color: '#334155',
+        color: 'var(--borda-forte)',
         textAlign: 'center',
       }}>
         {rodape || 'Os dados são fornecidos para fins informativos. Simulação de ambiente Web.'}

@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import SlideModal from '../../../components/SlideModal/SlideModal';
+import { Botao } from '../../../components/ui';
 import api from '../../../config/api';
 
 const labelStyle = {
   display: 'block', fontSize: '12px', fontWeight: 600,
-  color: '#7a8fa8', marginBottom: '5px',
+  color: 'var(--texto-suave)', marginBottom: '5px',
 };
 const inputStyle = {
   width: '100%', padding: '8px 12px',
-  borderRadius: '8px', border: '1px solid #243040',
-  background: '#0d1520', boxSizing: 'border-box',
-  fontSize: '13px', color: '#cdd8e8', outline: 'none',
+  borderRadius: '8px', border: '1px solid var(--borda-forte)',
+  background: 'var(--surface)', boxSizing: 'border-box',
+  fontSize: '13px', color: 'var(--texto)', outline: 'none',
   transition: 'border-color 0.15s, box-shadow 0.15s',
 };
-const focusIn  = (e) => { e.target.style.borderColor = '#0972d3'; e.target.style.boxShadow = '0 0 0 2px rgba(9,114,211,0.15)'; };
-const focusOut = (e) => { e.target.style.borderColor = '#243040'; e.target.style.boxShadow = 'none'; };
+const focusIn  = (e) => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 2px rgba(16,185,129,0.15)'; };
+const focusOut = (e) => { e.target.style.borderColor = 'var(--borda-forte)'; e.target.style.boxShadow = 'none'; };
 
 export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
   const [data,          setData]          = useState('');
@@ -85,7 +86,7 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
           <div>
             <label style={labelStyle}>Tipo</label>
             {/* Toggle Compra / Venda */}
-            <div style={{ display: 'flex', background: '#0d1520', border: '1px solid #243040', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+            <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--borda-forte)', borderRadius: '8px', padding: '3px', gap: '3px' }}>
               {['Compra', 'Venda'].map(tipo => (
                 <button
                   key={tipo}
@@ -99,8 +100,8 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
                       ? (tipo === 'Compra' ? 'rgba(46,204,113,0.18)' : 'rgba(231,76,60,0.18)')
                       : 'transparent',
                     color: operacao === tipo
-                      ? (tipo === 'Compra' ? '#2ecc71' : '#e74c3c')
-                      : '#4e6480',
+                      ? (tipo === 'Compra' ? 'var(--sucesso)' : 'var(--perigo)')
+                      : 'var(--texto-mudo)',
                     boxShadow: operacao === tipo ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
                   }}
                 >
@@ -152,52 +153,26 @@ export default function NovaOperacaoModal({ isOpen, onClose, onSuccess }) {
         {/* Total */}
         <div style={{
           padding: '12px 16px',
-          background: '#0d1520',
+          background: 'var(--surface)',
           border: `1px solid ${isCompra ? 'rgba(46,204,113,0.2)' : 'rgba(231,76,60,0.2)'}`,
           borderRadius: '10px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           transition: 'border-color 0.2s',
         }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#4e6480' }}>Valor Total</span>
-          <span style={{ fontSize: '18px', fontWeight: 700, color: isCompra ? '#2ecc71' : '#e74c3c' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--texto-mudo)' }}>Valor Total</span>
+          <span style={{ fontSize: '18px', fontWeight: 700, color: isCompra ? 'var(--sucesso)' : 'var(--perigo)' }}>
             {isCompra ? '+ ' : '− '}{fmt(valorTotal)}
           </span>
         </div>
 
         {/* Botões */}
         <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
-          <button
-            type="button" onClick={onClose} disabled={carregando}
-            style={{
-              flex: 1, padding: '9px', background: 'transparent',
-              border: '1px solid #243040', color: '#7a8fa8',
-              borderRadius: '8px', fontWeight: 600, fontSize: '13px',
-              cursor: carregando ? 'not-allowed' : 'pointer',
-              opacity: carregando ? 0.5 : 1, transition: 'all 0.15s',
-            }}
-            onMouseOver={e => { if (!carregando) { e.currentTarget.style.borderColor = '#334d66'; e.currentTarget.style.color = '#cdd8e8'; } }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = '#243040'; e.currentTarget.style.color = '#7a8fa8'; }}
-          >
+          <Botao variante="secundario" onClick={onClose} disabled={carregando} style={{ flex: 1 }}>
             Cancelar
-          </button>
-          <button
-            type="submit" disabled={carregando}
-            style={{
-              flex: 2, padding: '9px',
-              background: '#0972d3',
-              border: '1px solid #0972d3',
-              color: '#fff', borderRadius: '8px',
-              fontWeight: 600, fontSize: '13px',
-              cursor: carregando ? 'not-allowed' : 'pointer',
-              opacity: carregando ? 0.6 : 1,
-              boxShadow: '0 2px 8px rgba(9,114,211,0.3)',
-              transition: 'all 0.15s',
-            }}
-            onMouseOver={e => { if (!carregando) { e.currentTarget.style.background = '#1a84e8'; e.currentTarget.style.borderColor = '#1a84e8'; } }}
-            onMouseOut={e => { e.currentTarget.style.background = '#0972d3'; e.currentTarget.style.borderColor = '#0972d3'; }}
-          >
+          </Botao>
+          <Botao type="submit" disabled={carregando} style={{ flex: 2 }}>
             {carregando ? 'Cadastrando...' : 'Cadastrar Operação'}
-          </button>
+          </Botao>
         </div>
       </form>
     </SlideModal>
