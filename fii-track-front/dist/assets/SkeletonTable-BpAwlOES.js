@@ -1,0 +1,6 @@
+import{r as e,t}from"./jsx-runtime-BRIasfsz.js";e();var n=t();function r({rows:e=5,cols:t=4}){return(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(`style`,{children:`
+        @keyframes skeletonPulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.3; }
+        }
+      `}),(0,n.jsxs)(`div`,{style:{borderRadius:`12px`,border:`1px solid var(--borda)`,overflow:`hidden`,background:`var(--surface)`},children:[(0,n.jsx)(`div`,{style:{background:`rgba(16,185,129,0.06)`,borderBottom:`1px solid rgba(16,185,129,0.15)`,display:`flex`,gap:`1rem`,padding:`0.75rem 1rem`},children:[...Array(t)].map((e,r)=>(0,n.jsx)(`div`,{style:{height:`10px`,width:r===0?`15%`:r===t-1?`10%`:`20%`,background:`var(--surface-2)`,borderRadius:`4px`,animation:`skeletonPulse 1.5s ease-in-out infinite`}},r))}),(0,n.jsx)(`table`,{style:{width:`100%`,borderCollapse:`collapse`},children:(0,n.jsx)(`tbody`,{children:[...Array(e)].map((e,r)=>(0,n.jsx)(`tr`,{style:{borderBottom:`1px solid var(--borda)`},children:[...Array(t)].map((e,i)=>(0,n.jsx)(`td`,{style:{padding:`0.875rem 1rem`},children:(0,n.jsx)(`div`,{style:{height:`13px`,width:i===0?`55%`:i===t-1?`35%`:`75%`,background:`var(--surface-2)`,borderRadius:`4px`,animation:`skeletonPulse 1.5s ease-in-out infinite`,animationDelay:`${r*.07}s`}})},i))},r))})})]})]})}export{r as t};
