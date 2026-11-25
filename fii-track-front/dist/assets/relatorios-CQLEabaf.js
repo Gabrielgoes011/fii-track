@@ -1,0 +1,1 @@
+import{r as e,t}from"./jsx-runtime-BRIasfsz.js";import{I as n}from"./index-CU3WUK3X.js";import{t as r}from"./PaginaEmDesenvolvimento-GgLagiij.js";e();var i=t();function a(){return(0,i.jsx)(r,{titulo:`Relatórios`,descricao:`Visualize relatórios e análises da sua carteira`,icon:n,cor:`#06b6d4`})}export{a as default};

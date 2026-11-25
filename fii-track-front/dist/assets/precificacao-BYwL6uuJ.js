@@ -1,1 +1,0 @@
-import{r as e,t}from"./jsx-runtime-BRIasfsz.js";import{J as n}from"./index-DAWIsfs8.js";import{t as r}from"./PaginaEmDesenvolvimento-GgLagiij.js";e();var i=t();function a(){return(0,i.jsx)(r,{titulo:`Precificação`,descricao:`Análise de preços e valuation dos seus FIIs`,icon:n,cor:`#f59e0b`})}export{a as default};
